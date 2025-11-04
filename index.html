@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <!-- Додано <meta> для мобільної версії -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAN Монітор</title>
+    
+    <!-- НОВИЙ ШРИФТ ДЛЯ ПІДПИСУ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ПОЧАТОК CSS --- */
+        
+        /* --- Скидання стилів --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            height: 100%;
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        /* --- МАКЕТ: МОБІЛЬНА ВЕРСІЯ (за замовчуванням) --- */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #333;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap; /* Дозволяє кнопкам переноситись */
+            justify-content: center;
+            padding: 5px 0;
+        }
+        
+        /* --- ОНОВЛЕНО СТИЛІ ДЛЯ ЛОГОТИПУ --- */
+        .sidebar-title { 
+            display: none; /* Сховано на мобілках */
+            padding: 10px 0;
+            width: 100%; /* Додано, щоб забезпечити центрування */
+        }
+        .sidebar-title img {
+            width: 80%; /* Логотип займає 80% ширини бічної панелі */
+            max-width: 150px; /* Але не більше 150px */
+            height: auto;
+            margin-bottom: 5px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .sidebar-title small {
+            color: #aaa; /* Трохи світліший сірий */
+            font-family: 'Orbitron', sans-serif; /* ЗАСТОСОВАНО ШРИФТ */
+            font-size: 0.9em; /* Трохи збільшено */
+            font-weight: 400; /* Стандартна вага для Orbitron */
+            display: block; /* Щоб був під логотипом */
+            text-align: center;
+            margin-top: 10px; /* ЗБІЛЬШЕНО ВІДСТАНЬ */
+            letter-spacing: 1.5px; /* Додано відстань між буквами, як у лого */
+        }
+        /* --- КІНЕЦЬ ОНОВЛЕННЯ --- */
+        
+        /* --- ОНОВЛЕНО: СТИЛІ ДЛЯ МЕНЮ --- */
+        .nav-item {
+            /* На мобілках кожна кнопка займає не всю ширину, тому скидаємо */
+            width: auto;
+        }
+        
+        .sidebar button.nav-button {
+            padding: 10px 12px;
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 0.9em;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            /* width: 100%; /* Кнопки меню займають всю ширину - прибрано для мобілок */
+            text-align: left; /* Вирівнюємо текст зліва */
+            display: flex; /* Потрібно для стрілки */
+            align-items: center;
+        }
+        .sidebar button.nav-button:hover { background-color: #444; }
+        .sidebar button.nav-button.active { border-bottom: 2px solid #007bff; color: white; }
+
+        /* --- НОВЕ: СТИЛІ ДЛЯ ПІДМЕНЮ --- */
+        .has-submenu > .nav-button {
+            justify-content: space-between;
+        }
+        .submenu-arrow {
+            transition: transform 0.2s ease;
+            font-size: 1.2em;
+            margin-left: 5px; /* Відступ стрілки від тексту */
+        }
+        .submenu {
+            display: none; /* Повністю ховаємо на мобілках */
+            width: 100%;
+            background-color: #222;
+        }
+        .submenu .nav-button {
+            padding-left: 25px; /* Відступ для вкладеності */
+            font-size: 0.9em;
+            width: 100%;
+        }
+        .nav-item.open .submenu {
+            display: block; /* Анімація відкриття */
+        }
+        .nav-item.open .submenu-arrow {
+            transform: rotate(90deg); /* Обертаємо стрілку */
+        }
+        /* --- КІНЕЦЬ СТИЛІВ ПІДМЕНЮ --- */
+
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            /* Висота мінус верхня панель. Можливо, доведеться підігнати */
+            height: calc(100vh - 50px); 
+        }
+        .top-bar {
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 0.9em;
+        }
+        
+        /* --- ОНОВЛЕНО: СТИЛІ ДЛЯ ПРАВОЇ ЧАСТИНИ HEADER --- */
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        .status-group {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            /* Робимо меншими */
+            font-size: 0.9em;
+            color: #555;
+        }
+        .status-light {
+            width: 10px; height: 10px; /* Зроблено меншими */
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            margin-right: 5px;
+            transition: background-color 0.3s;
+        }
+        .status-light.connected { background-color: #28a745; }
+        .status-light.receiving { background-color: #ffc107; animation: pulse 1s infinite; }
+        .status-label { margin-right: 10px; }
+        
+        #connectButton { 
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em; /* Розмір іконки */
+            padding: 5px 8px;
+            color: #333;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        #connectButton:hover {
+            opacity: 1;
+        }
+        /* --- КІНЕЦЬ ОНОВЛЕННЯ --- */
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ (ОНОВЛЕНО) */
+        .lang-switcher {
+            margin-left: 20px;
+        }
+        .lang-switcher button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em; /* Зроблено емодзі більшими */
+            opacity: 0.6; /* Неактивні прапори прозорі */
+            transition: opacity 0.2s;
+            padding: 0 5px; /* Невеликий відступ */
+        }
+        .lang-switcher button:hover {
+            opacity: 1;
+        }
+        .lang-switcher button.active {
+            opacity: 1; /* Активний прапор непрозорий */
+            text-decoration: none; /* Прибрано підкреслення */
+        }
+        .lang-switcher span {
+            color: #ccc;
+            font-size: 1.5em;
+            vertical-align: middle;
+        }
+
+        .content-area { padding: 15px; flex-grow: 1; overflow-y: auto; }
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+        h2 { margin-bottom: 15px; }
+
+        /* --- СТИЛІ КОМПОНЕНТІВ (загальні) --- */
+        .write-button {
+            background-color: #ffc;
+            border: 1px solid #e6b400;
+            padding: 5px 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .write-button:hover { background-color: #ffe; }
+
+        input[type="text"], input[type="number"], select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            margin-top: 2px;
+        }
+        input[readonly] { background-color: #eee; }
+        label { font-weight: bold; margin-top: 10px; display: block; }
+
+        /* Група кнопок ON/OFF */
+        .button-group { display: flex; margin-top: 5px; }
+        .button-group button {
+            flex-grow: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .button-group button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .button-group button:first-child { border-radius: 4px 0 0 4px; }
+        .button-group button:last-child { border-radius: 0 4px 4px 0; }
+
+        /* --- СІТКИ (мобільна версія) --- */
+        .inverter-layout, .bms-layout {
+            display: grid;
+            grid-template-columns: 1fr; /* 1 колонка на мобілках */
+            gap: 20px;
+        }
+        .rw-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 колонки на мобілках */
+            gap: 10px;
+            align-items: end; /* Вирівняти по нижньому краю */
+        }
+        .rw-grid label { text-align: left; grid-column: 1 / -1; } /* Лейбл на всю ширину */
+        .rw-grid input[readonly] { grid-column: 1 / -1; } /* Read-only на всю ширину */
+        .rw-grid input { width: 100%; }
+        .rw-grid .write-button { width: 100%; }
+
+        /* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            .sidebar {
+                width: 200px;
+                flex-shrink: 0;
+                display: block; /* Повертаємо вертикальне меню */
+                padding-top: 20px;
+            }
+            .sidebar-title { 
+                display: block; /* ПОКАЗУЄМО логотип на десктопі */
+                text-align: center; 
+                margin-bottom: 20px; 
+            }
+            
+            /* ОНОВЛЕНО: На десктопі кнопки теж на всю ширину */
+            .nav-item {
+                width: 100%; /* Повертаємо повну ширину для контейнерів */
+            }
+            .sidebar button.nav-button {
+                display: flex; /* Використовуємо flex для вирівнювання */
+                width: 100%;
+                padding: 15px 20px;
+                font-size: 1em;
+                border-bottom: 1px solid #444;
+                align-items: center; /* Вирівнюємо текст і стрілку */
+            }
+            .sidebar button.nav-button.active { border-bottom: 1px solid #007bff; }
+            
+            .has-submenu > .nav-button {
+                justify-content: space-between; /* Розносимо текст і стрілку */
+            }
+            /* НОВЕ: стилі для підменю на десктопі */
+            .submenu {
+                display: block; /* Завжди block на десктопі */
+                max-height: 0; /* Але приховано */
+                overflow: hidden;
+                transition: max-height 0.3s ease-out;
+            }
+            .nav-item.open .submenu {
+                max-height: 500px; /* Анімація відкриття */
+            }
+            .submenu .nav-button {
+                padding-left: 40px; /* Відступ для підменю */
+                border-bottom-color: #2a2a2a; /* Темніший бордер */
+            }
+            
+            .main-wrapper { height: 100vh; }
+            .top-bar { font-size: 1em; }
+            .status-light { width: 15px; height: 15px; }
+            #connectButton { font-size: 1.5em; } /* Розмір іконки */
+            .content-area { padding: 20px; }
+            
+            .inverter-layout, .bms-layout {
+                grid-template-columns: 1fr 1fr; /* 2 колонки на десктопі */
+                gap: 40px;
+            }
+        }
+
+        /* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
+        @media (min-width: 1024px) {
+            .rw-grid {
+                grid-template-columns: 200px 100px 100px 80px; /* 4 колонки як на скріні */
+                gap: 10px;
+                align-items: center;
+            }
+            .rw-grid label { grid-column: 1 / 2; text-align: right; }
+            .rw-grid input[readonly] { grid-column: 2 / 3; }
+            .rw-grid input { grid-column: 3 / 4; }
+            .rw-grid .write-button { grid-column: 4 / 5; }
+        }
+
+        /* Стиль для Терміналу */
+        #log {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            height: 70vh;
+            overflow-y: scroll;
+            padding: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        
+        /* --- КІНЕЦЬ CSS --- */
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <!-- ОНОВЛЕНО: Текст замінено на логотип -->
+        <div class="sidebar-title">
+            <img src="logo.png" alt="Electric Engines Logo" 
+                 onerror="this.onerror=null; this.alt='Electric Engines'; this.style.color='#fff'; this.style.fontWeight='bold';">
+            <small>diagnostic tool</small>
+        </div>
+        
+        <!-- ОНОВЛЕНО: Структура меню -->
+        <div class="nav-item">
+            <button class="nav-button" data-page-file="pages/inverter.html" data-lang-key="menu_inverter"><span>⚡️ Інвертор</span></button>
+        </div>
+        
+        <!-- НОВЕ ПІДМЕНЮ БМС -->
+        <div class="nav-item has-submenu">
+            <!-- Ця кнопка тепер ТІЛЬКИ відкриває/закриває підменю -->
+            <button class="nav-button" id="bms-toggle-button" data-lang-key="menu_bms">
+                <span>🔋 БМС</span>
+                <span class="submenu-arrow">›</span>
+            </button>
+            <div class="submenu">
+                <!-- 
+                  ВАЖЛИВО: Переконайтеся, що ви ПЕРЕЙМЕНУВАЛИ 'pages/bms.html' 
+                  на 'pages/bms_params.html' у вашій папці
+                -->
+                <button class="nav-button" data-page-file="pages/bms_params.html" data-lang-key="menu_bms_params">Параметри</button>
+                <button class="nav-button" data-page-file="pages/bms_cells.html" data-lang-key="menu_bms_cells">Комірки</button>
+                <button class="nav-button" data-page-file="pages/bms_temp_map.html" data-lang-key="menu_bms_temp_map">T-Мапа</button>
+                <button class="nav-button" data-page-file="pages/bms_soc_map.html" data-lang-key="menu_bms_soc_map">SOC-Мапа</button>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <button class="nav-button" data-page-file="pages/settings.html" data-lang-key="menu_settings"><span>⚙️ Налаштування</span></button>
+        </div>
+        <div class="nav-item">
+            <button class="nav-button" data-page-file="pages/update.html" data-lang-key="menu_update"><span>⬆️ Оновлення</span></button>
+        </div>
+        <div class="nav-item">
+            <button class="nav-button" data-page-file="pages/terminal.html" data-lang-key="menu_terminal"><span>💻 Термінал</span></button>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <!-- ЗМІНЕНО: Група статусу та мови переїхала в .header-right -->
+            
+            <div class="lang-switcher">
+                <!-- ОНОВЛЕНО: Текст замінено на емодзі -->
+                <button id="lang-uk" data-lang="uk">🇺🇦</button>
+                <span>|</span>
+                <button id="lang-en" data-lang="en">🇬🇧</button>
+            </div>
+
+            <!-- НОВА ОБГОРТКА .header-right -->
+            <div class="header-right">
+                <div class="status-group">
+                    <div id="statusAdapter" class="status-light"></div>
+                    <span class="status-label" data-lang-key="status_adapter">Адаптер</span>
+                </div>
+                <div class="status-group">
+                    <div id="statusCar" class="status-light"></div>
+                    <span class="status-label" data-lang-key="status_can">Шина (CAN)</span>
+                </div>
+                
+                <!-- ОНОВЛЕНО: Текст кнопки замінено на іконку -->
+                <button id="connectButton" data-lang-key="btn_connect" title="Підключити">🔌</button>
+            </div>
+        </header>
+
+        <main class="content-area" id="page-container">
+            <!-- Вміст буде завантажено сюди -->
+        </main>
+    </div>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
+

@@ -1,0 +1,93 @@
+<h2 data-lang-key="inverter_title">Інвертор</h2>
+<div class="inverter-layout">
+    
+    <!-- Ліва колонка (Read-Only) -->
+    <div class="inverter-column">
+        <label data-lang-key="inv_hv_voltage">Invertor high voltage</label>
+        <input type="text" id="readInvertorHighVoltage" value="0 V" readonly>
+        
+        <label data-lang-key="inv_temp">Invertor temperature</label>
+        <input type="text" id="readInvertorTemperature" value="0 C" readonly>
+        
+        <label data-lang-key="inv_motor_temp">Motor temperature</label>
+        <input type="text" id="readMotorTemperature" value="0 C" readonly>
+        
+        <label data-lang-key="inv_selector">Selector position</label>
+        <input type="text" id="readSelectorPosition" value="N" readonly>
+        
+        <label data-lang-key="inv_rpm">Motor RPM</label>
+        <input type="text" id="readMotorRPM" value="0 rpm" readonly>
+        
+        <label data-lang-key="inv_pedal">Pedal position</label>
+        <input type="text" id="readPedalPosition" value="0" readonly>
+        
+        <label data-lang-key="inv_torque_req">Torque request</label>
+        <input type="text" id="readTorqueRequest" value="0 Nm" readonly>
+    </div>
+    
+    <!-- Права колонка (Read-Only) -->
+    <div class="inverter-column">
+        <label data-lang-key="inv_ready">Ready</label>
+        <input type="text" id="readReady" value="No" readonly>
+        
+        <label data-lang-key="inv_error">Invertor error</label>
+        <input type="text" id="readInvertorError" value="No" readonly>
+        
+        <label data-lang-key="inv_status">Status</label>
+        <input type="text" id="readStatus" value="OK" readonly>
+    </div>
+</div>
+
+<hr style="margin: 20px 0;">
+
+<!-- Нижня частина (Read/Write) -->
+<div class="rw-grid">
+    <!-- Заголовки (для ясності) -->
+    <!-- Ми можемо їх прибрати, якщо вони не потрібні, або додати переклад -->
+    <span style="visibility: hidden;"></span>
+    <label style="text-align: left;" data-lang-key="col_read">Read</label>
+    <label style="text-align: left;" data-lang-key="col_write">Write</label>
+    <span style="visibility: hidden;"></span>
+
+    <!-- Max torque -->
+    <label data-lang-key="inv_max_torque">Max torque</label>
+    <input type="text" id="readMaxTorque" value="0 Nm" readonly>
+    <input type="text" id="writeMaxTorque" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="maxTorque" data-target-id="writeMaxTorque" data-lang-key="btn_write">Write</button>
+    
+    <!-- Pedal MIN position -->
+    <label data-lang-key="inv_pedal_min">Pedal MIN position</label>
+    <input type="text" id="readPedalMin" value="0" readonly>
+    <input type="text" id="writePedalMin" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="pedalMin" data-target-id="writePedalMin" data-lang-key="btn_write">Write</button>
+
+    <!-- Pedal MAX position -->
+    <label data-lang-key="inv_pedal_max">Pedal MAX position</label>
+    <input type="text" id="readPedalMax" value="0" readonly>
+    <input type="text" id="writePedalMax" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="pedalMax" data-target-id="writePedalMax" data-lang-key="btn_write">Write</button>
+
+    <!-- Torque in calibration point -->
+    <label data-lang-key="inv_torque_cal">Torque in calibration point</label>
+    <input type="text" id="readTorqueCal" value="0" readonly>
+    <input type="text" id="writeTorqueCal" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="torqueCal" data-target-id="writeTorqueCal" data-lang-key="btn_write">Write</button>
+    
+    <!-- Pedal position in calibration point -->
+    <label data-lang-key="inv_pedal_cal">Pedal position in calibration point</label>
+    <input type="text" id="readPedalCal" value="0" readonly>
+    <input type="text" id="writePedalCal" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="pedalCal" data-target-id="writePedalCal" data-lang-key="btn_write">Write</button>
+
+    <!-- Not presed pedal position -->
+    <label data-lang-key="inv_not_pressed">Not presed pedal position</label>
+    <input type="text" id="readNotPressed" value="0" readonly>
+    <input type="text" id="writeNotPressed" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="notPressed" data-target-id="writeNotPressed" data-lang-key="btn_write">Write</button>
+
+    <!-- Torque while pedal not pressed -->
+    <label data-lang-key="inv_torque_not_pressed">Torque while pedal not pressed</label>
+    <input type="text" id="readTorqueNotPressed" value="0 Nm" readonly>
+    <input type="text" id="writeTorqueNotPressed" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="torqueNotPressed" data-target-id="writeTorqueNotPressed" data-lang-key="btn_write">Write</button>
+</div>
