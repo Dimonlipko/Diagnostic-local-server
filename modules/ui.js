@@ -9,12 +9,17 @@ export function updateLogElement() {
 }
 
 /**
- * Безпечно логує повідомлення, *тільки* якщо сторінка терміналу активна
+ * Логує повідомлення.
+ * ЗАВЖДИ зберігає в state.terminalLog.
+ * Оновлює <pre> на екрані, ТІЛЬКИ якщо він видимий.
  */
 export function logMessage(message) {
+    // 1. ЗАВЖДИ оновлюємо повний лог у state
+    state.terminalLog = message + '\n' + state.terminalLog;
+
+    // 2. Оновлюємо видимий <pre> елемент, тільки якщо він зараз є на сторінці
     if (state.logElement) {
-        // Додаємо на початок, щоб нові повідомлення були зверху
-        state.logElement.textContent = message + '\n' + state.logElement.textContent;
+        state.logElement.textContent = state.terminalLog;
     }
     // console.log(message); // Для дебагу на всіх сторінках
 }
@@ -33,6 +38,12 @@ export async function loadPage(pageFile) {
         pageContainer.innerHTML = await response.text();
         
         updateLogElement(); 
+
+        // 3. НОВИЙ БЛОК: Відновлюємо лог, якщо ми завантажили сторінку терміналу
+        if (state.logElement) {
+            state.logElement.textContent = state.terminalLog;
+        }
+           
         translatePage(); // Перекладаємо новий вміст
 
     } catch (error) {
@@ -136,4 +147,3 @@ export function updateUI(id, data) {
         }
     }
 }
-

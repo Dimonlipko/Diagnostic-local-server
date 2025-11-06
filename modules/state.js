@@ -8,6 +8,7 @@ export let state = {
     adapterType: 'unknown',
     carStatusTimeout: null,
     logElement: null, // Посилання на <pre id="log">
-    currentLanguage: 'uk'
+    currentLanguage: 'uk',
+    terminalLog: 'Очікування підключення...'
 };
 
