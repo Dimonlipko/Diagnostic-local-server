@@ -10,68 +10,108 @@ let lineBuffer = "";
  * Читання з порту з таймаутом (без змін)
  */
 async function readWithTimeout(timeoutMs) {
-    let timeoutId;
-    const timeoutPromise = new Promise((resolve) => {
-        timeoutId = setTimeout(() => resolve({ value: null, done: false, timeout: true }), timeoutMs);
-    });
+    const startTime = Date.now();
+    let fullResponse = "";
     
-    // --- (без змін) ---
-    const readPromise = state.reader.read(); // Це поверне { value: Uint8Array, done }
-    const result = await Promise.race([readPromise, timeoutPromise]);
-    clearTimeout(timeoutId);
+    while (Date.now() - startTime < timeoutMs) {
+        let timeoutId;
+        const timeoutPromise = new Promise((resolve) => {
+            const remaining = timeoutMs - (Date.now() - startTime);
+            timeoutId = setTimeout(() => resolve({ value: null, done: false, timeout: true }), remaining);
+        });
+        
+        const readPromise = state.reader.read();
+        const result = await Promise.race([readPromise, timeoutPromise]);
+        clearTimeout(timeoutId);
 
-    // --- (без змін) ---
-    if (result.value) {
-        const decodedValue = new TextDecoder().decode(result.value);
-        // логуємо сиру відповідь для дебагу
-        // logMessage(`RAW: ${decodedValue}`); 
-        return { value: decodedValue, done: false, timeout: false };
+        // Якщо таймаут - повертаємо те, що встигли зібрати
+        if (result.timeout) {
+            if (fullResponse.length > 0) {
+                return { value: fullResponse, done: false, timeout: false };
+            }
+            return { value: null, done: false, timeout: true };
+        }
+
+        // Якщо є дані - додаємо до буфера
+        if (result.value) {
+            const decodedValue = new TextDecoder().decode(result.value);
+            fullResponse += decodedValue;
+            
+            // Якщо прийшов символ переносу рядка - відповідь завершена
+            if (decodedValue.includes('\r') || decodedValue.includes('\n') || decodedValue.includes('>')) {
+                return { value: fullResponse, done: false, timeout: false };
+            }
+            
+            // Продовжуємо читати
+            continue;
+        }
+        
+        if (result.done) {
+            return { value: fullResponse.length > 0 ? fullResponse : null, done: true, timeout: false };
+        }
     }
-    // --- (без змін) ---
     
-    return result;
+    // Таймаут вийшов, повертаємо те, що є
+    if (fullResponse.length > 0) {
+        return { value: fullResponse, done: false, timeout: false };
+    }
+    return { value: null, done: false, timeout: true };
 }
 
 /**
  * Опитує пристрій для визначення типу (slcan або elm327) (без змін)
  */
+/**
+ * Опитує пристрій для визначення типу (slcan або elm327)
+ */
 async function detectAdapterType() {
-    logMessage("Визначення типу... (спроба 1: slcan 'V')...");
-    await state.writer.write("V\r");
-    const { value } = await readWithTimeout(300);
-    if (value) {
-        logMessage(`Відповідь на 'V': ${value}`);
-        if (value.startsWith('V') || value.startsWith('N')) return 'slcan';
-        if (value.includes('?')) return 'elm327';
-    }
-
-    // --- (без змін) ---
-    logMessage("Спроба 1 не вдалась. (спроба 2: ELM 'ATE0')...");
-    await state.writer.write("ATE0\r"); // Надсилаємо ATE0 + \r
-    const { value: v2 } = await readWithTimeout(3000);
-    if (v2) {
-        logMessage(`Відповідь на 'ATE0': ${v2}`);
-        if (v2.includes('OK')) {
-            state.echoOff = true; // Ми вже вимкнули ехо
+    // Очищуємо буфер
+    lineBuffer = "";
+    
+    // ========================================
+    // КРОК 1: Перевірка ELM327 через ATI
+    // ========================================
+    logMessage("Крок 1: Перевірка ELM327 'ATI'...");
+    await state.writer.write("ATI\r");
+    
+    const { value: v1, timeout: t1 } = await readWithTimeout(2000);
+    
+    if (v1 && !t1) {
+        const cleaned = v1.trim().toUpperCase();
+        logMessage(`Відповідь на 'ATI': [${cleaned}]`);
+        
+        // Перевіряємо чи це ELM (може бути ELM327, ELM v1.5 тощо)
+        if (cleaned.includes('ELM')) {
+            logMessage("✓ Виявлено ELM327 адаптер!");
             return 'elm327';
         }
     }
-    // --- (без змін) ---
-
-    // --- (без змін) ---
-    logMessage("Спроба 2 не вдалась. (спроба 3: ELM 'ATI')...");
-    await state.writer.write("ATI\r"); // Надсилаємо ATI + \r
-    const { value: v3 } = await readWithTimeout(3000);
-    if (v3) {
-        logMessage(`Відповідь на 'ATI': ${v3}`);
-        if (v3.includes('ELM327')) return 'elm327';
+    
+    // ========================================
+    // КРОК 2: Якщо не ELM - перевіряємо slcan через V
+    // ========================================
+    logMessage("Крок 2: Перевірка slcan 'V'...");
+    await state.writer.write("V\r");
+    
+    const { value: v2, timeout: t2 } = await readWithTimeout(1500);
+    
+    if (v2 && !t2) {
+        const cleaned = v2.trim();
+        logMessage(`Відповідь на 'V': [${cleaned}]`);
+        
+        // Якщо БУДЬ-ЯКА відповідь є - це slcan
+        if (cleaned.length > 0) {
+            logMessage("✓ Виявлено slcan адаптер!");
+            return 'slcan';
+        }
     }
-    // --- (без змін) ---
-
-    logMessage("Не вдалося визначити тип адаптера.");
+    
+    // ========================================
+    // Адаптер не виявлено
+    // ========================================
+    logMessage("❌ Адаптер не виявлено. Немає відповіді.");
     return 'unknown';
 }
-
 /**
  * Надсилає команди ініціалізації
  */
