@@ -3,72 +3,70 @@
     
     <div class="bms-left">
         <label data-lang-key="bms_battery_voltage">Battery voltage</label>
-        <input type="text" id="readBatteryVoltage" value="0 V" readonly>
+        <input type="text" id="readBatteryVoltage" value="0 V" readonly data-bind="bms_info_220107.batteryVoltage">
         
         <label data-lang-key="bms_cell_min">Cell MIN voltage</label>
-        <input type="text" id="readCellMin" value="0 V" readonly>
+        <input type="text" id="readCellMin" value="0 V" readonly data-bind="bms_info_220306.cellMin">
         
         <label data-lang-key="bms_cell_max">Cell MAX voltage</label>
-        <input type="text" id="readCellMax" value="0 V" readonly>
+        <input type="text" id="readCellMax" value="0 V" readonly data-bind="bms_info_220306.cellMax">
 
         <label data-lang-key="bms_balancing">Balancing</label>
-        <input type="text" id="readBalancing" value="OFF" readonly>
+        <input type="text" id="readBalancing" value="OFF" readonly data-bind="bms_info_220408.balancing">
         
         <label data-lang-key="bms_recuperation">Recuperation</label>
-        <input type="text" id="readRecuperation" value="0 Nm" readonly>
+        <input type="text" id="readRecuperation" value="0 Nm" readonly data-bind="bms_info_220408.recuperation">
         
         <label data-lang-key="bms_cut_charge">Cut charge power when finishing</label>
-        <input type="text" id="readCutCharge" value="No" readonly>
+        <input type="text" id="readCutCharge" value="No" readonly data-bind="bms_info_220414.cutCharge">
         
         <label data-lang-key="bms_cell_off_charging">Cell voltage off charging</label>
-        <input type="text" id="readCellOffCharging" value="0 V" readonly>
+        <input type="text" id="readCellOffCharging" value="0 V" readonly data-bind="bms_info_220409.cellOffCharging">
 
         <label data-lang-key="bms_cell_start_balancing">Cell voltage start balancing</label>
-        <input type="text" id="readCellStartBalancing" value="0 V" readonly>
+        <input type="text" id="readCellStartBalancing" value="0 V" readonly data-bind="bms_info_220409.cellStartBalancing">
 
         <label data-lang-key="bms_cell_on_tortle">Cell voltage on tortle</label>
-        <input type="text" id="readCellOnTortle" value="0 V" readonly>
+        <input type="text" id="readCellOnTortle" value="0 V" readonly data-bind="bms_info_220410.cellOnTortle">
 
         <label data-lang-key="bms_cell_off_battery">Cell voltage off battery</label>
-        <input type="text" id="readCellOffBattery" value="0 V" readonly>
+        <input type="text" id="readCellOffBattery" value="0 V" readonly data-bind="bms_info_220410.cellOffBattery">
 
         <label data-lang-key="bms_soc">SOC</label>
-        <input type="text" id="readSOC" value="0 %" readonly>
+        <input type="text" id="readSOC" value="0 %" readonly data-bind="bms_info_220105.soc">
         
         <label data-lang-key="bms_soc_ah">SOC in Ah</label>
-        <input type="text" id="readSOCAh" value="0 Ah" readonly>
+        <input type="text" id="readSOCAh" value="0 Ah" readonly data-bind="bms_info_220101.socAh">
         
         <label data-lang-key="bms_soh_ah">SOH in Ah</label>
-        <input type="text" id="readSOHAh" value="0 Ah" readonly>
+        <input type="text" id="readSOHAh" value="0 Ah" readonly data-bind="bms_info_220102.sohAh">
         
         <label data-lang-key="bms_current">Current</label>
-        <input type="text" id="readCurrent" value="0 A" readonly>
+        <input type="text" id="readCurrent" value="0 A" readonly data-bind="bms_info_220108.current">
         
         <label data-lang-key="bms_current_sens_type">Current sens type</label>
-        <input type="text" id="readCurrentSensType" value="Volt 1" readonly>
+        <input type="text" id="readCurrentSensType" value="Volt 1" readonly data-bind="bms_info_220108.currentSensType">
         
         <label data-lang-key="bms_current_sens1">Current sens 1</label>
-        <input type="text" id="readCurrentSens1" value="0 A" readonly>
+        <input type="text" id="readCurrentSens1" value="0 A" readonly data-bind="bms_info_220109.currentSens1">
         
         <label data-lang-key="bms_current_sens2">Current sens 2</label>
-        <input type="text" id="readCurrentSens2" value="0 A" readonly>
+        <input type="text" id="readCurrentSens2" value="0 A" readonly data-bind="bms_info_220109.currentSens2">
         
         <label data-lang-key="bms_ir_sens">IR sens voltage</label>
-        <input type="text" id="readIRSens" value="0 mV" readonly>
+        <input type="text" id="readIRSens" value="0 mV" readonly data-bind="bms_info_220111.irSens">
     </div>
 
     <div class="bms-right">
         <label data-lang-key="bms_min_cell_num">MIN Cell number</label>
-        <input type="text" id="readMinCellNum" value="0" readonly>
+        <input type="text" id="readMinCellNum" value="0" readonly data-bind="bms_info_220308.minCellNum">
         
         <label data-lang-key="bms_max_cell_num">MAX Cell number</label>
-        <input type="text" id="readMaxCellNum" value="0" readonly>
+        <input type="text" id="readMaxCellNum" value="0" readonly data-bind="bms_info_220308.maxCellNum">
 
         <label data-lang-key="bms_balancing">Balancing</label>
         <div class="button-group" data-param-name="balancing">
-            <button class="bms-toggle" data-value="on" data-lang-key="btn_on">ON</button>
-            <button class="bms-toggle" data-value="off" data-lang-key="btn_off">OFF</button>
-        </div>
+            <button class="bms-toggle" data-value="1" data-lang-key="btn_on">ON</button> <button class="bms-toggle" data-value="0" data-lang-key="btn_off">OFF</button> </div>
         
         <label data-lang-key="bms_recuperation">Recuperation</label>
         <div class="rw-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -78,9 +76,7 @@
 
         <label data-lang-key="bms_cut_charge">Cut charge power when finishing</label>
         <div class="button-group" data-param-name="cutCharge">
-            <button class="bms-toggle" data-value="on" data-lang-key="btn_on">ON</button>
-            <button class="bms-toggle" data-value="off" data-lang-key="btn_off">OFF</button>
-        </div>
+            <button class="bms-toggle" data-value="1" data-lang-key="btn_on">ON</button> <button class="bms-toggle" data-value="0" data-lang-key="btn_off">OFF</button> </div>
 
         <label data-lang-key="bms_cell_off_charging">Cell voltage off charging</label>
         <div class="rw-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -121,10 +117,7 @@
         <label data-lang-key="bms_current_sens_type">Current sens type</label>
         <div class="rw-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
             <select id="writeCurrentSensType" class="bms-select" data-param-name="currentSensType">
-                <option value="leaf" data-lang-key="bms_sens_leaf">Leaf</option>
-                <option value="off" data-lang-key="bms_sens_off">OFF</option>
-                <option value="volt1" data-lang-key="bms_sens_volt1">Volt 1</option>
-            </select>
+                <option value="2" data-lang-key="bms_sens_leaf">Leaf</option> <option value="1" data-lang-key="bms_sens_off">OFF</option> <option value="0" data-lang-key="bms_sens_volt1">Volt 1</option> </select>
             <button class="write-button" data-param-name="currentSensType" data-target-id="writeCurrentSensType" data-lang-key="btn_write">Write</button>
         </div>
     </div>

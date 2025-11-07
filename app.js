@@ -19,6 +19,12 @@ import { sendCanRequest } from './modules/canProtocol.js';
 /**
  * Форматує JS-значення у повний CAN-фрейм (ID + дані) для запису.
  */
+/**
+ * Форматує значення від користувача у готове CAN-повідомлення.
+ * @param {string} param - Ключ параметра з PARAMETER_REGISTRY (напр., 'socAh').
+ * @param {string} value - "Сире" значення з поля вводу (напр., "100").
+ * @returns {object|null} - Об'єкт { canId, data } або null у разі помилки.
+ */
 function formatCanMessage(param, value) {
     if (!window.PARAMETER_REGISTRY) {
         logMessage("ПОМИЛКА: Внутрішня: PARAMETER_REGISTRY не знайдено.");
@@ -29,32 +35,52 @@ function formatCanMessage(param, value) {
     const config = window.PARAMETER_REGISTRY[param]?.writeConfig;
 
     if (!config) {
-        // 💡 ЦЕ ПОВІДОМЛЕННЯ, ЯКЕ ВИ БАЧИЛИ
         logMessage(`ПОМИЛКА: Не знайдено 'writeConfig' для "${param}"`);
         return null;
     }
 
-    let numericValue = parseInt(value, 10);
+    // <-- ЗМІНА: Використовуємо parseFloat замість parseInt
+    let numericValue = parseFloat(value); 
+    
     if (isNaN(numericValue)) {
         logMessage(`ПОМИЛКА: Значення "${value}" для "${param}" не є числом.`);
         return null;
     }
+
+    // <-- ЗМІНА: Застосовуємо множник, ЯКЩО він існує в конфігурації
+    if (config.multiplier) {
+        // Множимо значення від користувача (напр., 100) на множник (напр., 1000000)
+        // Округлюємо, оскільки CAN-повідомлення не може бути дробовим
+        numericValue = Math.round(numericValue * config.multiplier);
+    }
+    // Тепер numericValue = 100000000 (у прикладі з socAh)
 
     let hexValue;
     const totalHexLength = config.bytes * 2; 
 
     if (config.signed) {
         const mask = Math.pow(2, config.bytes * 8) - 1;
+        // Тепер ця логіка працює з ВЖЕ помноженим значенням
         hexValue = (numericValue & mask).toString(16);
     } else {
         if (numericValue < 0) {
             logMessage(`ПОМИЛКА: "${param}" не приймає від'ємні значення.`);
             return null;
         }
+        // І ця логіка працює з ВЖЕ помноженим значенням
         hexValue = numericValue.toString(16);
     }
 
+    // Доповнюємо HEX до потрібної довжини (напр., 8 символів для 4 байт)
     const paddedHexValue = hexValue.padStart(totalHexLength, '0');
+    
+    // Перевірка, чи не перевищує значення максимальний розмір
+    if (paddedHexValue.length > totalHexLength) {
+        logMessage(`ПОМИЛКА: Значення ${numericValue} завелике для ${config.bytes} байт.`);
+        console.error(`[Formatter] Значення ${numericValue} (${hexValue}) перевищує ${config.bytes} байт.`);
+        return null;
+    }
+    
     const finalData = config.dataPrefix + paddedHexValue;
     
     return {

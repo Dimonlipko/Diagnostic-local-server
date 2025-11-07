@@ -263,51 +263,6 @@ async function readLoop() {
     }
 }
 
-// ... (formatCanMessage залишається БЕЗ ЗМІН) ...
-function formatCanMessage(param, value) {
-    if (!window.PARAMETER_REGISTRY) {
-        logMessage("ПОМИЛКА: Внутрішня: PARAMETER_REGISTRY не знайдено.");
-        console.error("[Formatter] PARAMETER_REGISTRY не знайдено у 'window'!");
-        return null;
-    }
-    const config = window.PARAMETER_REGISTRY[param]?.writeConfig;
-    if (!config) {
-        logMessage(`ПОМИЛКА: Не знайдено 'writeConfig' для "${param}"`);
-        return null;
-    }
-    let numericValue = parseInt(value, 10);
-    if (isNaN(numericValue)) {
-        logMessage(`ПОМИЛКА: Значення "${value}" для "${param}" не є числом.`);
-        return null;
-    }
-    let hexValue;
-    const totalHexLength = config.bytes * 2; 
-    if (config.signed) {
-        const mask = Math.pow(2, config.bytes * 8) - 1;
-        hexValue = (numericValue & mask).toString(16);
-    } else {
-        if (numericValue < 0) {
-            logMessage(`ПОМИЛКА: "${param}" не приймає від'ємні значення.`);
-            return null;
-        }
-        const maxValue = Math.pow(2, config.bytes * 8) - 1;
-        if (numericValue > maxValue) {
-             logMessage(`ПОПЕРЕДЖЕННЯ: Значення ${numericValue} завелике для "${param}", буде обрізане.`);
-             hexValue = (numericValue & maxValue).toString(16);
-        } else {
-             hexValue = numericValue.toString(16);
-        }
-    }
-    const paddedHexValue = hexValue.padStart(totalHexLength, '0');
-    const finalData = config.dataPrefix + paddedHexValue;
-    
-    return {
-        canId: config.canId,
-        data: finalData.toUpperCase()
-    };
-}
-
-
 /**
  * Головна функція підключення
  */
