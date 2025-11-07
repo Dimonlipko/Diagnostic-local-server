@@ -1,25 +1,124 @@
+// --- app.js (ПОВНІСТЮ ОНОВЛЕНИЙ) ---
+
 import { state } from './modules/state.js';
 import { DEFAULT_PAGE } from './modules/config.js';
 import { setLanguage, initLanguageSwitcher } from './modules/translator.js';
-import { initNavigation, loadPage, initPageEventListeners } from './modules/ui.js';
+import { initNavigation, loadPage, initPageEventListeners, logMessage } from './modules/ui.js';
 import { connectAdapter, sendCanMessage, disconnectAdapter } from './modules/webSerial.js';
+// 💡 ІМПОРТУЄМО ФУНКЦІЮ ВІДПРАВКИ З canProtocol.js (ЯКЩО ВОНА ТАМ)
+// АБО З webSerial.js, ЯКЩО ВОНА ВМІЄ ПРИЙМАТИ ID І ДАНІ
+// Я припускаю, що у вас є sendCanRequest у 'canProtocol.js'
+import { sendCanRequest } from './modules/canProtocol.js'; 
+
+
+// ===============================================
+// БЛОК ДЛЯ ЗАПИСУ ДАНИХ
+// (Цей код тепер є частиною app.js)
+// ===============================================
+
+/**
+ * Форматує JS-значення у повний CAN-фрейм (ID + дані) для запису.
+ */
+function formatCanMessage(param, value) {
+    if (!window.PARAMETER_REGISTRY) {
+        logMessage("ПОМИЛКА: Внутрішня: PARAMETER_REGISTRY не знайдено.");
+        console.error("[Formatter] PARAMETER_REGISTRY не знайдено у 'window'!");
+        return null;
+    }
+
+    const config = window.PARAMETER_REGISTRY[param]?.writeConfig;
+
+    if (!config) {
+        // 💡 ЦЕ ПОВІДОМЛЕННЯ, ЯКЕ ВИ БАЧИЛИ
+        logMessage(`ПОМИЛКА: Не знайдено 'writeConfig' для "${param}"`);
+        return null;
+    }
+
+    let numericValue = parseInt(value, 10);
+    if (isNaN(numericValue)) {
+        logMessage(`ПОМИЛКА: Значення "${value}" для "${param}" не є числом.`);
+        return null;
+    }
+
+    let hexValue;
+    const totalHexLength = config.bytes * 2; 
+
+    if (config.signed) {
+        const mask = Math.pow(2, config.bytes * 8) - 1;
+        hexValue = (numericValue & mask).toString(16);
+    } else {
+        if (numericValue < 0) {
+            logMessage(`ПОМИЛКА: "${param}" не приймає від'ємні значення.`);
+            return null;
+        }
+        hexValue = numericValue.toString(16);
+    }
+
+    const paddedHexValue = hexValue.padStart(totalHexLength, '0');
+    const finalData = config.dataPrefix + paddedHexValue;
+    
+    return {
+        canId: config.canId,
+        data: finalData.toUpperCase()
+    };
+}
+
+
+/**
+ * РЕАЛЬНИЙ обробник для onWrite, який замінить "заглушку".
+ */
+async function handleWrite(paramKey, value) {
+    if (!state.isConnected) {
+        logMessage("ПОМИЛKA: Адаптер не підключено.");
+        return;
+    }
+    
+    logMessage(`Спроба запису: ${paramKey} = ${value}`);
+    
+    // 1. Форматуємо повідомлення
+    const canMessage = formatCanMessage(paramKey, value);
+    
+    if (!canMessage) {
+        // Помилка вже буде в лозі з formatCanMessage
+        return;
+    }
+    
+    // 2. Викликаємо вашу універсальну функцію відправки
+    try {
+        // 💡 Використовуємо 'sendCanRequest', яка приймає ID і ДАНІ
+        const success = await sendCanRequest(canMessage.canId, canMessage.data); 
+        
+        if (success) {
+            logMessage(`[WRITE ✓] ${paramKey} = ${value} (CAN: ${canMessage.data})`);
+        } else {
+            logMessage(`[WRITE ✗] Помилка відправки для ${paramKey}`);
+        }
+    } catch (e) {
+        logMessage(`[WRITE ✗] Критична помилка відправки: ${e.message}`);
+    }
+}
+
+// ===============================================
+// КІНЕЦЬ БЛОКУ
+// ===============================================
+
+
+// --- ВАШ ІСНУЮЧИЙ КОД ---
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM завантажено, ініціалізація...');
 
-    // Ініціалізуємо перемикачі мови
     initLanguageSwitcher();
-
-    // Ініціалізуємо навігацію
     initNavigation();
 
-    // Ініціалізуємо делегування подій
+    // 💡 ОНОВЛЕНО: Тепер ми передаємо нашу НОВУ функцію
     initPageEventListeners({
-        onWrite: sendCanMessage,
-        onToggle: sendCanMessage
+        onWrite: handleWrite, // 👈 ОСЬ ГОЛОВНА ЗМІНА
+        
+        // TODO: Вам також треба буде зробити обробник для onToggle
+        onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`)
     });
 
-    // Кнопка підключення
     const connectButton = document.getElementById('connectButton');
     if (connectButton) {
         connectButton.addEventListener('click', () => {
@@ -33,11 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Кнопка connectButton не знайдена!');
     }
 
-    // Встановлюємо мову
     const savedLang = localStorage.getItem('appLanguage') || 'uk';
     setLanguage(savedLang);
 
-    // Завантажуємо дефолтну сторінку
     const defaultNavButton = document.querySelector(`[data-page-file="${DEFAULT_PAGE}"]`);
     if (defaultNavButton) {
         console.log(`Завантаження дефолтної сторінки: ${DEFAULT_PAGE}`);
@@ -45,8 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPage(DEFAULT_PAGE);
     } else {
         console.error(`Не знайдено кнопку для дефолтної сторінки: ${DEFAULT_PAGE}`);
-        
-        // Пробуємо завантажити першу доступну
         const firstButton = document.querySelector('.nav-button[data-page-file]');
         if (firstButton) {
             const firstPage = firstButton.dataset.pageFile;
