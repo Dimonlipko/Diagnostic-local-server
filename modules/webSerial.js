@@ -1,6 +1,9 @@
 import { state } from './state.js';
 import { BAUD_RATE } from './config.js';
 import { logMessage, updateUI } from './ui.js';
+import { parseCanResponse } from './canProtocol.js';
+import { handleCanResponse, startPollingForPage } from './pollingManager.js';
+
 
 // --- Буфер для неповних рядків (без змін) ---
 let lineBuffer = "";
@@ -64,9 +67,38 @@ async function readWithTimeout(timeoutMs) {
 /**
  * Опитує пристрій для визначення типу (slcan або elm327)
  */
+/**
+ * Опитує пристрій для визначення типу (slcan або elm327)
+ * ПОКРАЩЕНА ВЕРСІЯ: спочатку вимикаємо ехо ELM
+ */
 async function detectAdapterType() {
-    // Очищуємо буфер
     lineBuffer = "";
+    
+    // ========================================
+    // КРОК 0: Спробуємо вимкнути ехо (якщо це ELM)
+    // ========================================
+    logMessage("Крок 0: Спроба вимкнути ехо (ATE0)...");
+    await state.writer.write("ATE0\r");
+    
+    const { value: v0, timeout: t0 } = await readWithTimeout(1500);
+    
+    if (v0 && !t0) {
+        const cleaned = v0.trim().toUpperCase();
+        logMessage(`Відповідь на 'ATE0': [${cleaned}]`);
+        
+        // Якщо є OK - це точно ELM327
+        if (cleaned.includes('OK')) {
+            logMessage("✓ Виявлено ELM327 адаптер (ехо вимкнено)!");
+            state.echoOff = true;
+            return 'elm327';
+        }
+        
+        // Якщо є "?" - це теж ELM (просто з помилкою)
+        if (cleaned.includes('?')) {
+            logMessage("ELM327 відповів '?' - спробуємо ATI...");
+            // Продовжуємо перевірку
+        }
+    }
     
     // ========================================
     // КРОК 1: Перевірка ELM327 через ATI
@@ -77,18 +109,21 @@ async function detectAdapterType() {
     const { value: v1, timeout: t1 } = await readWithTimeout(2000);
     
     if (v1 && !t1) {
-        const cleaned = v1.trim().toUpperCase();
+        // Видаляємо можливе ехо команди
+        let cleaned = v1.trim().toUpperCase();
+        // Прибираємо "ATI" з початку, якщо воно є
+        cleaned = cleaned.replace(/^ATI[\r\n]*/, '');
+        
         logMessage(`Відповідь на 'ATI': [${cleaned}]`);
         
-        // Перевіряємо чи це ELM (може бути ELM327, ELM v1.5 тощо)
-        if (cleaned.includes('ELM')) {
+        if (cleaned.includes('ELM327')) {
             logMessage("✓ Виявлено ELM327 адаптер!");
             return 'elm327';
         }
     }
     
     // ========================================
-    // КРОК 2: Якщо не ELM - перевіряємо slcan через V
+    // КРОК 2: Перевірка slcan через V
     // ========================================
     logMessage("Крок 2: Перевірка slcan 'V'...");
     await state.writer.write("V\r");
@@ -96,20 +131,30 @@ async function detectAdapterType() {
     const { value: v2, timeout: t2 } = await readWithTimeout(1500);
     
     if (v2 && !t2) {
-        const cleaned = v2.trim();
+        let cleaned = v2.trim().toUpperCase();
+        // Прибираємо можливе ехо "V"
+        cleaned = cleaned.replace(/^V[\r\n]*/, '');
+        
         logMessage(`Відповідь на 'V': [${cleaned}]`);
         
-        // Якщо БУДЬ-ЯКА відповідь є - це slcan
-        if (cleaned.length > 0) {
-            logMessage("✓ Виявлено slcan адаптер!");
-            return 'slcan';
+        // Якщо знову бачимо ELM327 - це ELM
+        if (cleaned.includes('ELM327')) {
+            logMessage("✓ Виявлено ELM327 адаптер!");
+            return 'elm327';
+        }
+        
+        // slcan відповідає типу: V1013, 1210, тощо (без "V" на початку після очищення)
+        // або просто цифри/літери
+        if (cleaned.length > 0 && cleaned.length < 20 && !cleaned.includes('ELM')) {
+            // Додаткова перевірка: чи це схоже на версію slcan
+            if (/^[A-Z0-9]+$/.test(cleaned)) {
+                logMessage("✓ Виявлено slcan адаптер!");
+                return 'slcan';
+            }
         }
     }
     
-    // ========================================
-    // Адаптер не виявлено
-    // ========================================
-    logMessage("❌ Адаптер не виявлено. Немає відповіді.");
+    logMessage("❌ Адаптер не виявлено.");
     return 'unknown';
 }
 /**
@@ -118,26 +163,39 @@ async function detectAdapterType() {
 async function initializeAdapter() {
     if (state.adapterType === 'slcan') {
         logMessage('Ініціалізація slcan...');
-        await state.writer.write("C\r"); 
-        await state.writer.write("O\r"); 
+        await state.writer.write("C\r");
+        await state.writer.write("O\r");
         logMessage('slcan канал відкрито.');
     } else if (state.adapterType === 'elm327') {
         logMessage('Ініціалізація ELM327...');
         
         if (!state.echoOff) {
-            await state.writer.write("ATE0\r");   // Вимкнути ехо
+            logMessage('Вимикаємо ехо (ATE0)...');
+            await state.writer.write("ATE0\r");
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        // --- ЗМІНА: Встановлюємо протокол і заголовки. Прибираємо ATMA. ---
+        logMessage('Скидаємо налаштування (ATZ)...');
+        await state.writer.write("ATZ\r");
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Чекаємо перезавантаження
+        
+        logMessage('Вимикаємо пробіли (ATS0)...');
+        await state.writer.write("ATS0\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         logMessage('Встановлюємо 500 кбіт/с (ATSP6)...');
-        await state.writer.write("ATSP6\r");  // Протокол 6 = 500kbit/s, 11-bit ID
+        await state.writer.write("ATSP6\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         logMessage('Вмикаємо заголовки (ATH1)...');
-        await state.writer.write("ATH1\r");   // Показувати ID у відповідях
+        await state.writer.write("ATH1\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // await state.writer.write("ATMA\r"); // БІЛЬШЕ НЕ ПОТРІБНО
+        logMessage('Вимикаємо адаптивний таймінг (ATAT0)...');
+        await state.writer.write("ATAT0\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         logMessage('ELM327 налаштовано для опитування.');
-        // --- КІНЕЦЬ ЗМІНИ ---
     }
 }
 
@@ -191,38 +249,75 @@ function parseData(line) {
     }
 }
 
-/**
- * Головний цикл читання (без змін)
- */
+
 async function readLoop() {
     try {
+        logMessage("=== ЦИКЛ ЧИТАННЯ ЗАПУЩЕНО ===");
+        
         while (true) {
-            if (!state.reader) break;
-
-            // --- (без змін) ---
-            const { value, done } = await state.reader.read(); // value - це Uint8Array
-            if (done) { 
-                if (state.reader) state.reader.releaseLock(); 
-                break; 
+            if (!state.reader) {
+                logMessage("Reader відсутній, виходимо з циклу");
+                break;
             }
-
-            // --- (без змін) ---
+            
+            const { value, done } = await state.reader.read();
+            
+            if (done) {
+                logMessage("Читання завершено (done=true)");
+                if (state.reader) state.reader.releaseLock();
+                break;
+            }
+            
+            if (!value) {
+                continue; // Пропускаємо порожні читання
+            }
+            
             const textChunk = new TextDecoder().decode(value, {stream: true});
+            
+            // ДЕТАЛЬНЕ ЛОГУВАННЯ
+            logMessage(`[RAW CHUNK] Довжина: ${textChunk.length} | Hex: ${Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+            logMessage(`[RAW TEXT] "${textChunk}"`);
+            
             lineBuffer += textChunk;
             
-            // --- (без змін) ---
             let lines = lineBuffer.split(/\r\n|\r|\n/);
+            lineBuffer = lines.pop() || "";
             
-            lineBuffer = lines.pop() || ""; 
-
-            // --- (без змін) ---
+            logMessage(`[LINES] Знайдено ${lines.length} рядків, буфер: "${lineBuffer}"`);
+            
             for (const line of lines) {
-                if (line) parseData(line.trim()); // Обробляємо кожний повний рядок
+                if (!line) continue;
+                
+                const trimmedLine = line.trim();
+                logMessage(`[PARSE] Обробка рядка: "${trimmedLine}"`);
+                
+                // Парсимо відповідь
+                const parsed = parseCanResponse(trimmedLine);
+                
+                if (parsed) {
+                    logMessage(`[PARSED ✓] ID: ${parsed.id} | Data: ${parsed.data}`);
+                    
+                    // Передаємо в менеджер опитування
+                    handleCanResponse(parsed.id, parsed.data);
+                    
+                    // Оновлюємо індикатор активності
+                    const statusCar = document.getElementById('statusCar');
+                    if (statusCar) {
+                        statusCar.classList.add('receiving');
+                        clearTimeout(state.carStatusTimeout);
+                        state.carStatusTimeout = setTimeout(() => {
+                            statusCar.classList.remove('receiving');
+                        }, 500);
+                    }
+                } else {
+                    logMessage(`[PARSED ✗] Рядок не розпізнано: "${trimmedLine}"`);
+                }
             }
-            // --- (без змін) ---
         }
     } catch (error) {
-        logMessage(`Помилка читання: ${error.message}`);
+        logMessage(`[ERROR] Помилка читання: ${error.message}`);
+        console.error(error);
+        if (state.reader) state.reader.releaseLock();
     }
 }
 
@@ -234,42 +329,6 @@ function formatCanMessage(param, value) {
     logMessage(`Заглушка: ${param} = ${value}. Потрібна реалізація formatCanMessage.`);
     return null;
 }
-
-// --- НОВА ФУНКЦІЯ: Цикл опитування ---
-/**
- * Запускає цикл опитування (request-response) кожні 500мс
- */
-function startDataPolling() {
-    // Зупиняємо старий таймер, якщо він є
-    if (state.dataPollingTimer) {
-        clearInterval(state.dataPollingTimer);
-    }
-    
-    logMessage("Запускаємо цикл опитування інвертора (500ms)...");
-
-    state.dataPollingTimer = setInterval(async () => {
-        // Переконуємось, що ми підключені
-        if (!state.writer) {
-            clearInterval(state.dataPollingTimer);
-            state.dataPollingTimer = null;
-            return;
-        }
-
-        // Надсилаємо запит в залежності від типу адаптера
-        if (state.adapterType === 'elm327') {
-            // Згідно з вашим кодом: ID 79b, 4 байти 03 22 03 01
-            await state.writer.write("ATSH 79B\r"); // Встановити заголовок (ID)
-            await state.writer.write("03220301\r"); // Надіслати 4 байти даних
-        } 
-        else if (state.adapterType === 'slcan') {
-            // 't' + '79B' (ID) + '4' (DLC) + '03220301' (Data)
-            await state.writer.write("t79B403220301\r");
-        }
-
-    }, 500); // Повторювати кожні 500мс
-}
-// --- КІНЕЦЬ НОВОЇ ФУНКЦІЇ ---
-
 
 /**
  * Головна функція підключення
@@ -322,10 +381,6 @@ export async function connectAdapter() {
         await initializeAdapter();
         readLoop(); // Запускаємо цикл читання
         
-        // --- ЗМІНА: Запускаємо цикл опитування ---
-        startDataPolling();
-        // --- КІНЕЦЬ ЗМІНИ ---
-        
     } catch (error) {
         logMessage(`Помилка: ${error.message}`);
         
@@ -369,11 +424,6 @@ export async function sendCanMessage(paramName, value) {
 export async function disconnectAdapter() {
     logMessage("Відключення...");
     
-    // Зупиняємо опитування
-    if (state.dataPollingTimer) {
-        clearInterval(state.dataPollingTimer);
-        state.dataPollingTimer = null;
-    }
     
     // Зупиняємо цикл читання (readLoop)
     if (state.reader) {

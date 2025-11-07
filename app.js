@@ -1,52 +1,60 @@
-// Це "диригент". Він імпортує логіку з модулів та ініціалізує її.
 import { state } from './modules/state.js';
 import { DEFAULT_PAGE } from './modules/config.js';
 import { setLanguage, initLanguageSwitcher } from './modules/translator.js';
 import { initNavigation, loadPage, initPageEventListeners } from './modules/ui.js';
-import { connectAdapter, sendCanMessage } from './modules/webSerial.js';
+import { connectAdapter, sendCanMessage, disconnectAdapter } from './modules/webSerial.js';
 
-// Весь наш код запускається, коли HTML-оболонка готова
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM завантажено, ініціалізація...');
 
-    // --- 1. ПРИВ'ЯЗКА ОСНОВНИХ ОБРОБНИКІВ ---
-
-    // Ініціалізуємо перемикачі мови (UA/EN)
+    // Ініціалізуємо перемикачі мови
     initLanguageSwitcher();
 
-    // Ініціалізуємо навігацію (кліки по меню)
+    // Ініціалізуємо навігацію
     initNavigation();
 
-    // Ініціалізуємо делегування подій для динамічного контенту (кнопки Write, ON/OFF)
+    // Ініціалізуємо делегування подій
     initPageEventListeners({
-        onWrite: sendCanMessage, // Передаємо функцію sendCanMessage як callback
-        onToggle: sendCanMessage // Ту саму функцію для кнопок ON/OFF
+        onWrite: sendCanMessage,
+        onToggle: sendCanMessage
     });
 
-    // Прив'язка кнопки "Підключити"
+    // Кнопка підключення
     const connectButton = document.getElementById('connectButton');
     if (connectButton) {
-        connectButton.addEventListener('click', connectAdapter);
+        connectButton.addEventListener('click', () => {
+            if (state.port) {
+                disconnectAdapter();
+            } else {
+                connectAdapter();
+            }
+        });
+    } else {
+        console.error('Кнопка connectButton не знайдена!');
     }
 
-    // --- 2. ІНІЦІАЛІЗАЦІЯ ---
-    
-    // Встановлюємо збережену мову або 'uk'
+    // Встановлюємо мову
     const savedLang = localStorage.getItem('appLanguage') || 'uk';
-    setLanguage(savedLang); // Це перекладе оболонку
+    setLanguage(savedLang);
 
     // Завантажуємо дефолтну сторінку
     const defaultNavButton = document.querySelector(`[data-page-file="${DEFAULT_PAGE}"]`);
     if (defaultNavButton) {
+        console.log(`Завантаження дефолтної сторінки: ${DEFAULT_PAGE}`);
         defaultNavButton.classList.add('active');
-        loadPage(DEFAULT_PAGE); // Це завантажить *і* перекладе сторінку
+        loadPage(DEFAULT_PAGE);
     } else {
-        console.error("Не знайдено дефолтну сторінку.");
-        // Якщо термінал не знайдено, завантажуємо першу доступну сторінку
+        console.error(`Не знайдено кнопку для дефолтної сторінки: ${DEFAULT_PAGE}`);
+        
+        // Пробуємо завантажити першу доступну
         const firstButton = document.querySelector('.nav-button[data-page-file]');
         if (firstButton) {
+            const firstPage = firstButton.dataset.pageFile;
+            console.log(`Завантаження першої доступної сторінки: ${firstPage}`);
             firstButton.classList.add('active');
-            loadPage(firstButton.dataset.pageFile);
+            loadPage(firstPage);
+        } else {
+            console.error('Не знайдено жодної кнопки навігації!');
         }
     }
 });
-

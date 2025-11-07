@@ -9,6 +9,8 @@ export let state = {
     carStatusTimeout: null,
     logElement: null, // Посилання на <pre id="log">
     currentLanguage: 'uk',
-    terminalLog: 'Очікування підключення...'
+    terminalLog: 'Очікування підключення...',
+    activePollers: [],
+    lastRequestId: null // Додано для парсингу відповідей ELM без заголовків
 };
 
