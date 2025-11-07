@@ -11,6 +11,7 @@ export let state = {
     currentLanguage: 'uk',
     terminalLog: 'Очікування підключення...',
     activePollers: [],
-    lastRequestId: null // Додано для парсингу відповідей ELM без заголовків
+    lastRequestId: null, // Додано для парсингу відповідей ELM без заголовків
+    isConnected: false
 };
 

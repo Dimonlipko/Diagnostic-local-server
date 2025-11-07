@@ -62,13 +62,18 @@ async function readWithTimeout(timeoutMs) {
 async function detectAdapterType() {
     lineBuffer = "";
     
+    // КРОК 0: Спробуємо вимкнути ехо
     logMessage("Крок 0: Спроба вимкнути ехо (ATE0)...");
     await state.writer.write("ATE0\r");
     
-    const { value: v0, timeout: t0 } = await readWithTimeout(1500);
+    const { value: v0, timeout: t0 } = await readWithTimeout(2000); // ЗБІЛЬШЕНО таймаут
     
     if (v0 && !t0) {
-        const cleaned = v0.trim().toUpperCase();
+        let cleaned = v0.trim().toUpperCase();
+        // ВИПРАВЛЕНО: Прибираємо ехо команди
+        cleaned = cleaned.replace(/^ATE0[\r\n]*/g, '').replace(/[\r\n]*ATE0$/g, '');
+        cleaned = cleaned.trim();
+        
         logMessage(`Відповідь на 'ATE0': [${cleaned}]`);
         
         if (cleaned.includes('OK')) {
@@ -76,29 +81,42 @@ async function detectAdapterType() {
             state.echoOff = true;
             return 'elm327';
         }
-        
-        if (cleaned.includes('?')) {
-            logMessage("ELM327 відповів '?' - спробуємо ATI...");
-        }
     }
     
+    // Додаткова затримка перед наступною командою
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // КРОК 1: Перевірка ELM327 через ATI
     logMessage("Крок 1: Перевірка ELM327 'ATI'...");
     await state.writer.write("ATI\r");
     
-    const { value: v1, timeout: t1 } = await readWithTimeout(2000);
+    const { value: v1, timeout: t1 } = await readWithTimeout(2000); // ЗБІЛЬШЕНО таймаут
     
     if (v1 && !t1) {
         let cleaned = v1.trim().toUpperCase();
-        cleaned = cleaned.replace(/^ATI[\r\n]*/, '');
+        // ВИПРАВЛЕНО: Прибираємо всі входження "ATI" та "OK"
+        cleaned = cleaned.replace(/^ATI[\r\n]*/g, '').replace(/[\r\n]*ATI$/g, '');
+        cleaned = cleaned.replace(/^OK[\r\n]*/g, '').replace(/[\r\n]*OK$/g, '');
+        cleaned = cleaned.replace(/^>+/g, '').replace(/>+$/g, '');
+        cleaned = cleaned.trim();
         
         logMessage(`Відповідь на 'ATI': [${cleaned}]`);
         
-        if (cleaned.includes('ELM327')) {
+        if (cleaned.includes('ELM327') || cleaned.includes('ELM')) {
             logMessage("✓ Виявлено ELM327 адаптер!");
+            return 'elm327';
+        }
+        
+        // Якщо є "OK" але немає "ELM" - все одно це ELM
+        if (cleaned === '' && v1.includes('OK')) {
+            logMessage("✓ Виявлено ELM327 адаптер (за 'OK')!");
             return 'elm327';
         }
     }
     
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // КРОК 2: Перевірка slcan через V
     logMessage("Крок 2: Перевірка slcan 'V'...");
     await state.writer.write("V\r");
     
@@ -106,7 +124,9 @@ async function detectAdapterType() {
     
     if (v2 && !t2) {
         let cleaned = v2.trim().toUpperCase();
-        cleaned = cleaned.replace(/^V[\r\n]*/, '');
+        cleaned = cleaned.replace(/^V[\r\n]*/g, '').replace(/[\r\n]*V$/g, '');
+        cleaned = cleaned.replace(/^>+/g, '').replace(/>+$/g, '');
+        cleaned = cleaned.trim();
         
         logMessage(`Відповідь на 'V': [${cleaned}]`);
         
@@ -115,10 +135,31 @@ async function detectAdapterType() {
             return 'elm327';
         }
         
+        // slcan відповідає коротко
         if (cleaned.length > 0 && cleaned.length < 20 && !cleaned.includes('ELM')) {
             if (/^[A-Z0-9]+$/.test(cleaned)) {
                 logMessage("✓ Виявлено slcan адаптер!");
                 return 'slcan';
+            }
+        }
+        
+        // Якщо тільки ">" або порожньо - можливо ELM не відповів, спробуємо ще раз
+        if (cleaned === '' || cleaned === '>') {
+            logMessage("Порожня відповідь, остання спроба через ATZ...");
+            
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await state.writer.write("ATZ\r");
+            
+            const { value: v3, timeout: t3 } = await readWithTimeout(3000);
+            
+            if (v3 && !t3) {
+                let cleaned3 = v3.trim().toUpperCase();
+                logMessage(`Відповідь на 'ATZ': [${cleaned3}]`);
+                
+                if (cleaned3.includes('ELM')) {
+                    logMessage("✓ Виявлено ELM327 адаптер (через ATZ)!");
+                    return 'elm327';
+                }
             }
         }
     }
@@ -166,31 +207,21 @@ async function initializeAdapter() {
     }
 }
 
-// ... (Ваша стара parseData не використовується, це окей) ...
-
 async function readLoop() {
     try {
         logMessage("=== ЦИКЛ ЧИТАННЯ ЗАПУЩЕНО ===");
         
-        while (true) {
-            if (!state.reader) {
-                logMessage("Reader відсутній, виходимо з циклу");
-                break;
-            }
+        while (state.isConnected) {  // ЗМІНЕНО: перевіряємо прапорець
+            if (!state.reader) break;
             
             const { value, done } = await state.reader.read();
             
             if (done) {
-                logMessage("Читання завершено (done=true)");
-                // 💡 ВИПРАВЛЕНО: 'releaseLock' тут не потрібен, 
-                // він має бути в 'disconnectAdapter' ПІСЛЯ 'cancel()'
-                // if (state.reader) state.reader.releaseLock(); 
+                logMessage("Читання завершено");
                 break;
             }
             
-            if (!value) {
-                continue; 
-            }
+            if (!value) continue;
             
             const textChunk = new TextDecoder().decode(value, {stream: true});
             lineBuffer += textChunk;
@@ -219,18 +250,15 @@ async function readLoop() {
             }
         }
     } catch (error) {
-        // 💡 ВИПРАВЛЕНО: 'AbortError' - це очікувана помилка при 'cancel()'. 
-        // Ми її просто ігноруємо, а не логуємо як помилку.
         if (error.name !== 'AbortError') {
-            logMessage(`[ERROR] Помилка читання: ${error.message}`);
-            console.error(error);
+            logMessage(`Помилка читання: ${error.message}`);
         }
     } finally {
-        // 💡 ВИПРАВЛЕНО: 'releaseLock' має бути тут, у 'finally'.
-        // Це гарантує, що порт звільниться, навіть якщо сталася помилка.
         if (state.reader) {
-            state.reader.releaseLock();
-            logMessage("Reader замок відпущено.");
+            try {
+                state.reader.releaseLock();
+                logMessage("Reader відпущено.");
+            } catch (e) {}
         }
     }
 }
@@ -316,24 +344,19 @@ export async function connectAdapter() {
         state.adapterType = await detectAdapterType();
         if (state.adapterType === 'unknown') throw new Error('Не вдалося визначити тип адаптера.');
 
-        await initializeAdapter();
+        await initializeAdapter(); // ЦЯ ФУНКЦІЯ МАЄ БУТИ ВИЗНАЧЕНА ВИЩЕ
 
-        // 💡 ВИПРАВЛЕНО: Проблема 1 - повідомляємо додатку, що ми підключені!
         state.isConnected = true;
         logMessage("✓ Стан: Підключено.");
         
-        // Запускаємо цикл читання в останню чергу
         readLoop(); 
         
-        // 💡 ДОДАНО: Оновлюємо кнопку, щоб вона показувала "Відключити"
-        document.getElementById('connectButton').textContent = 'Відключити';
+        const connectButton = document.getElementById('connectButton');
+        if (connectButton) connectButton.textContent = 'Відключити';
         
-        // 💡 ДОДАНО: Запускаємо опитування (або перезавантажуємо сторінку, щоб воно запустилось)
-        // Це змусить pollingManager почати працювати одразу
         const activePageButton = document.querySelector('.sidebar .nav-button.active[data-page-file]');
         if (activePageButton) {
             logMessage("Перезапуск опитування для поточної сторінки...");
-            // Ми "клікаємо" на активну кнопку, щоб перезавантажити сторінку і запустити опитування
             activePageButton.click();
         }
 
@@ -341,11 +364,8 @@ export async function connectAdapter() {
         logMessage(`Помилка: ${error.message}`);
         
         stopAllPolling();
-
-        // 💡 ВИПРАВЛЕНО: Переконуємось, що стан скинуто
         state.isConnected = false;
 
-        // Важливо очистити все, якщо підключення не вдалося
         if(state.reader) {
             try { await state.reader.cancel(); } catch(e) {}
         }
@@ -361,8 +381,8 @@ export async function connectAdapter() {
         state.reader = null;
         state.writer = null;
 
-        // 💡 ДОДАНО: Скидаємо текст кнопки
-        document.getElementById('connectButton').textContent = 'Підключити';
+        const connectButton = document.getElementById('connectButton');
+        if (connectButton) connectButton.textContent = 'Підключити';
     }
 }
 
@@ -406,60 +426,60 @@ export async function sendCanMessage(paramName, value) {
     }
 }
 
-
-/**
- * 💡 ВИПРАВЛЕНО: Проблема 2 - Повністю перероблена функція відключення
- */
 export async function disconnectAdapter() {
     logMessage("Відключення...");
     
-    // 1. Зупиняємо всі таймери опитування
+    // 1. Встановлюємо прапорець, що відключаємось (щоб readLoop зупинився)
+    state.isConnected = false;
+    
+    // 2. Зупиняємо всі таймери опитування
     stopAllPolling();
     
-    // 2. Скасовуємо reader. Це змусить readLoop() вийти
-    //    і виконати 'finally { releaseLock() }'
-    if (state.reader) {
-        try {
-            await state.reader.cancel();
-            // Ми не робимо releaseLock() тут! 'readLoop' зробить це за нас.
-            // Чекаємо, доки 'closed' підтвердить, що 'finally' спрацював
-            await state.reader.closed.catch(() => {});
-        } catch (error) { 
-            logMessage(`Помилка при скасуванні reader: ${error.message}`); 
-        }
-    }
-    
-    // 3. Закриваємо writer
+    // 3. Закриваємо writer СПОЧАТКУ (це важливо!)
     if (state.writer) {
         try {
             await state.writer.close();
-            // 'releaseLock()' тут не існує, це була помилка
+            logMessage("Writer закрито.");
         } catch (error) { 
-            logMessage(`Помилка при закритті writer: ${error.message}`); 
+            logMessage(`Помилка writer: ${error.message}`); 
         }
+        state.writer = null;
     }
     
-    // 4. Тільки ТЕПЕР, коли потоки звільнені, закриваємо порт
+    // 4. ПОТІМ скасовуємо reader
+    if (state.reader) {
+        try {
+            await state.reader.cancel();
+            logMessage("Reader скасовано.");
+        } catch (error) { 
+            logMessage(`Помилка reader: ${error.message}`); 
+        }
+        state.reader = null;
+    }
+    
+    // 5. Чекаємо трохи, щоб все встигло закритись
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // 6. ТЕПЕР закриваємо порт
     if (state.port) {
         try {
             await state.port.close();
+            logMessage("Порт закрито.");
         } catch (error) { 
-            logMessage(`Помилка при закритті порту: ${error.message}`); 
+            logMessage(`Помилка порту: ${error.message}`); 
         }
+        state.port = null;
     }
     
-    // 5. Скидаємо ВЕСЬ стан
-    state.port = null;
-    state.reader = null;
-    state.writer = null;
+    // 7. Скидаємо стан
     state.adapterType = 'unknown';
-    state.isConnected = false; // 💡 ВАЖЛИВО!
 
-    // 6. Оновлюємо UI
+    // 8. Оновлюємо UI
     const statusAdapter = document.getElementById('statusAdapter');
     if (statusAdapter) statusAdapter.classList.remove('connected');
     
-    document.getElementById('connectButton').textContent = 'Підключити';
+    const connectButton = document.getElementById('connectButton');
+    if (connectButton) connectButton.textContent = 'Підключити';
     
-    logMessage("Адаптер відключено.");
+    logMessage("✓ Адаптер відключено.");
 }
