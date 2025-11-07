@@ -90,17 +90,13 @@ export const PARAMETER_REGISTRY = {
                 const errorMap = {"0": "No", "1": "Yes"};
 
                 // "Invertor temperature" (fb: 4, 1b)
-                const invTempRaw = parseInt(dataHex.substring(8, 10), 16);
+                const invTemp = parseInt(dataHex.substring(8, 10), 16);
                 // "Motor temperature" (fb: 5, 1b)
-                const motTempRaw = parseInt(dataHex.substring(10, 12), 16);
+                const motTemp = parseInt(dataHex.substring(10, 12), 16);
                 // "Selector position" (fb: 6, 1b)
                 const selRaw = parseInt(dataHex.substring(12, 14), 16);
                 // "Invertor error" (fb: 7, 1b)
                 const errRaw = parseInt(dataHex.substring(14, 16), 16);
-                
-                // Припускаємо offset: -40 (як у "PDM temperature")
-                const invTemp = (invTempRaw - 40);
-                const motTemp = (motTempRaw - 40);
 
                 return {
                     invTemp: `${invTemp} C`, 
