@@ -1,30 +1,22 @@
 import { state } from './state.js';
 import { translatePage } from './translator.js';
-import { startPollingForPage, stopAllPolling } from './pollingManager.js';
+import { stopAllPolling } from './pollingManager.js';
+import { PARAMETER_REGISTRY } from './parameterRegistry.js';
 
 let logElement = null;
 
-/**
- * Оновлює посилання на елемент <pre id="log">
- */
 export function updateLogElement() {
     logElement = document.getElementById('log');
 }
 
-/**
- * Логує повідомлення
- */
 export function logMessage(message) {
     state.terminalLog = message + '\n' + state.terminalLog;
     if (logElement) {
         logElement.textContent = state.terminalLog;
     }
-    console.log(message); // Для дебагу
+    console.log(message);
 }
 
-/**
- * Асинхронно завантажує HTML сторінки в контейнер
- */
 export async function loadPage(pageFile) {
     const pageContainer = document.getElementById('page-container');
     if (!pageContainer) {
@@ -56,7 +48,22 @@ export async function loadPage(pageFile) {
 
         // Якщо підключені - запускаємо опитування
         if (state.port) {
-            startPollingForPage(pageFile);
+            const requiredKeys = getRequiredKeysFromDOM(pageContainer);
+            
+            console.log(`[PageLoader] Запуск опитування для ${requiredKeys.size} параметрів...`, Array.from(requiredKeys));
+            
+            // ВИПРАВЛЕНО: Використовуємо імпортовані модулі
+            if (window.pollingManager && PARAMETER_REGISTRY) {
+                window.pollingManager.startPolling(
+                    Array.from(requiredKeys),
+                    PARAMETER_REGISTRY,
+                    updateUiValue  // Викликаємо локальну функцію
+                );
+            } else {
+                const errorMsg = '[PageLoader] pollingManager не доступний.';
+                console.error(errorMsg);
+                logMessage(`ПОМИЛКА: ${errorMsg}`);
+            }
         }
 
     } catch (error) {
@@ -71,13 +78,9 @@ export async function loadPage(pageFile) {
     }
 }
 
-/**
- * Ініціалізує навігацію по меню
- */
 export function initNavigation() {
     console.log('Ініціалізація навігації...');
     
-    // 1. Кнопки, що завантажують сторінки
     const pageLoadButtons = document.querySelectorAll('.nav-button[data-page-file]');
     console.log(`Знайдено ${pageLoadButtons.length} кнопок навігації`);
     
@@ -86,15 +89,12 @@ export function initNavigation() {
             const pageFile = button.dataset.pageFile;
             console.log(`Клік по кнопці: ${pageFile}`);
             
-            // Знімаємо 'active' з усіх кнопок
             document.querySelectorAll('.sidebar .nav-button').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Додаємо 'active' до поточної
             button.classList.add('active');
             
-            // Також додаємо 'active' до батьківського меню
             const parentMenu = button.closest('.has-submenu');
             if (parentMenu) {
                 const parentButton = parentMenu.querySelector('.nav-button:not([data-page-file])');
@@ -107,7 +107,6 @@ export function initNavigation() {
         });
     });
 
-    // 2. Кнопки, що відкривають підменю
     const submenuToggleButtons = document.querySelectorAll('.has-submenu > .nav-button:not([data-page-file])');
     console.log(`Знайдено ${submenuToggleButtons.length} кнопок підменю`);
     
@@ -121,9 +120,22 @@ export function initNavigation() {
     });
 }
 
-/**
- * Ініціалізує делегування подій для динамічного контенту
- */
+function getRequiredKeysFromDOM(container) {
+    const requiredKeys = new Set();
+    const boundElements = container.querySelectorAll('[data-bind]');
+    
+    boundElements.forEach(element => {
+        const bindKey = element.getAttribute('data-bind');
+        const rootKey = bindKey.split('.')[0];
+        
+        if (rootKey) {
+            requiredKeys.add(rootKey);
+        }
+    });
+    
+    return requiredKeys;
+}
+
 export function initPageEventListeners(handlers) {
     const pageContainer = document.getElementById('page-container');
     if (!pageContainer) {
@@ -136,7 +148,6 @@ export function initPageEventListeners(handlers) {
     pageContainer.addEventListener('click', (event) => {
         const target = event.target;
 
-        // Обробник для кнопок "Write"
         if (target.classList.contains('write-button') && handlers.onWrite) {
             const paramName = target.dataset.paramName;
             const targetId = target.dataset.targetId;
@@ -151,7 +162,6 @@ export function initPageEventListeners(handlers) {
             }
         }
 
-        // Обробник для кнопок ON/OFF
         if (target.classList.contains('bms-toggle') && handlers.onToggle) {
             const paramName = target.parentElement.dataset.paramName;
             const value = target.dataset.value;
@@ -162,7 +172,6 @@ export function initPageEventListeners(handlers) {
             handlers.onToggle(paramName, value);
         }
 
-        // Обробник для кнопки "Прошити"
         if (target.id === 'flashButton' && handlers.onFlash) {
             const fileInput = document.getElementById('firmwareFile');
             const canId = document.getElementById('updateCanId').value;
@@ -183,11 +192,46 @@ export function initPageEventListeners(handlers) {
     });
 }
 
-/**
- * Оновлює UI на основі вхідних CAN-даних (застаріла функція - тепер використовується pollingManager)
- */
 export function updateUI(id, data) {
-    // Ця функція тепер не використовується, бо всю роботу робить pollingManager
-    // Залишаємо для зворотної сумісності
     console.log(`updateUI викликано (застаріла): ID=${id}, Data=${data}`);
+}
+
+/**
+ * Оновлює UI для конкретного параметра
+ */
+function updateUiValue(rootKey, data) {
+    const elements = document.querySelectorAll(`[data-bind^="${rootKey}"]`);
+    
+    elements.forEach(element => {
+        const bindKey = element.getAttribute('data-bind');
+        
+        if (bindKey === rootKey) {
+            if (typeof data !== 'object' || data === null) {
+                setElementValue(element, data);
+            } else {
+                console.warn(`[UI_Updater] Отримано об'єкт для прямої прив'язки ${rootKey}.`);
+            }
+        } else if (bindKey.startsWith(rootKey + '.')) {
+            if (typeof data !== 'object' || data === null) {
+                console.warn(`[UI_Updater] Потрібна властивість з ${rootKey}, але дані не є об'єктом.`);
+                return;
+            }
+
+            const propertyName = bindKey.substring(rootKey.length + 1);
+            
+            if (data.hasOwnProperty(propertyName)) {
+                setElementValue(element, data[propertyName]);
+            }
+        }
+    });
+}
+
+function setElementValue(element, value) {
+    const formattedValue = (value === null || value === undefined) ? 'N/A' : value;
+
+    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+        element.value = formattedValue;
+    } else {
+        element.textContent = formattedValue;
+    }
 }

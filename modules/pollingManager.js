@@ -1,175 +1,210 @@
-// --- pollingManager.js (ПОВНІСТЮ ВИПРАВЛЕНИЙ) ---
+// --- pollingManager.js (ПОВНІСТЮ ОНОВЛЕНИЙ) ---
 
 import { state } from './state.js';
-import { PARAMETER_REGISTRY } from './parameterRegistry.js';
-import { PAGE_BINDINGS } from './pageBindings.js';
 import { sendCanRequest } from './canProtocol.js';
 
-//
-// !!! ГОЛОВНЕ ВИПРАВЛЕННЯ: Ми більше не імпортуємо нічого з 'ui.js' !!!
-//
-// import { logMessage } from './ui.js'; // <--- РОЗІРВАЛИ ЦИКЛ
-//
+// Глобальна мапа для активних запитів (слухачів)
+// Ключ тепер буде "responseCanId:requestPid" (напр. "7BB:220301")
+const activeRequests = new Map();
 
-// Ми будемо використовувати console.log і додамо префікс для ясності.
 function logMessage(message) {
     console.log(`[Polling] ${message}`);
 }
 
-// Це та сама мапа. Тепер вона буде ОДНА для всіх.
-const activeRequests = new Map();
-
 /**
- * Запускає опитування для конкретної сторінки
+ * Запускає опитування на основі списку ключів, зібраних з DOM.
+ * @param {string[]} parameterKeys - Масив кореневих ключів (напр. 'inverter_info_220301')
+ * @param {object} registry - Повний PARAMETER_REGISTRY
+ * @param {function} updateCallback - Функція оновлення UI (напр. window.uiUpdater.updateUiValue)
  */
-export function startPollingForPage(pageFile) {
+function startPolling(parameterKeys, registry, updateCallback) {
     stopAllPolling(); // Це також очистить activeRequests
     
-    const parameterIds = PAGE_BINDINGS[pageFile];
-    if (!parameterIds || parameterIds.length === 0) {
-        logMessage(`Немає параметрів для опитування на сторінці ${pageFile}`);
+    if (!registry) {
+        logMessage("ПОМИЛКА: Реєстр параметрів (PARAMETER_REGISTRY) не передано.");
+        return;
+    }
+    if (!updateCallback) {
+        logMessage("ПОМИЛКА: Функцію оновлення UI (updateCallback) не передано.");
+        return;
+    }
+    if (!parameterKeys || parameterKeys.length === 0) {
+        logMessage(`Немає параметрів для опитування.`);
         return;
     }
     
-    // Цей лог ви вже бачили
-    logMessage(`Запуск опитування для ${parameterIds.length} параметрів...`);
+    logMessage(`Запуск опитування для ${parameterKeys.length} ключів...`);
+
+    const requestGroups = groupParametersByRequest(parameterKeys, registry);
     
-    const requestGroups = groupParametersByRequest(parameterIds);
-    
-    requestGroups.forEach(({ request, parameters }) => {
-        // Запускаємо перший запит негайно
-        sendRequestForParameters(request, parameters);
-        
-        // І створюємо інтервал для наступних
-        const intervalId = setInterval(() => {
-            sendRequestForParameters(request, parameters);
-        }, request.interval);
-        
-        if (!state.activePollers) {
-            state.activePollers = [];
-        }
-        state.activePollers.push(intervalId);
+    // --- 💡 ПОЧАТОК ЗМІН ---
+    // Створюємо "шаховий" старт, щоб вони не билися
+    // Чим менше інтервал, тим щільніше вони будуть, але 50мс - безпечно
+    const staggerInterval = 50; 
+
+    requestGroups.forEach((group, index) => {
+        const { request, parameters } = group;
+        const paramId = parameters[0].id; // Напр. 'inverter_info_220301'
+
+        const handlerContext = {
+            request: request,
+            parameters: parameters, 
+            updateCallback: updateCallback
+        };
+
+        // Розраховуємо затримку старту для КОЖНОГО таймера
+        const startDelay = index * staggerInterval;
+
+        // Запускаємо інтервал не одразу, а з затримкою
+        setTimeout(() => {
+            logMessage(`[Polling] Старт таймера для ${paramId} (інтервал: ${request.interval}ms)`);
+            
+            // Запускаємо перший запит негайно (після нашої затримки)
+            sendRequestForParameters(handlerContext);
+            
+            // І створюємо інтервал для наступних
+            const intervalId = setInterval(() => {
+                sendRequestForParameters(handlerContext);
+            }, request.interval);
+            
+            if (!state.activePollers) {
+                state.activePollers = [];
+            }
+            state.activePollers.push(intervalId);
+
+        }, startDelay); // 👈 Ось тут і є вся магія!
+
     });
+    // --- 💡 КІНЕЦЬ ЗМІН ---
 }
 
 /**
- * Групує параметри за однаковими запитами
+ * Групує параметри за однаковими запитами (для data-bind)
  */
-function groupParametersByRequest(parameterIds) {
+function groupParametersByRequest(parameterKeys, registry) {
     const groups = new Map();
     
-    parameterIds.forEach(paramId => {
-        const param = PARAMETER_REGISTRY[paramId];
-        if (!param) {
-            logMessage(`ПОПЕРЕДЖЕННЯ: Параметр "${paramId}" не знайдено в реєстрі`);
+    parameterKeys.forEach(key => {
+        const paramGroup = registry[key];
+        if (!paramGroup) {
+            logMessage(`ПОПЕРЕДЖЕННЯ: Параметр "${key}" не знайдено в реєстрі`);
             return;
         }
         
-        const key = `${param.request.canId}:${param.request.data}`;
-        
+        // Переконуємось, що це група для опитування (має 'request')
+        if (!paramGroup.request) {
+            return;
+        }
+
+        // Використовуємо сам ключ групи як унікальний
         if (!groups.has(key)) {
             groups.set(key, {
-                request: param.request,
-                parameters: []
+                request: paramGroup.request,
+                parameters: [{
+                    id: key, // 'inverter_info_220301'
+                    ...paramGroup
+                }]
             });
         }
-        
-        groups.get(key).parameters.push({
-            id: paramId,
-            ...param
-        });
     });
     
     return Array.from(groups.values());
 }
 
 /**
- * Надсилає запит і реєструє параметри (З виправленням "гонки станів")
+ * Надсилає запит і реєструє параметри
  */
-async function sendRequestForParameters(request, parameters) {
+async function sendRequestForParameters(context) {
+    const { request } = context;
+
+    // 'parameters' - це масив, що містить одну групу (напр. 'inverter_info_220301')
+    const paramGroup = context.parameters[0];
+    const responseCanId = paramGroup.response.canId; // '7BB'
+    const requestPid = paramGroup.request.data;     // '220301'
     
-    // 1. СПОЧАТКУ РЕЄСТРУЄМО СЛУХАЧА
-    parameters.forEach(param => {
-        const responseId = param.response.canId;
-        
-        if (!activeRequests.has(responseId)) {
-            activeRequests.set(responseId, []);
-        }
-        
-        const existing = activeRequests.get(responseId);
-        const filtered = existing.filter(p => p.id !== param.id);
-        filtered.push(param);
-        activeRequests.set(responseId, filtered);
-    });
+    // 1. РЕЄСТРУЄМО СЛУХАЧА ПІД УНІКАЛЬНИМ КЛЮЧЕМ
+    // Ключ = "ID_Відповіді:PID_Запиту" (напр. "7BB:220301")
+    const responseKey = `${responseCanId}:${requestPid}`;
+
+    // Ми не перевіряємо, чи існує ключ. Ми просто перезаписуємо
+    // контекст очікування щоразу, коли надсилаємо запит.
+    // Це гарантує, що ми чекаємо на відповідь саме на *цей* запит.
+    activeRequests.set(responseKey, context);
     
-    logMessage(`Зареєстровано слухачів для: ${parameters.map(p => p.id).join(', ')} (чекають на ${parameters[0].response.canId})`);
+    // logMessage(`Зареєстровано слухача для: ${responseKey}`);
 
     // 2. ПОТІМ ВІДПРАВЛЯЄМО ЗАПИТ
     const success = await sendCanRequest(request.canId, request.data);
     
     if (!success) {
-        logMessage(`ПОМИЛКА: не вдалося відправити запит для ${request.canId}`);
+        logMessage(`ПОМИЛКА: не вдалося відправити запит для ${request.canId} (${requestPid})`);
+        // Якщо не вдалося відправити, видаляємо слухача, щоб він не висів вічно
+        activeRequests.delete(responseKey);
     }
 }
 
 /**
  * Обробляє вхідну CAN-відповідь
+ * Ця функція має викликатися вашим головним CAN-обробником
  */
 export function handleCanResponse(canId, dataHex) {
-    logMessage(`[HANDLE] Отримано CAN ID: ${canId}, Data: ${dataHex}`);
+    // canId = '7BB'
+    // dataHex = '0762030300000168'
     
-    const waitingParams = activeRequests.get(canId);
+    // Це відповідь UDS (ISO-15765). Нам потрібно витягти PID.
+    // "62" - це відповідь на "22" (0x22 + 0x40 = 0x62)
+    // "0303" - це PID, який ми запитували.
     
-    logMessage(`[HANDLE] Параметрів в черзі для ID ${canId}: ${waitingParams ? waitingParams.length : 0}`);
+    if (dataHex.length < 8) { // Потрібно принаймні "07620301"
+        return; 
+    }
+
+    const responseMode = dataHex.substring(2, 4).toUpperCase(); // "62"
+    const responsePid = dataHex.substring(4, 8).toUpperCase();  // "0301" or "0303"
     
-    if (!waitingParams || waitingParams.length === 0) {
-        logMessage(`[HANDLE] Немає параметрів, що чекають на ID ${canId}`);
+    let requestPid;
+    
+    // Конвертуємо "62" -> "22"
+    if (responseMode === '62') {
+        requestPid = '22' + responsePid;
+    } else {
+        // Додайте тут інші правила, якщо вони потрібні
+        // logMessage(`Невідомий режим відповіді: ${responseMode}`);
+        return; 
+    }
+
+    // Створюємо той самий унікальний ключ, що й у sendRequestForParameters
+    const responseKey = `${canId}:${requestPid}`; // "7BB:220301"
+    
+    // Шукаємо *конкретного* слухача
+    const context = activeRequests.get(responseKey);
+    
+    if (!context) {
+        // Немає слухача для цієї відповіді. Це нормально.
+        // Можливо, це відповідь, на яку ми вже не чекаємо, або "шум".
         return;
     }
     
-    logMessage(`[CAN ✓] ID: ${canId} | Data: ${dataHex}`);
+    logMessage(`[CAN ✓] ID: ${canId} | Key: ${responseKey} | Data: ${dataHex}`);
     
-    waitingParams.forEach(param => {
-        try {
-            logMessage(`[PARSE PARAM] Парсинг параметра: ${param.id}`);
-            const parsedValue = param.response.parser(dataHex);
-            logMessage(`[PARSE PARAM ✓] ${param.id} = ${JSON.stringify(parsedValue)}`);
-            updateUIForParameter(param, parsedValue);
-        } catch (e) {
-            logMessage(`[PARSE PARAM ✗] Помилка парсингу ${param.id}: ${e.message}`);
-            console.error(e);
+    // Ми знайшли ОДИН правильний контекст
+    const paramGroup = context.parameters[0]; // напр. 'inverter_info_220301'
+    
+    try {
+        const parsedValue = paramGroup.response.parser(dataHex);
+        
+        if (parsedValue !== null) {
+            // Викликаємо callback (який є window.uiUpdater.updateUiValue)
+            context.updateCallback(paramGroup.id, parsedValue);
         }
-    });
-}
 
-/**
- * Оновлює UI для параметра (внутрішня функція)
- */
-function updateUIForParameter(param, value) {
-    const uiElement = param.uiElement;
+    } catch (e) {
+        logMessage(`[PARSE PARAM ✗] Помилка парсингу ${paramGroup.id} (key: ${responseKey}): ${e.message}`);
+        console.error(e);
+    }
     
-    if (typeof uiElement === 'string') {
-        const element = document.getElementById(uiElement);
-        if (element) {
-            const displayValue = param.response.formatter 
-                ? param.response.formatter(value) 
-                : (value !== null ? value.toString() : 'N/A');
-            element.value = displayValue;
-        } else {
-            logMessage(`ПОМИЛКА UI: Елемент не знайдено: ${uiElement}`);
-        }
-    }
-    else if (typeof uiElement === 'object' && value !== null) {
-        Object.keys(uiElement).forEach(key => {
-            const elementId = uiElement[key];
-            const element = document.getElementById(elementId);
-            if (element && value[key] !== undefined) {
-                element.value = value[key];
-            } else if (!element) {
-                logMessage(`ПОМИЛКА UI: Елемент не знайдено: ${elementId}`);
-            }
-        });
-    }
+    // Очищуємо ТІЛЬКИ ЦЬОГО слухача
+    activeRequests.delete(responseKey);
 }
 
 /**
@@ -186,6 +221,12 @@ export function stopAllPolling() {
         state.activePollers = [];
     }
     
-    // Це ключ: очищуємо мапу ТІЛЬКИ коли зупиняємо все
     activeRequests.clear();
 }
+
+// --- ГОЛОВНЕ ---
+window.pollingManager = {
+    startPolling: startPolling,
+    stopAllPolling: stopAllPolling,
+    handleCanResponse: handleCanResponse
+};

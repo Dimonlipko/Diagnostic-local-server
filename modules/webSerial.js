@@ -1,8 +1,11 @@
+// webSerisl.js
+
 import { state } from './state.js';
 import { BAUD_RATE } from './config.js';
 import { logMessage, updateUI } from './ui.js';
 import { parseCanResponse } from './canProtocol.js';
-import { handleCanResponse, startPollingForPage } from './pollingManager.js';
+// --- ВИПРАВЛЕНО: Видалено 'startPollingForPage', додано 'stopAllPolling' ---
+import { handleCanResponse, stopAllPolling } from './pollingManager.js';
 
 
 // --- Буфер для неповних рядків (без змін) ---
@@ -62,14 +65,7 @@ async function readWithTimeout(timeoutMs) {
 }
 
 /**
- * Опитує пристрій для визначення типу (slcan або elm327) (без змін)
- */
-/**
  * Опитує пристрій для визначення типу (slcan або elm327)
- */
-/**
- * Опитує пристрій для визначення типу (slcan або elm327)
- * ПОКРАЩЕНА ВЕРСІЯ: спочатку вимикаємо ехо ELM
  */
 async function detectAdapterType() {
     lineBuffer = "";
@@ -200,7 +196,7 @@ async function initializeAdapter() {
 }
 
 /**
- * Парсить рядок даних
+ * Парсить рядок даних (стара функція, не використовується readLoop)
  */
 function parseData(line) {
     let isValidCanMessage = false;
@@ -245,7 +241,7 @@ function parseData(line) {
             clearTimeout(state.carStatusTimeout);
             state.carStatusTimeout = setTimeout(() => statusCar.classList.remove('receiving'), 500); // Індикатор згасне через 0.5с
         }
-        updateUI(id, data);
+        updateUI(id, data); // <--- ЦЕ СТАРА ЛОГІКА
     }
 }
 
@@ -275,27 +271,27 @@ async function readLoop() {
             const textChunk = new TextDecoder().decode(value, {stream: true});
             
             // ДЕТАЛЬНЕ ЛОГУВАННЯ
-            logMessage(`[RAW CHUNK] Довжина: ${textChunk.length} | Hex: ${Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
-            logMessage(`[RAW TEXT] "${textChunk}"`);
+            // logMessage(`[RAW CHUNK] Довжина: ${textChunk.length} | Hex: ${Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+            // logMessage(`[RAW TEXT] "${textChunk}"`);
             
             lineBuffer += textChunk;
             
             let lines = lineBuffer.split(/\r\n|\r|\n/);
             lineBuffer = lines.pop() || "";
             
-            logMessage(`[LINES] Знайдено ${lines.length} рядків, буфер: "${lineBuffer}"`);
+            // logMessage(`[LINES] Знайдено ${lines.length} рядків, буфер: "${lineBuffer}"`);
             
             for (const line of lines) {
                 if (!line) continue;
                 
                 const trimmedLine = line.trim();
-                logMessage(`[PARSE] Обробка рядка: "${trimmedLine}"`);
+                // logMessage(`[PARSE] Обробка рядка: "${trimmedLine}"`);
                 
                 // Парсимо відповідь
                 const parsed = parseCanResponse(trimmedLine);
                 
                 if (parsed) {
-                    logMessage(`[PARSED ✓] ID: ${parsed.id} | Data: ${parsed.data}`);
+                    // logMessage(`[PARSED ✓] ID: ${parsed.id} | Data: ${parsed.data}`);
                     
                     // Передаємо в менеджер опитування
                     handleCanResponse(parsed.id, parsed.data);
@@ -310,7 +306,7 @@ async function readLoop() {
                         }, 500);
                     }
                 } else {
-                    logMessage(`[PARSED ✗] Рядок не розпізнано: "${trimmedLine}"`);
+                    // logMessage(`[PARSED ✗] Рядок не розпізнано: "${trimmedLine}"`);
                 }
             }
         }
@@ -334,14 +330,7 @@ function formatCanMessage(param, value) {
  * Головна функція підключення
  */
 export async function connectAdapter() {
-    // --- ЗМІНА: Зупиняємо опитування перед новим підключенням ---
-    if (state.dataPollingTimer) {
-        clearInterval(state.dataPollingTimer);
-        state.dataPollingTimer = null;
-    }
-    // --- КІНЕЦЬ ЗМІНИ ---
-
-    // --- ЗМІНА: Додаємо перевірку, чи порт вже існує (для відключення) ---
+    // --- ЗМІНА: Зупиняємо опитування при відключенні ---
     if (state.port) {
         logMessage("Порт вже відкритий. Виконуємо відключення...");
         await disconnectAdapter(); // Викликаємо нову функцію відключення
@@ -368,8 +357,8 @@ export async function connectAdapter() {
         
         // --- (без змін) ---
         const textEncoder = new TextEncoderStream();
-        state.writer = textEncoder.writable.getWriter(); // <-- ПРОПУЩЕНИЙ РЯДОК
-        textEncoder.readable.pipeTo(port.writable);    // <-- ПРОПУЩЕНИЙ РЯДОК
+        state.writer = textEncoder.writable.getWriter();
+        textEncoder.readable.pipeTo(port.writable);
         
         // --- (без змін) ---
         state.reader = port.readable.getReader(); // <-- ЧИТАЄМО СИРІ БАЙТИ
@@ -385,10 +374,7 @@ export async function connectAdapter() {
         logMessage(`Помилка: ${error.message}`);
         
         // --- ЗМІНА: Зупиняємо опитування при помилці ---
-        if (state.dataPollingTimer) {
-            clearInterval(state.dataPollingTimer);
-            state.dataPollingTimer = null;
-        }
+        stopAllPolling();
         // --- КІНЕЦЬ ЗМІНИ ---
 
         if(state.reader) state.reader.releaseLock();
@@ -424,6 +410,9 @@ export async function sendCanMessage(paramName, value) {
 export async function disconnectAdapter() {
     logMessage("Відключення...");
     
+    // --- ЗМІНА: Зупиняємо опитування ---
+    stopAllPolling();
+    // --- КІНЕЦЬ ЗМІНИ ---
     
     // Зупиняємо цикл читання (readLoop)
     if (state.reader) {
@@ -459,4 +448,3 @@ export async function disconnectAdapter() {
     logMessage("Адаптер відключено.");
 }
 // --- КІНЕЦЬ НОВОЇ ФУНКЦІЇ ---
-

@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { logMessage } from './ui.js'; // ДОДАНО ІМПОРТ
+import { logMessage } from './ui.js';
 
 /**
  * УНІВЕРСАЛЬНА функція відправки CAN-запиту
@@ -30,10 +30,10 @@ export async function sendCanRequest(canId, data) {
  * Відправка для ELM327
  */
 async function sendCanRequest_ELM327(canId, data) {
-    // Зберігаємо ID запиту для парсингу відповіді
+    // Зберігаємо ID запиту для парсингу відповіді без заголовків
     state.lastRequestId = canId.toUpperCase();
     
-    await state.writer.write(`ATSH ${canId}\r`);
+    await state.writer.write(`ATSH${canId}\r`);
     await new Promise(resolve => setTimeout(resolve, 10));
     await state.writer.write(`${data}\r`);
 }
@@ -57,18 +57,24 @@ export function parseCanResponse(line) {
         cleanLine = cleanLine.substring(1).trim();
     }
     
-    // Ігноруємо службові повідомлення
+    // РОЗШИРЕНИЙ ФІЛЬТР службових повідомлень
     if (!cleanLine || 
         cleanLine === 'OK' || 
         cleanLine === '?' || 
         cleanLine.includes('ELM327') || 
         cleanLine.startsWith('V') || 
         cleanLine === 'SEARCHING...' ||
-        cleanLine.startsWith('NO DATA')) {
+        cleanLine.startsWith('NO DATA') ||
+        cleanLine.startsWith('CAN ERROR') ||
+        cleanLine.startsWith('BUS INIT') ||
+        cleanLine.startsWith('UNABLE') ||
+        // ДОДАНО: Фільтруємо AT-команди
+        cleanLine.startsWith('AT') ||
+        cleanLine.match(/^[A-Z]{2,}[0-9]*$/)) { // Команди типу ATZ, ATE0, ATSP6, тощо
         return null;
     }
     
-    logMessage(`[PARSE TRY] Adapter: ${state.adapterType} | Line: "${cleanLine}"`);
+    // logMessage(`[PARSE TRY] Adapter: ${state.adapterType} | Line: "${cleanLine}"`);
     
     if (state.adapterType === 'slcan') {
         const result = parseCanResponse_SLCAN(cleanLine);
@@ -91,7 +97,6 @@ function parseCanResponse_SLCAN(line) {
         const id = line.substring(1, 4).toUpperCase();
         const dlc = parseInt(line.substring(4, 5), 16);
         const data = line.substring(5, 5 + dlc * 2).toUpperCase();
-        logMessage(`[SLCAN PARSE] ID: ${id}, DLC: ${dlc}, Data: ${data}`);
         return { id, data };
     }
     return null;
@@ -101,61 +106,58 @@ function parseCanResponse_SLCAN(line) {
  * Парсинг для ELM327
  */
 function parseCanResponse_ELM327(line) {
-    // Прибираємо можливий промпт ">" на початку
-    let cleanLine = line;
-    if (cleanLine.startsWith('>')) {
-        cleanLine = cleanLine.substring(1).trim();
-    }
-    
-    // Якщо рядок порожній після очищення - ігноруємо
-    if (!cleanLine) return null;
-    
-    const parts = cleanLine.split(' ');
-    logMessage(`[ELM PARSE] Parts: ${JSON.stringify(parts)}, Length: ${parts.length}`);
-    
-    // Формат 1: "7BB 07 62 03 01 ..." (ID + дані з пробілами, заголовки увімкнені)
-    if (parts.length > 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
-        const id = parts[0].toUpperCase();
-        const data = parts.slice(1).join('').toUpperCase();
-        logMessage(`[ELM PARSE ✓] ID: ${id}, Data: ${data}`);
-        return { id, data };
-    }
-    
-    // Формат 2: "7BB07620301..." (ID + дані без пробілів)
-    if (parts.length === 1 && cleanLine.length > 3 && /^[0-9A-F]{3}/i.test(cleanLine.substring(0, 3))) {
-        const id = cleanLine.substring(0, 3).toUpperCase();
-        const data = cleanLine.substring(3).toUpperCase();
-        logMessage(`[ELM PARSE NO SPACE ✓] ID: ${id}, Data: ${data}`);
-        return { id, data };
-    }
-    
-    // Формат 3: "62 03 01 FF FF..." (тільки дані, без ID - використовуємо останній запитуваний ID)
-    // Це відбувається, коли заголовки не працюють
-    if (parts.length > 1 && /^[0-9A-F]{2}$/i.test(parts[0])) {
-        // Використовуємо ID з останнього запиту (зберігаємо в state)
-        if (state.lastRequestId) {
-            const data = cleanLine.split(' ').join('').toUpperCase();
-            logMessage(`[ELM PARSE NO HEADER ✓] Використовую ID з запиту: ${state.lastRequestId}, Data: ${data}`);
-            
-            // Мапінг: запит до 79B -> відповідь від 7BB
-            const responseId = mapRequestToResponseId(state.lastRequestId);
-            return { id: responseId, data };
-        } else {
-            logMessage(`[ELM PARSE ✗] Дані без ID, але немає інформації про останній запит`);
+    // Перевіряємо чи це не ехо нашої команди
+    if (line.startsWith('ATSH') || line.match(/^[0-9A-F]{6,}$/i)) {
+        // Це або команда ATSH, або hex дані що ми відправили
+        // Якщо це тільки hex (наш запит) - ігноруємо
+        if (line.match(/^[0-9A-F]{6}$/i)) {
+            return null; // Це ехо нашого запиту типу "220301"
         }
     }
     
-    logMessage(`[ELM PARSE ✗] Не вдалося розпізнати формат`);
+    const parts = line.split(' ');
+    // logMessage(`[ELM PARSE] Parts: ${JSON.stringify(parts)}, Length: ${parts.length}`);
+    
+    // Формат 1: "7BB 62 03 01 ..." (ID + дані з пробілами, заголовки працюють)
+    if (parts.length >= 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
+        const id = parts[0].toUpperCase();
+        const data = parts.slice(1).join('').toUpperCase();
+        // logMessage(`[ELM PARSE ✓] ID: ${id}, Data: ${data}`);
+        return { id, data };
+    }
+    
+    // Формат 2: "7BB62030101..." (ID + дані без пробілів)
+    if (parts.length === 1 && line.length > 3) {
+        // Перевіряємо чи перші 3 символи - це валідний ID
+        const possibleId = line.substring(0, 3).toUpperCase();
+        if (/^[0-9A-F]{3}$/i.test(possibleId)) {
+            const data = line.substring(3).toUpperCase();
+            // logMessage(`[ELM PARSE NO SPACE ✓] ID: ${possibleId}, Data: ${data}`);
+            return { id: possibleId, data };
+        }
+    }
+    
+    // Формат 3: "62 03 01 FF FF..." (тільки дані, без ID - заголовки не працюють)
+    if (parts.length >= 2 && /^[0-9A-F]{2}$/i.test(parts[0]) && /^[0-9A-F]{2}$/i.test(parts[1])) {
+        if (state.lastRequestId) {
+            const data = line.split(' ').join('').toUpperCase();
+            // logMessage(`[ELM PARSE NO HEADER ✓] ID: ${mapRequestToResponseId(state.lastRequestId)}, Data: ${data}`);
+            
+            const responseId = mapRequestToResponseId(state.lastRequestId);
+            return { id: responseId, data };
+        }
+    }
+    
+    // logMessage(`[ELM PARSE ✗] Не вдалося розпізнати формат`);
     return null;
 }
 
 /**
  * Мапить ID запиту на ID відповіді
- * Наприклад: 79B (запит) -> 7BB (відповідь)
  */
 function mapRequestToResponseId(requestId) {
-    // Загальне правило: для діагностичних запитів 0x7XY -> відповідь 0x7(X+8)Y
-    // 79B -> 7BB, 79A -> 7BA, тощо
+    // Для діагностичних запитів: 0x7XY -> відповідь 0x7(X+8)Y
+    // 79B -> 7BB
     const match = requestId.match(/^7([0-9A-F])([0-9A-F])$/i);
     if (match) {
         const x = parseInt(match[1], 16);
@@ -164,6 +166,5 @@ function mapRequestToResponseId(requestId) {
         return `7${responseX}${y.toUpperCase()}`;
     }
     
-    // Якщо не вдалося розпізнати - повертаємо як є
     return requestId;
 }
