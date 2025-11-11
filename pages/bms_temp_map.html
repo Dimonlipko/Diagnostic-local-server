@@ -1,5 +1,43 @@
-<h2 data-lang-key="menu_bms_temp_map">Температурна Мапа</h2>
-<p>
-    Тут буде візуалізація температури по датчиках.
-</p>
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Датчики Температури</title>
+    <!-- Посилання на окремий файл стилів -->
+    <link rel="stylesheet" href="temperature_sensors.css">
+</head>
+<body>
 
+    <h2 data-lang-key="menu_bms_temps">Температура батареї</h2>
+
+    <div class="temp-map-grid">
+        
+        <!-- Датчик 1 -->
+        <div class="temp-item">
+            <!-- 
+                Клас "temp-v-normal" розфарбовує комірку.
+                Використовуйте: temp-v-cold, temp-v-normal, temp-v-warm, temp-v-hot 
+            -->
+            <input type="text" class="temp-v-normal" id="temp_v_01" value="25.4 °C" readonly data-bind="bms_temps_1_32.cell_1">
+        </div>
+        
+        <!-- Датчик 2 -->
+        <div class="temp-item">
+            <input type="text" class="temp-v-normal" id="temp_v_02" value="26.1 °C" readonly data-bind="bms_temps_1_32.cell_2">
+        </div>
+        
+        <!-- Датчик 3 -->
+        <div class="temp-item">
+            <input type="text" class="temp-v-warm" id="temp_v_03" value="38.0 °C" readonly data-bind="bms_temps_1_32.cell_3">
+        </div>
+        
+        <!-- Датчик 4 -->
+        <div class="temp-item">
+            <input type="text" class="temp-v-normal" id="temp_v_04" value="25.8 °C" readonly data-bind="bms_temps_1_32.cell_4">
+        </div>
+
+    </div>
+
+</body>
+</html>

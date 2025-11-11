@@ -1,4 +1,4 @@
-        /* --- ПОЧАТОК CSS --- */
+/* --- ПОЧАТОК CSS --- */
         
         /* --- Скидання стилів --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -245,8 +245,82 @@
         .rw-grid input[readonly] { grid-column: 1 / -1; } /* Read-only на всю ширину */
         .rw-grid input { width: 100%; }
         .rw-grid .write-button { width: 100%; }
+        
+        /* --- СІТКА ВІДОБРАЖЕННЯ КОМІРОК (СТИЛЬ HEATMAP - МОБІЛЬНА ВЕРСІЯ) --- */
+        /* ЦЕ БАЗОВІ СТИЛІ ДЛЯ МОБІЛЬНИХ */
+        .cell-map-grid {
+            display: grid;
+            /* * МОБІЛЬНА ВЕРСІЯ: 4 комірки в ряд (як на скріншоті-приклад).
+             * Це grid-макет, де елементи йдуть 1, 2, 3, 4 в першому ряду.
+             */
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            background-color: transparent;
+            
+            /* ДОДАНО: Вмикаємо лічильник комірок */
+            counter-reset: cell-counter;
+        }
+
+        .cell-item {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            display: flex;
+            /* Скидаємо margin-bottom, який міг бути доданий в @media */
+            margin-bottom: 0; 
+            
+            /* ДОДАНО: Потрібно для позиціонування номера */
+            position: relative;
+        }
+        
+        /* ДОДАНО: Стиль для CSS-лічильника (номера комірки) */
+        .cell-item::before {
+            counter-increment: cell-counter;
+            content: counter(cell-counter);
+            
+            /* Позиціонування */
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            
+            /* Стиль */
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.4); /* Напівпрозорий чорний */
+            z-index: 1; /* Поверх <input> */
+        }
+
+        /* Повністю ховаємо лейбли (Cell [01] тощо) */
+        .cell-item label {
+            display: none;
+        }
+
+        /* Перетворюємо <input> на кольоровий блок */
+        .cell-item input[type="text"] {
+            border: none;
+            outline: none;
+            box-shadow: none;
+            margin-top: 0;
+            text-align: center;
+            color: #000;
+            font-family: sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            width: 100%;
+            border-radius: 4px;
+            background-color: #e0e0e0; /* Нейтральний сірий (базовий) */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            user-select: none;
+            
+            /* ДОДАНО: Зсуваємо текст, щоб не накладався на номер */
+            padding: 10px 5px 10px 18px; /* Додано відступ зліва */
+            position: relative; 
+        }
 
         /* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
+        /* ТЕПЕР ЦЕЙ БЛОК ЙДЕ ПІСЛЯ МОБІЛЬНИХ СТИЛІВ І БУДЕ ЇХ ПЕРЕЗАПИСУВАТИ */
         @media (min-width: 768px) {
             body { flex-direction: row; }
             .sidebar {
@@ -303,7 +377,42 @@
                 grid-template-columns: 1fr 1fr; /* 2 колонки на десктопі */
                 gap: 40px;
             }
-        }
+            
+            /* --- ВНЕСЕНО ЗМІНИ ДЛЯ ДЕСКТОПНОЇ СІТКИ КОМІРОК --- */
+            .cell-map-grid {
+                /* * ДЕСКТОП ВЕРСІЯ: Перемикаємось на CSS Columns.
+                 * Тепер сітка буде з 8 колонок (по 12 комірок в кожній).
+                 */
+                display: block; /* Скидаємо grid */
+                column-count: 8;  /* 8 колонок */
+                column-gap: 10px; /* Зменшено відступ */
+            }
+
+            /* .cell-item (всередині .cell-map-grid) */
+            .cell-map-grid .cell-item {
+                /* Запобігаємо розриву одного .cell-item між колонками */
+                break-inside: avoid;
+                
+                /* Додаємо відступ знизу, оскільки 'gap' більше не працює у .cell-map-grid */
+                margin-bottom: 4px; 
+            }
+            
+            /* РОБИМО КОМІРКИ "ЩІЛЬНІШИМИ" ДЛЯ ДЕСКТОПУ (НОВЕ) */
+            .cell-map-grid .cell-item input[type="text"] {
+                font-size: 13px;  /* Зменшуємо шрифт */
+                padding-top: 6px;    /* Зменшуємо вертикальний відступ */
+                padding-bottom: 6px; 
+                padding-left: 18px; /* Залишаємо місце для номера */
+            }
+            
+            .cell-map-grid .cell-item::before {
+                 left: 5px; /* Трохи коригуємо для нового padding */
+                 top: 1px; 
+                 font-size: 9px; /* Робимо номер ще меншим */
+            }
+            /* --- КІНЕЦЬ ЗМІН --- */
+
+        } /* --- КІНЕЦЬ @media (min-width: 768px) --- */
 
         /* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
         @media (min-width: 1024px) {
@@ -318,6 +427,237 @@
             .rw-grid .write-button { grid-column: 4 / 5; }
         }
 
+        /* --- СІТКА ДАТЧИКІВ ТЕМПЕРАТУРИ (СТИЛЬ HEATMAP - МОБІЛЬНА ВЕРСІЯ) --- */
+.temp-map-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 колонки на мобільному */
+    gap: 4px;
+    background-color: transparent;
+    counter-reset: temp-counter; /* Лічильник для температур */
+}
+
+.temp-item {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    margin-bottom: 0; 
+    position: relative;
+}
+
+/* Номер датчика */
+.temp-item::before {
+    counter-increment: temp-counter;
+    content: counter(temp-counter);
+    position: absolute;
+    left: 4px;
+    top: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+/* Стиль самого <input> з температурою */
+.temp-item input[type="text"] {
+    border: none;
+    outline: none;
+    box-shadow: none;
+    margin-top: 0;
+    text-align: center;
+    color: #000;
+    font-family: sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    width: 100%;
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Базовий сірий */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    user-select: none;
+    padding: 10px 5px 10px 18px; /* Відступ для номера */
+    position: relative; 
+    transition: background-color 0.3s;
+}
+
+/* --- Класи Heatmap для ТЕМПЕРАТУРИ (додає JavaScript або статично) --- */
+.temp-v-cold {
+    background-color: #a9d0f5 !important; /* Холодний синій */
+    color: #000 !important;
+}
+.temp-v-normal {
+    background-color: #c8f5a9 !important; /* Нормальний зелений */
+    color: #000 !important;
+}
+.temp-v-warm {
+    background-color: #f5e0a9 !important; /* Теплий жовтий */
+    color: #000 !important;
+}
+.temp-v-hot {
+    background-color: #f5a9a9 !important; /* Гарячий червоний */
+    color: #000 !important;
+}
+
+
+/* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
+@media (min-width: 768px) {
+    
+    /* (Оскільки у нас всього 4 датчики, логіка 8 колонок не потрібна) */
+    /* На десктопі вони просто стануть більшими */
+    .temp-map-grid {
+         /* 4 колонки виглядають добре і на десктопі, якщо їх всього 4 */
+        grid-template-columns: repeat(4, 1fr);
+        /* Можемо зробити їх ширшими, обмеживши контейнер */
+        max-width: 600px; 
+    }
+
+    .temp-item input[type="text"] {
+        font-size: 16px; /* Трохи більший шрифт */
+        padding-top: 15px;
+        padding-bottom: 15px; 
+    }
+    
+    .temp-item::before {
+         font-size: 11px;
+         left: 5px;
+         top: 4px; 
+    }
+
+    /* --- Картка оновлення --- */
+.update-card {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 600px;
+    /* Центруємо картку, якщо вона в .content-area */
+    margin: 0 auto; 
+    transition: all 0.3s ease;
+}
+
+/* --- Область вибору файлу --- */
+.file-input-area {
+    border: 2px dashed #d0dbe5;
+    padding: 25px;
+    border-radius: 8px;
+    text-align: center;
+    background-color: #f9fafb;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.file-input-area:hover {
+    background-color: #f1f5f9;
+    border-color: #3498db;
+}
+
+/* Ховаємо стандартний input[type="file"] */
+#file-input {
+    display: none;
+}
+
+/* Стилізована кнопка, яка насправді є <label> */
+.file-select-button {
+    font-size: 16px;
+    font-weight: 600;
+    color: #3498db;
+    cursor: pointer;
+}
+
+/* Текст з назвою обраного файлу */
+#file-name {
+    margin-top: 15px;
+    display: block;
+    color: #555;
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* --- Кнопка "Залити прошивку" --- */
+#upload-button {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background-color: #2ecc71; /* Зелений колір */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 25px;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+#upload-button:disabled {
+    background-color: #bdc3c7; /* Сірий колір */
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+#upload-button:not(:disabled):hover {
+    background-color: #27ae60;
+}
+
+/* --- Область прогресу (схована за замовчуванням) --- */
+.progress-area {
+    margin-top: 25px;
+    display: none; /* Ховаємо, поки не почнеться оновлення */
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+    height: 25px;
+}
+
+.progress-bar {
+    width: 0%; /* Початкова ширина */
+    height: 100%;
+    background-color: #3498db; /* Синій колір прогресу */
+    border-radius: 5px;
+    transition: width 0.1s ease-in-out;
+    text-align: center;
+    line-height: 25px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#status-text {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* --- ОВЕРЛЕЙ БЛОКУВАННЯ (схований за замовчуванням) --- */
+.overlay {
+    position: fixed; /* 'fixed' працює відносно вікна браузера */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: none; /* Ховаємо */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+}
+.overlay-content {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    border-radius: 10px;
+}
+.overlay-content h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+}
+
         /* Стиль для Терміналу */
         #log {
             background-color: #1e1e1e;
@@ -328,5 +668,8 @@
             white-space: pre-wrap;
             font-family: monospace;
         }
+        
+        /* БЛОК HEATMAP (який був у кінці) ТЕПЕР ПЕРЕМІЩЕНО ВИЩЕ, 
+           ПЕРЕД @media-запитами, ТОМУ ТУТ БІЛЬШЕ НІЧОГО НЕМАЄ */
         
         /* --- КІНЕЦЬ CSS --- */
