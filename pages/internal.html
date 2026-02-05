@@ -1,0 +1,64 @@
+<h2 data-lang-key="internal_title">Internal Monitor</h2>
+
+<div class="inverter-layout">
+    
+    <div class="inverter-column">
+        <h3 style="color: #2196F3; font-size: 14px; margin-bottom: 10px;">Analog Inputs (ADC)</h3>
+
+        <label data-lang-key="int_12v_adc">12v ADC</label>
+        <input type="text" id="read12vADC" value="0 V" readonly data-bind="internal_info_220401.adc12v">
+        
+        <label data-lang-key="int_5v_adc">5v ADC</label>
+        <input type="text" id="read5vADC" value="0 V" readonly data-bind="internal_info_220401.adc5v">
+        
+        <label data-lang-key="int_a1_adc">A1 ADC</label>
+        <input type="text" id="readA1ADC" value="0 V" readonly data-bind="internal_info_220402.adcA1">
+        
+        <label data-lang-key="int_a2_adc">A2 ADC</label>
+        <input type="text" id="readA2ADC" value="0 V" readonly data-bind="internal_info_220402.adcA2">
+        
+        <label data-lang-key="int_a4_adc">A4 ADC</label>
+        <input type="text" id="readA4ADC" value="0 V" readonly data-bind="internal_info_220403.adcA4">
+        
+        <label data-lang-key="int_a5_pedal">A5 ADC (Pedal 1)</label>
+        <input type="text" id="readA5Pedal" value="0 V" readonly data-bind="internal_info_220403.pedal1">
+        
+        <label data-lang-key="int_a9_brake">A9 ADC (Brake sens)</label>
+        <input type="text" id="readA9Brake" value="0 V" readonly data-bind="internal_info_220405.brakeSens">
+
+        <label data-lang-key="int_device_id">Device ID</label>
+        <input type="text" id="readDeviceId" value="---" readonly data-bind="internal_info_220407.deviceId">
+
+        <label data-lang-key="int_soft_ver">Soft ver</label>
+        <input type="text" id="readSoftVer" value="---" readonly data-bind="internal_info_220407.softVer">
+    </div>
+    
+    <div class="inverter-column">
+        <h3 style="color: #4CAF50; font-size: 14px; margin-bottom: 10px;">Digital Outputs & Status</h3>
+
+        <label data-lang-key="int_contactor_plus">A10 (Contactor +)</label>
+        <input type="text" id="readContactorPlus" value="Off" readonly data-bind="internal_info_220415.contactorPlus">
+        
+        <label data-lang-key="int_contactor_minus">A11 (Contactor -)</label>
+        <input type="text" id="readContactorMinus" value="Off" readonly data-bind="internal_info_220415.contactorMinus">
+        
+        <label data-lang-key="int_precharge">D11 (Precharge)</label>
+        <input type="text" id="readPrecharge" value="Off" readonly data-bind="internal_info_220415.precharge">
+        
+        <label data-lang-key="int_water_pump">D24 (Water pump)</label>
+        <input type="text" id="readWaterPump" value="Off" readonly data-bind="internal_info_220415.waterPump">
+        
+        <label data-lang-key="int_fan_high">D9 (Fan high speed)</label>
+        <input type="text" id="readFanHigh" value="Off" readonly data-bind="internal_info_220416.fanHigh">
+        
+        <label data-lang-key="int_fan_low">D26 (Fan low speed)</label>
+        <input type="text" id="readFanLow" value="Off" readonly data-bind="internal_info_220417.fanLow">
+
+        <label data-lang-key="int_brake_booster">D25 (Brake booster)</label>
+        <input type="text" id="readBrakeBooster" value="Off" readonly data-bind="internal_info_220417.boosterStatus">
+
+        <label data-lang-key="int_can3">CAN 3 Status</label>
+        <input type="text" id="readCan3" value="OK" readonly data-bind="internal_info_220413.can3">
+    </div>
+</div>
+

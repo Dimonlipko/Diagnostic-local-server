@@ -21,6 +21,7 @@ const ASSETS_TO_CACHE = [
   './pages/bms_params.html',
   './pages/bms_soc_map.html',
   './pages/bms_temp_map.html',
+  './pages/internal.html',
   './pages/inverter.html',
   './pages/settings.html',
   './pages/terminal.html',

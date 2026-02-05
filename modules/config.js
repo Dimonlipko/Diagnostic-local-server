@@ -3,16 +3,16 @@ export const BAUD_RATE = 38400;
 export const DEFAULT_PAGE = 'pages/terminal.html';
 
 // --- СЛОВНИК ПЕРЕКЛАДІВ ---
-// (Взято з вашого файлу)
 export const translations = {
     'uk': {
         'menu_title': 'CAN Монітор',
         'menu_inverter': '⚡️ Інвертор',
         'menu_bms': '🔋 БМС',
         'menu_bms_params': 'Параметри',
-        'menu_bms_cells': 'Комірки',
-        'menu_bms_temp_map': 'T-Мапа',
+        'menu_bms_cells': 'Комірки',                                                         
+        'menu_bms_temp_map': 'Температура',
         'menu_bms_soc_map': 'SOC-Мапа',
+        'menu_internal': 'Внутрішні парам',
         'menu_settings': '⚙️ Налаштування',
         'menu_update': '⬆️ Оновлення',
         'menu_terminal': '💻 Термінал',
@@ -22,11 +22,25 @@ export const translations = {
         'btn_write': 'Запис',
         'btn_on': 'УВІМК',
         'btn_off': 'ВИМК',
-        'placeholder_new_value': 'Нове значення',
+        'col_read': 'Поточне значення',
+        'col_write': 'Нове значення',
+        'placeholder_new_value': 'Значення...',
         'terminal_title': 'Термінал (Debug)',
         'terminal_subtitle': 'Сирий потік даних з адаптера для дебагу:',
-        'inverter_title': 'Інвертор',
-        // ... (тут мають бути всі ключі для інвертора) ...
+        
+        // --- Settings Page (Налаштування) ---
+        'settings_title': 'Налаштування ЕБУ (ECU)',
+        'set_wheel_circ': 'Окружність колеса',
+        'set_contactor_voltage': 'Напруга увімк. контактора',
+        'set_type_selector': 'Тип селектора',
+        'set_type_start_btn': 'Тип кнопки Start',
+        'set_type_invertor': 'Тип інвертора',
+        'set_pump_temp': 'Температура пуску помпи',
+        'set_fan_high_temp': 'Поріг вентилятора (High)',
+        'set_fan_low_temp': 'Поріг вентилятора (Low)',
+        'set_type_bms': 'Тип BMS',
+
+        // --- BMS Parameters ---
         'bms_title': 'Параметри BMS:',
         'bms_battery_voltage': 'Напруга батареї',
         'bms_cell_min': 'Cell MIN напруга',
@@ -58,8 +72,9 @@ export const translations = {
         'menu_bms': '🔋 BMS',
         'menu_bms_params': 'Parameters',
         'menu_bms_cells': 'Cells',
-        'menu_bms_temp_map': 'Cell Map',
+        'menu_bms_temp_map': 'Temp Map',
         'menu_bms_soc_map': 'SOC Map',
+        'menu_internal': 'Internal',
         'menu_settings': '⚙️ Settings',
         'menu_update': '⬆️ Update',
         'menu_terminal': '💻 Terminal',
@@ -69,11 +84,25 @@ export const translations = {
         'btn_write': 'Write',
         'btn_on': 'ON',
         'btn_off': 'OFF',
-        'placeholder_new_value': 'New Value',
+        'col_read': 'Current Value',
+        'col_write': 'New Value',
+        'placeholder_new_value': 'Value...',
         'terminal_title': 'Terminal (Debug)',
         'terminal_subtitle': 'Raw data stream from adapter for debugging:',
-        'inverter_title': 'Inverter',
-        // ... (тут мають бути всі ключі для інвертора англійською) ...
+
+        // --- Settings Page ---
+        'settings_title': 'ECU Settings',
+        'set_wheel_circ': 'Wheel circumference',
+        'set_contactor_voltage': 'Contactor ON voltage',
+        'set_type_selector': 'Type selector',
+        'set_type_start_btn': 'Type start button',
+        'set_type_invertor': 'Type inverter',
+        'set_pump_temp': 'Pump start temperature',
+        'set_fan_high_temp': 'Fan ON high speed temp',
+        'set_fan_low_temp': 'Fan ON low speed temp',
+        'set_type_bms': 'Type BMS',
+
+        // --- BMS Parameters ---
         'bms_title': 'BMS Parameters:',
         'bms_battery_voltage': 'Battery voltage',
         'bms_cell_min': 'Cell MIN voltage',

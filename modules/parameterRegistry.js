@@ -102,8 +102,8 @@ export const PARAMETER_REGISTRY = {
                 const errRaw = parseInt(dataHex.substring(14, 16), 16);
 
                 return {
-                    invTemp: `${invTemp} C`, 
-                    motorTemp: `${motTemp} C`,
+                    invTemp: `${invTemp} °C`, 
+                    motorTemp: `${motTemp} °C`,
                     selector: selectorMap[selRaw.toString()] || 'Unknown',
                     error: errorMap[errRaw.toString()] || 'Unknown'
                 };
@@ -674,7 +674,332 @@ export const PARAMETER_REGISTRY = {
             dataPrefix: '2e0108',
             bytes: 1
         }
+    },
+
+    /**
+     * Запит 220401: ADC напруги
+     */
+    'internal_info_220401': {
+        request: { canId: '79B', data: '220401', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                // 12v ADC (байти 4-5), 5v ADC (байти 6-7)
+                const v12_h = parseInt(dataHex.substring(8, 10), 16);
+                const v12_l = parseInt(dataHex.substring(10, 12), 16);
+                const v5_h = parseInt(dataHex.substring(12, 14), 16);
+                const v5_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    adc12v: `${(parseUint16(v12_h, v12_l) / 1000).toFixed(2)}V`,
+                    adc5v: `${(parseUint16(v5_h, v5_l) / 1000).toFixed(2)}V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220402: Аналогові входи A1, A2
+     */
+    'internal_info_220402': {
+        request: { canId: '79B', data: '220402', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const a1_h = parseInt(dataHex.substring(8, 10), 16);
+                const a1_l = parseInt(dataHex.substring(10, 12), 16);
+                const a2_h = parseInt(dataHex.substring(12, 14), 16);
+                const a2_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    adcA1: parseUint16(a1_h, a1_l).toString(),
+                    adcA2: parseUint16(a2_h, a2_l).toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220403: A4 ADC та Педаль (A5)
+     */
+    'internal_info_220403': {
+        request: { canId: '79B', data: '220403', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const a4_h = parseInt(dataHex.substring(8, 10), 16);
+                const a4_l = parseInt(dataHex.substring(10, 12), 16);
+                const a5_h = parseInt(dataHex.substring(12, 14), 16);
+                const a5_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    adcA4: parseUint16(a4_h, a4_l).toString(),
+                    adcPedal1: parseUint16(a5_h, a5_l).toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220404: Аналогові входи A7, A8
+     */
+    'internal_info_220404': {
+        request: { canId: '79B', data: '220404', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const a7_h = parseInt(dataHex.substring(8, 10), 16);
+                const a7_l = parseInt(dataHex.substring(10, 12), 16);
+                const a8_h = parseInt(dataHex.substring(12, 14), 16);
+                const a8_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    adcA7: parseUint16(a7_h, a7_l).toString(),
+                    adcA8: parseUint16(a8_h, a8_l).toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220405: Гальма та Дискретні D5, D6
+     */
+    'internal_info_220405': {
+        request: { canId: '79B', data: '220405', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const a9_h = parseInt(dataHex.substring(8, 10), 16);
+                const a9_l = parseInt(dataHex.substring(10, 12), 16);
+                const d5 = parseInt(dataHex.substring(12, 14), 16);
+                const d6 = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    adcBrake: parseUint16(a9_h, a9_l).toString(),
+                    statusD5: d5 === 1 ? "ON" : "OFF",
+                    statusBrakeLight: d6 === 1 ? "Active" : "Inactive"
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220406: Цифрові входи D7, D48, D50, D52
+     */
+    'internal_info_220406': {
+        request: { canId: '79B', data: '220406', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                return {
+                    statusD7: parseInt(dataHex.substring(8, 10), 16).toString(),
+                    statusD48: parseInt(dataHex.substring(10, 12), 16).toString(),
+                    statusD50: parseInt(dataHex.substring(12, 14), 16).toString(),
+                    statusD52: parseInt(dataHex.substring(14, 16), 16).toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220413: Chademo та CAN 3
+     */
+    'internal_info_220413': {
+        request: { canId: '79B', data: '220413', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                return {
+                    chademoIn0: parseInt(dataHex.substring(8, 10), 16).toString(),
+                    chademoIn2: parseInt(dataHex.substring(10, 12), 16).toString(),
+                    can3Status: parseInt(dataHex.substring(12, 14), 16).toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220407: Системна інформація
+     */
+    'internal_info_220407': {
+        request: { canId: '79B', data: '220407', interval: 5000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const id = parseInt(dataHex.substring(8, 10), 16);
+                const ver = parseInt(dataHex.substring(10, 12), 16);
+                return {
+                    deviceId: id.toString(),
+                    softVersion: (ver / 10).toFixed(1)
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220415: Контактори та Помпа
+     */
+    'internal_info_220415': {
+        request: { canId: '79B', data: '220415', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const stateMap = { "0": "High", "1": "Low" };
+                return {
+                    contactorPlus: stateMap[dataHex.substring(8, 10)] || "Unknown",
+                    contactorMinus: stateMap[dataHex.substring(10, 12)] || "Unknown",
+                    precharge: dataHex.substring(12, 14) === "01" ? "Active" : "OFF",
+                    waterPump: dataHex.substring(14, 16) === "01" ? "Running" : "Stop"
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220416: Вентилятори та Chademo Out
+     */
+    'internal_info_220416': {
+        request: { canId: '79B', data: '220416', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                return {
+                    fanHigh: dataHex.substring(8, 10) === "01" ? "ON" : "OFF",
+                    brakeDAC: parseInt(dataHex.substring(10, 12), 16).toString(),
+                    chademoOut0: dataHex.substring(12, 14),
+                    chademoOut1: dataHex.substring(14, 16)
+                };
+            }
+        }
+    },
+
+    'settings_info_220901': {
+        request: { canId: '79B', data: '220901', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const h = parseInt(dataHex.substring(8, 10), 16);
+                const l = parseInt(dataHex.substring(10, 12), 16);
+                return { wheelCirc: parseUint16(h, l).toString() };
+            }
+        }
+    },
+
+    /**
+     * Запит 220110: Contactor ON voltage
+     */
+    'settings_info_220110': {
+        request: { canId: '79B', data: '220110', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const h = parseInt(dataHex.substring(8, 10), 16);
+                const l = parseInt(dataHex.substring(10, 12), 16);
+                return { contactorVoltage: `${parseUint16(h, l)} V` };
+            }
+        }
+    },
+
+    /**
+     * Запит 220131: Types (Selector, Button, Invertor)
+     */
+    'settings_info_220131': {
+        request: { canId: '79B', data: '220131', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const selectorMap = { "0": "Button", "1": "Leaf", "2": "PSA" };
+                const buttonMap = { "0": "With fixation", "1": "Without fixation" };
+                const invMap = { "0": "AZE0", "1": "ZE0", "2": "ZE1" };
+
+                const selRaw = parseInt(dataHex.substring(10, 12), 16); // Байт 5
+                const btnRaw = parseInt(dataHex.substring(12, 14), 16); // Байт 6
+                const invRaw = parseInt(dataHex.substring(14, 16), 16); // Байт 7
+
+                return {
+                    typeSelector: selectorMap[selRaw.toString()] || "Unknown",
+                    typeStartBtn: buttonMap[btnRaw.toString()] || "Unknown",
+                    typeInvertor: invMap[invRaw.toString()] || "Unknown"
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220408: Pump Temp
+     */
+    'settings_info_220408': {
+        request: { canId: '79B', data: '220408', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const temp = parseInt(dataHex.substring(8, 10), 16); // Байт 4
+                return { pumpTemp: `${temp} °C` };
+            }
+        }
+    },
+
+    /**
+     * Запит 220414: Fan Temps & BMS Type
+     */
+    'settings_info_220414': {
+        request: { canId: '79B', data: '220414', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const bmsMap = { "0": "OFF", "1": "Volt Gen 1", "2": "Leaf", "3": "Orion 2", "4": "VW ID"};
+
+                const highTemp = parseInt(dataHex.substring(8, 10), 16); // Байт 4
+                const bmsRaw = parseInt(dataHex.substring(10, 12), 16);  // Байт 5
+                const lowTemp = parseInt(dataHex.substring(14, 16), 16);  // Байт 7
+
+                return {
+                    fanHighTemp: `${highTemp} °C`,
+                    typeBms: bmsMap[bmsRaw.toString()] || "Unknown",
+                    fanLowTemp: `${lowTemp} °C`
+                };
+            }
+        }
+    },
+
+    'write_wheel_circ': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0901', bytes: 2 }
+    },
+    'write_contactor_voltage': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0110', bytes: 2 }
+    },
+    'write_type_selector': {
+        writeConfig: { canId: '79B', dataPrefix: '2e013102', bytes: 1 }
+    },
+    'write_type_start_btn': {
+        writeConfig: { canId: '79B', dataPrefix: '2e013103', bytes: 1 }
+    },
+    'write_type_invertor': {
+        writeConfig: { canId: '79B', dataPrefix: '2e013104', bytes: 1 }
+    },
+    'write_pump_temp': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0408', bytes: 1 }
+    },
+    'write_fan_high_temp': {
+        writeConfig: { canId: '79B', dataPrefix: '2e041401', bytes: 1 }
+    },
+    'write_fan_low_temp': {
+        writeConfig: { canId: '79B', dataPrefix: '2e041404', bytes: 1 }
+    },
+    'write_type_bms': {
+        writeConfig: { canId: '79B', dataPrefix: '2e041402', bytes: 1 }
     }
+
 };
 
 window.PARAMETER_REGISTRY = PARAMETER_REGISTRY;

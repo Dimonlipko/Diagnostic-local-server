@@ -1,0 +1,71 @@
+<h2 data-lang-key="settings_title">ECU settings</h2>
+
+<div class="settings-layout">
+    <div class="settings-header-info">
+        </div>
+</div>
+
+<div class="rw-grid">
+
+    <label data-lang-key="set_wheel_circ">Wheel circumference</label>
+    <input type="text" id="readWheelCirc" value="0" readonly data-bind="settings_info_220901.wheelCirc">
+    <input type="text" id="writeWheelCirc" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_wheel_circ" data-target-id="writeWheelCirc" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_contactor_voltage">Contactor ON voltage</label>
+    <input type="text" id="readContactorVoltage" value="0 V" readonly data-bind="settings_info_220110.contactorVoltage">
+    <input type="text" id="writeContactorVoltage" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_contactor_voltage" data-target-id="writeContactorVoltage" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_type_selector">Type selector</label>
+    <input type="text" id="readTypeSelector" value="No Data" readonly data-bind="settings_info_220131.typeSelector">
+    <select id="writeTypeSelector">
+        <option value="0">Button</option>
+        <option value="1">Leaf</option>
+        <option value="2">PSA</option>
+    </select>
+    <button class="write-button" data-param-name="write_type_selector" data-target-id="writeTypeSelector" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_type_start_btn">Type start button</label>
+    <input type="text" id="readTypeStartBtn" value="No Data" readonly data-bind="settings_info_220131.typeStartBtn">
+    <select id="writeTypeStartBtn">
+        <option value="0">With fixation</option>
+        <option value="1">Without fixation</option>
+    </select>
+    <button class="write-button" data-param-name="write_type_start_btn" data-target-id="writeTypeStartBtn" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_type_invertor">Type invertor</label>
+    <input type="text" id="readTypeInvertor" value="No Data" readonly data-bind="settings_info_220131.typeInvertor">
+    <select id="writeTypeInvertor">
+        <option value="0">AZE0</option>
+        <option value="1">ZE0</option>
+        <option value="2">ZE1</option>
+    </select>
+    <button class="write-button" data-param-name="write_type_invertor" data-target-id="writeTypeInvertor" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_pump_temp">Pump start temperature</label>
+    <input type="text" id="readPumpTemp" value="0°C" readonly data-bind="settings_info_220408.pumpTemp">
+    <input type="text" id="writePumpTemp" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_pump_temp" data-target-id="writePumpTemp" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_fan_high_temp">Temp fan ON high speed</label>
+    <input type="text" id="readFanHighTemp" value="0°C" readonly data-bind="settings_info_220414.fanHighTemp">
+    <input type="text" id="writeFanHighTemp" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_fan_high_temp" data-target-id="writeFanHighTemp" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_fan_low_temp">Temp fan ON low speed</label>
+    <input type="text" id="readFanLowTemp" value="0°C" readonly data-bind="settings_info_220414.fanLowTemp">
+    <input type="text" id="writeFanLowTemp" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_fan_low_temp" data-target-id="writeFanLowTemp" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="set_type_bms">Type BMS</label>
+    <input type="text" id="readTypeBMS" value="OFF" readonly data-bind="settings_info_220414.typeBms">
+    <select id="writeTypeBMS">
+        <option value="0">OFF</option>
+        <option value="1">Volt Gen 1</option>
+        <option value="2">Leaf</option>
+        <option value="3">Orion 2</option>
+        <option value="4">VW ID</option>
+    </select>
+    <button class="write-button" data-param-name="write_type_bms" data-target-id="writeTypeBMS" data-lang-key="btn_write">Write</button>
+</div>
