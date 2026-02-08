@@ -211,7 +211,7 @@ async function readLoop() {
     try {
         logMessage("=== ЦИКЛ ЧИТАННЯ ЗАПУЩЕНО ===");
         
-        while (state.isConnected) {  // ЗМІНЕНО: перевіряємо прапорець
+        while (state.isConnected) {
             if (!state.reader) break;
             
             const { value, done } = await state.reader.read();
@@ -223,21 +223,27 @@ async function readLoop() {
             
             if (!value) continue;
             
+            // Декодуємо отримані байти у текст
             const textChunk = new TextDecoder().decode(value, {stream: true});
             lineBuffer += textChunk;
             
+            // Розбиваємо буфер на рядки за символами переносу
             let lines = lineBuffer.split(/\r\n|\r|\n/);
-            lineBuffer = lines.pop() || "";
+            lineBuffer = lines.pop() || ""; // Залишаємо незавершений рядок у буфері
             
             for (const line of lines) {
                 if (!line) continue;
                 
                 const trimmedLine = line.trim();
-                const parsed = parseCanResponse(trimmedLine);
+                
+                // Передаємо рядок у парсер canProtocol.js
+                const parsed = parseCanResponse(trimmedLine); 
                 
                 if (parsed) {
+                    // Якщо парсер повернув об'єкт {id, data}, передаємо в pollingManager
                     handleCanResponse(parsed.id, parsed.data);
                     
+                    // Візуальна індикація активності
                     const statusCar = document.getElementById('statusCar');
                     if (statusCar) {
                         statusCar.classList.add('receiving');
@@ -250,7 +256,7 @@ async function readLoop() {
             }
         }
     } catch (error) {
-        if (error.name !== 'AbortError') {
+        if (error.name !== 'AbortError' && state.isConnected) {
             logMessage(`Помилка читання: ${error.message}`);
         }
     } finally {
@@ -287,21 +293,26 @@ export async function connectAdapter() {
         await port.open({ baudRate: BAUD_RATE, dataTerminalReady: true });
         
         state.port = port; 
+        state.connectionType = 'serial'; // 💡 ДОДАНО: Чітка ідентифікація типу підключення
+        
         if (statusAdapter) statusAdapter.classList.add('connected');
         logMessage(`Порт відкрито. Швидкість: ${BAUD_RATE}`);
         
+        // Налаштування потоку запису (Writer)
         const textEncoder = new TextEncoderStream();
-        state.writer = textEncoder.writable.getWriter();
+        state.writer = textEncoder.writable.getWriter(); // 💡 Цей об'єкт тепер доступний для pollingManager
         textEncoder.readable.pipeTo(port.writable);
         
+        // Налаштування потоку читання (Reader)
         state.reader = port.readable.getReader(); 
 
+        // Визначаємо та ініціалізуємо адаптер
         state.adapterType = await detectAdapterType();
         if (state.adapterType === 'unknown') throw new Error('Не вдалося визначити тип адаптера.');
 
-        await initializeAdapter(); // ЦЯ ФУНКЦІЯ МАЄ БУТИ ВИЗНАЧЕНА ВИЩЕ
+        await initializeAdapter();
 
-        state.isConnected = true;
+        state.isConnected = true; // 💡 ПІДТВЕРДЖЕННЯ: Тепер state.isConnected стає true лише після повної готовності
         logMessage("✓ Стан: Підключено.");
         
         readLoop(); 

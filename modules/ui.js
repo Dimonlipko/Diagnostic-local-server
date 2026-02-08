@@ -25,7 +25,9 @@ export async function loadPage(pageFile) {
     }
 
     console.log(`Завантаження сторінки: ${pageFile}`);
-    stopAllPolling();
+    
+    // Завжди зупиняємо старе опитування перед зміною сторінки
+    stopAllPolling(); 
     
     try {
         const response = await fetch(pageFile);
@@ -46,24 +48,32 @@ export async function loadPage(pageFile) {
            
         translatePage();
 
-        // Якщо підключені - запускаємо опитування
-        if (state.port) {
+        // --- ЛОГІКА КЕРУВАННЯ ОПИТУВАННЯМ ---
+        
+        // Перевіряємо, чи ми підключені (через Serial або BLE)
+        const isConnected = !!(state.port || state.bleWriter); 
+        // Визначаємо сторінки, на яких опитування ЗАБОРОНЕНО
+        // Оскільки pageFile може містити шлях 'pages/terminal.html', використовуємо .includes()
+        const isSilentPage = pageFile.includes('terminal.html') || pageFile.includes('update.html');
+
+        if (isConnected && !isSilentPage) { 
             const requiredKeys = getRequiredKeysFromDOM(pageContainer);
             
             console.log(`[PageLoader] Запуск опитування для ${requiredKeys.size} параметрів...`, Array.from(requiredKeys));
             
-            // ВИПРАВЛЕНО: Використовуємо імпортовані модулі
             if (window.pollingManager && PARAMETER_REGISTRY) {
                 window.pollingManager.startPolling(
                     Array.from(requiredKeys),
                     PARAMETER_REGISTRY,
-                    updateUiValue  // Викликаємо локальну функцію
+                    updateUiValue
                 );
             } else {
                 const errorMsg = '[PageLoader] pollingManager не доступний.';
                 console.error(errorMsg);
                 logMessage(`ПОМИЛКА: ${errorMsg}`);
             }
+        } else if (isSilentPage) {
+            console.log(`[PageLoader] Опитування вимкнено для сторінки: ${pageFile}`);
         }
 
     } catch (error) {
@@ -148,6 +158,7 @@ export function initPageEventListeners(handlers) {
     pageContainer.addEventListener('click', (event) => {
         const target = event.target;
 
+        // --- ОБРОБКА КНОПКИ ЗАПИСУ ПАРАМЕТРІВ ---
         if (target.classList.contains('write-button') && handlers.onWrite) {
             const paramName = target.dataset.paramName;
             const targetId = target.dataset.targetId;
@@ -162,6 +173,7 @@ export function initPageEventListeners(handlers) {
             }
         }
 
+        // --- ОБРОБКА ПЕРЕМИКАЧІВ (TOGGLE) ---
         if (target.classList.contains('bms-toggle') && handlers.onToggle) {
             const paramName = target.parentElement.dataset.paramName;
             const value = target.dataset.value;
@@ -172,6 +184,7 @@ export function initPageEventListeners(handlers) {
             handlers.onToggle(paramName, value);
         }
 
+        // --- ОБРОБКА КНОПКИ ПРОШИВКИ (FLASH) ---
         if (target.id === 'flashButton' && handlers.onFlash) {
             const fileInput = document.getElementById('firmwareFile');
             const canId = document.getElementById('updateCanId').value;
@@ -188,6 +201,31 @@ export function initPageEventListeners(handlers) {
             }
             
             handlers.onFlash(fileInput.files[0], canId, canAnswer, token);
+        }
+
+        // --- НОВЕ: ОБРОБКА ВІДПРАВКИ З ТЕРМІНАЛУ ---
+        if (target.id === 'terminal-send-btn' && handlers.onTerminalSend) {
+            const inputElement = document.getElementById('terminal-input');
+            if (inputElement) {
+                const command = inputElement.value.trim();
+                if (command) {
+                    handlers.onTerminalSend(command);
+                    inputElement.value = ''; // Очищаємо поле після відправки
+                } else {
+                    logMessage('ПОПЕРЕДЖЕННЯ: Команда порожня.');
+                }
+            }
+        }
+    });
+
+    // Додаємо обробку натискання Enter у полі терміналу (окремий слухач для keydown)
+    pageContainer.addEventListener('keydown', (event) => {
+        if (event.target.id === 'terminal-input' && event.key === 'Enter' && handlers.onTerminalSend) {
+            const command = event.target.value.trim();
+            if (command) {
+                handlers.onTerminalSend(command);
+                event.target.value = '';
+            }
         }
     });
 }

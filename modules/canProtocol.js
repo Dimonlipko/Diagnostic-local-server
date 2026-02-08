@@ -5,35 +5,52 @@ import { logMessage } from './ui.js';
  * УНІВЕРСАЛЬНА функція відправки CAN-запиту
  */
 export async function sendCanRequest(canId, data) {
-    // 💡 Вибираємо активний writer: або від Serial, або від Bluetooth
+    // 1. Отримуємо актуальний writer зі стану
     const writer = state.writer || state.bleWriter;
 
+    // 2. Перевірка наявності writer перед спробою запису
     if (!writer) {
-        logMessage('ПОМИЛКА: Адаптер не підключено (немає writer).');
+        console.error("[Protocol] Помилка: Writer не знайдено в state.");
         return false;
     }
     
     try {
-        if (state.adapterType === 'elm327') {
-            // Передаємо обраний writer у функцію ELM327
-            await sendCanRequest_ELM327(canId, data, writer);
-        } else if (state.adapterType === 'slcan') {
-            await sendCanRequest_SLCAN(canId, data, writer);
+        // 3. Якщо передано canId, встановлюємо заголовок (для ELM327)
+        if (canId) {
+            state.lastRequestId = canId.toUpperCase();
+            await writer.write(`ATSH${canId}\r`);
+            
+            // Маленька затримка між командами для стабільності
+            const delay = state.connectionType === 'ble' ? 50 : 20;
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
+        
+        // 4. Відправляємо основні дані
+        await writer.write(`${data}\r`);
         return true;
     } catch (e) {
-        logMessage(`Помилка відправки: ${e.message}`);
+        // Виводимо помилку в лог інтерфейсу
+        if (typeof logMessage === 'function') {
+            logMessage(`Помилка відправки: ${e.message}`);
+        }
+        console.error(`[Protocol] Помилка запису:`, e);
         return false;
     }
 }
 
-// Оновлюємо внутрішню функцію, щоб вона приймала writer як аргумент
+/**
+ * Відправка для ELM327
+ */
 async function sendCanRequest_ELM327(canId, data, writer) {
-    state.lastRequestId = canId.toUpperCase();
+    // Якщо canId передано (запит до авто), встановлюємо заголовок
+    if (canId) {
+        state.lastRequestId = canId.toUpperCase();
+        await writer.write(`ATSH${canId}\r`);
+        const delay = state.connectionType === 'ble' ? 30 : 15;
+        await new Promise(resolve => setTimeout(resolve, delay));
+    }
     
-    // Тепер запис іде в той канал, який ми вибрали вище
-    await writer.write(`ATSH${canId}\r`);
-    await new Promise(resolve => setTimeout(resolve, 15)); // Трохи більше часу для BLE
+    // Відправляємо самі дані (або пряму команду терміналу)
     await writer.write(`${data}\r`);
 }
 
@@ -50,120 +67,78 @@ async function sendCanRequest_SLCAN(canId, data) {
  * УНІВЕРСАЛЬНА функція парсингу CAN-відповіді
  */
 export function parseCanResponse(line) {
-    // Прибираємо промпт на початку
-    let cleanLine = line;
+    let cleanLine = line.trim();
     if (cleanLine.startsWith('>')) {
         cleanLine = cleanLine.substring(1).trim();
     }
-    
-    // РОЗШИРЕНИЙ ФІЛЬТР службових повідомлень
-    if (!cleanLine || 
-        cleanLine === 'OK' || 
-        cleanLine === '?' || 
-        cleanLine.includes('ELM327') || 
-        cleanLine.startsWith('V') || 
-        cleanLine === 'SEARCHING...' ||
-        cleanLine.startsWith('NO DATA') ||
-        cleanLine.startsWith('CAN ERROR') ||
-        cleanLine.startsWith('BUS INIT') ||
-        cleanLine.startsWith('UNABLE') ||
-        // ДОДАНО: Фільтруємо AT-команди
-        cleanLine.startsWith('AT') ||
-        cleanLine.match(/^[A-Z]{2,}[0-9]*$/)) { // Команди типу ATZ, ATE0, ATSP6, тощо
-        return null;
+    if (!cleanLine) return null;
+
+    // 1. Визначаємо, чи ми на сторінці терміналу
+    const isTerminalPage = !!document.querySelector('.terminal-container') || 
+                          !!document.getElementById('terminal-output');
+
+    // 2. Викликаємо твій детальний парсер для перевірки на CAN-пакет
+    const parsed = parseCanResponse_ELM327(cleanLine);
+
+    // 3. ЛОГІКА ТЕРМІНАЛУ:
+    // Показуємо в терміналі тільки те, що НЕ є CAN-пакетом (команди, вольтаж, помилки)
+    if (isTerminalPage && !parsed) {
+        logMessage(`[RAW IN]: ${cleanLine}`);
     }
-    
-    // logMessage(`[PARSE TRY] Adapter: ${state.adapterType} | Line: "${cleanLine}"`);
-    
-    if (state.adapterType === 'slcan') {
-        const result = parseCanResponse_SLCAN(cleanLine);
-        if (result) logMessage(`[SLCAN ✓] ID: ${result.id}, Data: ${result.data}`);
-        return result;
-    } else if (state.adapterType === 'elm327') {
-        const result = parseCanResponse_ELM327(cleanLine);
-        if (result) logMessage(`[ELM ✓] ID: ${result.id}, Data: ${result.data}`);
-        return result;
-    }
-    
-    return null;
+
+    return parsed;
 }
 
 /**
- * Парсинг для SLCAN
- */
-function parseCanResponse_SLCAN(line) {
-    if (line.startsWith('t')) {
-        const id = line.substring(1, 4).toUpperCase();
-        const dlc = parseInt(line.substring(4, 5), 16);
-        const data = line.substring(5, 5 + dlc * 2).toUpperCase();
-        return { id, data };
-    }
-    return null;
-}
-
-/**
- * Парсинг для ELM327
+ * Твій перевірений парсер ELM327 (інтегрований)
  */
 function parseCanResponse_ELM327(line) {
+    // Очищаємо від можливих залишків промпта для надійності
+    const clean = line.replace('>', '').trim();
+
     // Перевіряємо чи це не ехо нашої команди
-    if (line.startsWith('ATSH') || line.match(/^[0-9A-F]{6,}$/i)) {
-        // Це або команда ATSH, або hex дані що ми відправили
-        // Якщо це тільки hex (наш запит) - ігноруємо
-        if (line.match(/^[0-9A-F]{6}$/i)) {
-            return null; // Це ехо нашого запиту типу "220301"
+    if (clean.startsWith('ATSH') || clean.match(/^[0-9A-F]{6,}$/i)) {
+        if (clean.match(/^[0-9A-F]{6}$/i)) {
+            return null; // Це ехо запиту типу "220301"
         }
     }
     
-    const parts = line.split(' ');
-    // logMessage(`[ELM PARSE] Parts: ${JSON.stringify(parts)}, Length: ${parts.length}`);
+    const parts = clean.split(' ');
     
-    // Формат 1: "7BB 62 03 01 ..." (ID + дані з пробілами, заголовки працюють)
+    // Формат 1: "7BB 62 03 01 ..." (ID + дані з пробілами)
     if (parts.length >= 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
         const id = parts[0].toUpperCase();
         const data = parts.slice(1).join('').toUpperCase();
-        // logMessage(`[ELM PARSE ✓] ID: ${id}, Data: ${data}`);
         return { id, data };
     }
     
     // Формат 2: "7BB62030101..." (ID + дані без пробілів)
-    if (parts.length === 1 && line.length > 3) {
-        // Перевіряємо чи перші 3 символи - це валідний ID
-        const possibleId = line.substring(0, 3).toUpperCase();
+    if (parts.length === 1 && clean.length > 3) {
+        const possibleId = clean.substring(0, 3).toUpperCase();
         if (/^[0-9A-F]{3}$/i.test(possibleId)) {
-            const data = line.substring(3).toUpperCase();
-            // logMessage(`[ELM PARSE NO SPACE ✓] ID: ${possibleId}, Data: ${data}`);
+            const data = clean.substring(3).toUpperCase();
             return { id: possibleId, data };
         }
     }
     
-    // Формат 3: "62 03 01 FF FF..." (тільки дані, без ID - заголовки не працюють)
+    // Формат 3: "62 03 01 FF FF..." (без ID, базуємось на lastRequestId)
     if (parts.length >= 2 && /^[0-9A-F]{2}$/i.test(parts[0]) && /^[0-9A-F]{2}$/i.test(parts[1])) {
         if (state.lastRequestId) {
-            const data = line.split(' ').join('').toUpperCase();
-            // logMessage(`[ELM PARSE NO HEADER ✓] ID: ${mapRequestToResponseId(state.lastRequestId)}, Data: ${data}`);
-            
+            const data = clean.split(' ').join('').toUpperCase();
             const responseId = mapRequestToResponseId(state.lastRequestId);
             return { id: responseId, data };
         }
     }
     
-    // logMessage(`[ELM PARSE ✗] Не вдалося розпізнати формат`);
     return null;
 }
 
 /**
- * Мапить ID запиту на ID відповіді
+ * Допоміжна функція для мапінгу ID (якщо вона у тебе була)
  */
-function mapRequestToResponseId(requestId) {
-    // Для діагностичних запитів: 0x7XY -> відповідь 0x7(X+8)Y
-    // 79B -> 7BB
-    const match = requestId.match(/^7([0-9A-F])([0-9A-F])$/i);
-    if (match) {
-        const x = parseInt(match[1], 16);
-        const y = match[2];
-        const responseX = (x + 8).toString(16).toUpperCase();
-        return `7${responseX}${y.toUpperCase()}`;
-    }
-    
-    return requestId;
+function mapRequestToResponseId(reqId) {
+    // Наприклад, запит 79B -> відповідь 7BB
+    if (reqId === '79B') return '7BB';
+    if (reqId === '7E0') return '7E8';
+    return reqId; 
 }

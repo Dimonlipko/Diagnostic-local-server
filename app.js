@@ -5,9 +5,6 @@ import { DEFAULT_PAGE } from './modules/config.js';
 import { setLanguage, initLanguageSwitcher } from './modules/translator.js';
 import { initNavigation, loadPage, initPageEventListeners, logMessage } from './modules/ui.js';
 import { connectAdapter, sendCanMessage, disconnectAdapter } from './modules/webSerial.js';
-// 💡 ІМПОРТУЄМО ФУНКЦІЮ ВІДПРАВКИ З canProtocol.js (ЯКЩО ВОНА ТАМ)
-// АБО З webSerial.js, ЯКЩО ВОНА ВМІЄ ПРИЙМАТИ ID І ДАНІ
-// Я припускаю, що у вас є sendCanRequest у 'canProtocol.js'
 import { sendCanRequest } from './modules/canProtocol.js'; 
 import { bluetoothManager } from './modules/webBluetooth.js';
 
@@ -140,7 +137,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initPageEventListeners({
         onWrite: handleWrite,
-        onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`)
+        onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`),
+        
+       onTerminalSend: async (command) => {
+    if (!state.isConnected) {
+        logMessage("ПОМИЛКА: Адаптер не підключено.");
+        return;
+    }
+
+    const writer = state.writer || state.bleWriter;
+    if (writer) {
+        try {
+            // 1. Очищення лінії: відправляємо порожній рядок, 
+            // щоб ELM327 скинув незавершені команди
+            await writer.write('\r'); 
+            await new Promise(r => setTimeout(r, 100)); // Коротка пауза
+
+            logMessage(`> ${command.toUpperCase()}`);
+            
+            // 2. Відправка реальної команди
+            await writer.write(command.toUpperCase() + '\r');
+            
+        } catch (err) {
+            logMessage(`ПОМИЛКА ТЕРМІНАЛУ: ${err.message}`);
+        }
+        }
+    }
     });
 
     const connectButton = document.getElementById('connectButton');
