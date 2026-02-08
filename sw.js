@@ -15,6 +15,7 @@ const ASSETS_TO_CACHE = [
   './modules/translator.js',
   './modules/ui.js',
   './modules/webSerial.js',
+  './modules/webBluetooth.js',
 
   // Pages
   './pages/bms_cells.html',

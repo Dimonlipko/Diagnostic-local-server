@@ -9,6 +9,7 @@ import { connectAdapter, sendCanMessage, disconnectAdapter } from './modules/web
 // АБО З webSerial.js, ЯКЩО ВОНА ВМІЄ ПРИЙМАТИ ID І ДАНІ
 // Я припускаю, що у вас є sendCanRequest у 'canProtocol.js'
 import { sendCanRequest } from './modules/canProtocol.js'; 
+import { bluetoothManager } from './modules/webBluetooth.js';
 
 
 // ===============================================
@@ -137,21 +138,40 @@ document.addEventListener('DOMContentLoaded', () => {
     initLanguageSwitcher();
     initNavigation();
 
-    // 💡 ОНОВЛЕНО: Тепер ми передаємо нашу НОВУ функцію
     initPageEventListeners({
-        onWrite: handleWrite, // 👈 ОСЬ ГОЛОВНА ЗМІНА
-        
-        // TODO: Вам також треба буде зробити обробник для onToggle
+        onWrite: handleWrite,
         onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`)
     });
 
     const connectButton = document.getElementById('connectButton');
     if (connectButton) {
-        connectButton.addEventListener('click', () => {
-            if (state.port) {
-                disconnectAdapter();
-            } else {
-                connectAdapter();
+        connectButton.addEventListener('click', async () => {
+            // 1. ЛОГІКА ВІДКЛЮЧЕННЯ
+            if (state.isConnected) {
+                if (state.connectionType === 'ble') {
+                    await bluetoothManager.disconnect();
+                } else {
+                    await disconnectAdapter();
+                }
+                return;
+            }
+
+            // 2. ВИЗНАЧЕННЯ ПЛАТФОРМИ
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            try {
+                if (isMobile) {
+                    logMessage("Мобільний пристрій: Запуск BLE...");
+                    // Викликаємо ваш новий модуль
+                    await bluetoothManager.connect();
+                } else {
+                    logMessage("ПК: Запуск Web Serial...");
+                    // Стандартне підключення через COM-порт
+                    await connectAdapter();
+                }
+            } catch (err) {
+                logMessage(`ПОМИЛКА підключення: ${err.message}`);
+                console.error(err);
             }
         });
     } else {

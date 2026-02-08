@@ -6,6 +6,7 @@ export let state = {
     reader: null,
     writer: null,
     adapterType: 'unknown',
+    connectionType: null,
     carStatusTimeout: null,
     logElement: null, // Посилання на <pre id="log">
     currentLanguage: 'uk',
