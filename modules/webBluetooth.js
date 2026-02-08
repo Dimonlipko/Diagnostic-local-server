@@ -5,13 +5,11 @@ import { parseCanResponse } from './canProtocol.js';
 export const bluetoothManager = {
     device: null,
     characteristic: null,
-    // UUID з вашого скріншоту перевірки
     SERVICE_UUID: '0000fff0-0000-1000-8000-00805f9b34fb',
     CHARACTERISTIC_UUID: '0000fff1-0000-1000-8000-00805f9b34fb',
 
     async connect() {
         try {
-            // 1. Пошук пристрою
             this.device = await navigator.bluetooth.requestDevice({
                 filters: [{ services: [this.SERVICE_UUID] }]
             });
@@ -21,25 +19,26 @@ export const bluetoothManager = {
             const service = await server.getPrimaryService(this.SERVICE_UUID);
             this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
 
-            // 2. Налаштування отримання даних
+            // Налаштування читання даних
             await this.characteristic.startNotifications();
             this.characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                const value = new TextDecoder().decode(event.target.value);
-                // Передаємо дані в ваш існуючий парсер
-                parseCanResponse(value); 
+                const decoder = new TextDecoder();
+                const rawData = decoder.decode(event.target.value);
+                // Відправляємо дані в ваш основний обробник
+                parseCanResponse(rawData);
             });
 
-            // 3. Оновлення глобального стану (state.js)
+            // Оновлюємо глобальний стан
             state.isConnected = true;
             state.connectionType = 'ble';
             state.adapterType = 'elm327';
             
-            // Створюємо writer, який очікує canProtocol.js
+            // Створюємо "замінник" writer для canProtocol.js
             state.bleWriter = {
                 write: async (data) => this.send(data)
             };
 
-            logMessage("BLE підключено успішно!");
+            logMessage("BLE підключено! Можете опитувати авто.");
             document.getElementById('statusAdapter').classList.add('active');
 
         } catch (error) {
@@ -52,6 +51,7 @@ export const bluetoothManager = {
     async send(data) {
         if (!this.characteristic) return;
         const encoder = new TextEncoder();
+        // BLE ELM327 зазвичай приймає дані невеликими порціями
         await this.characteristic.writeValue(encoder.encode(data));
     },
 
@@ -62,7 +62,7 @@ export const bluetoothManager = {
         state.isConnected = false;
         state.connectionType = null;
         state.bleWriter = null;
-        logMessage("BLE відключено.");
+        logMessage("BLE роз'єднано.");
         document.getElementById('statusAdapter').classList.remove('active');
     }
 };

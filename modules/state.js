@@ -5,7 +5,8 @@ export let state = {
     port: null,
     reader: null,
     writer: null,
-    adapterType: 'unknown',
+    bleWriter: null, // Для Web Bluetooth
+    adapterType: 'elm327',
     connectionType: null,
     carStatusTimeout: null,
     logElement: null, // Посилання на <pre id="log">

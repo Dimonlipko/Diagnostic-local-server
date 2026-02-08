@@ -5,19 +5,20 @@ import { logMessage } from './ui.js';
  * УНІВЕРСАЛЬНА функція відправки CAN-запиту
  */
 export async function sendCanRequest(canId, data) {
-    if (!state.writer) {
-        logMessage('ПОМИЛКА: Адаптер не підключено.');
+    // 💡 Вибираємо активний writer: або від Serial, або від Bluetooth
+    const writer = state.writer || state.bleWriter;
+
+    if (!writer) {
+        logMessage('ПОМИЛКА: Адаптер не підключено (немає writer).');
         return false;
     }
     
     try {
         if (state.adapterType === 'elm327') {
-            await sendCanRequest_ELM327(canId, data);
+            // Передаємо обраний writer у функцію ELM327
+            await sendCanRequest_ELM327(canId, data, writer);
         } else if (state.adapterType === 'slcan') {
-            await sendCanRequest_SLCAN(canId, data);
-        } else {
-            logMessage(`ПОМИЛКА: Невідомий тип адаптера: ${state.adapterType}`);
-            return false;
+            await sendCanRequest_SLCAN(canId, data, writer);
         }
         return true;
     } catch (e) {
@@ -26,16 +27,14 @@ export async function sendCanRequest(canId, data) {
     }
 }
 
-/**
- * Відправка для ELM327
- */
-async function sendCanRequest_ELM327(canId, data) {
-    // Зберігаємо ID запиту для парсингу відповіді без заголовків
+// Оновлюємо внутрішню функцію, щоб вона приймала writer як аргумент
+async function sendCanRequest_ELM327(canId, data, writer) {
     state.lastRequestId = canId.toUpperCase();
     
-    await state.writer.write(`ATSH${canId}\r`);
-    await new Promise(resolve => setTimeout(resolve, 10));
-    await state.writer.write(`${data}\r`);
+    // Тепер запис іде в той канал, який ми вибрали вище
+    await writer.write(`ATSH${canId}\r`);
+    await new Promise(resolve => setTimeout(resolve, 15)); // Трохи більше часу для BLE
+    await writer.write(`${data}\r`);
 }
 
 /**
