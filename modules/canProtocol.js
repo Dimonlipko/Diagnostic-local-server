@@ -74,35 +74,27 @@ export function parseCanResponse(line) {
  * Твій оригінальний парсер ELM327
  */
 function parseCanResponse_ELM327(line) {
-    const clean = line.replace('>', '').trim();
+    // 💡 ОЧИЩЕННЯ: Видаляємо пробіли та ">" одразу для всього рядка
+    const clean = line.replace(/>/g, '').replace(/\s+/g, '').trim().toUpperCase();
 
-    if (clean.startsWith('ATSH') || clean.match(/^[0-9A-F]{6,}$/i)) {
-        if (clean.match(/^[0-9A-F]{6}$/i)) return null; 
-    }
-    
-    const parts = clean.split(' ');
-    
-    // Формат 1: "7BB 62 03 01 ..."
-    if (parts.length >= 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
-        return { id: parts[0].toUpperCase(), data: parts.slice(1).join('').toUpperCase() };
-    }
-    
-    // Формат 2: "7BB62030101..."
-    if (parts.length === 1 && clean.length > 3) {
-        const possibleId = clean.substring(0, 3).toUpperCase();
-        if (/^[0-9A-F]{3}$/i.test(possibleId)) {
-            return { id: possibleId, data: clean.substring(3).toUpperCase() };
+    if (!clean || clean.length < 4) return null;
+
+    // Якщо це відповідь з ID (напр. "7BB620304...")
+    if (clean.length > 3 && /^[0-9A-F]+$/i.test(clean)) {
+        const possibleId = clean.substring(0, 3);
+        const data = clean.substring(3);
+        
+        // Перевіряємо, чи це справді схоже на відповідь (починається з 62 або 41)
+        if (data.startsWith('62') || data.startsWith('41')) {
+            return { id: possibleId, data: data };
         }
     }
     
-    // Формат 3: "62 03 01..." (без ID)
-    if (parts.length >= 2 && /^[0-9A-F]{2}$/i.test(parts[0]) && /^[0-9A-F]{2}$/i.test(parts[1])) {
-        if (state.lastRequestId) {
-            const data = clean.split(' ').join('').toUpperCase();
-            const responseId = (state.lastRequestId === '79B') ? '7BB' : state.lastRequestId;
-            return { id: responseId, data: data };
-        }
+    // Якщо ID немає в рядку, використовуємо останній запитаний ID зі state
+    if (clean.startsWith('62') || clean.startsWith('41')) {
+        const responseId = (state.lastRequestId === '79B') ? '7BB' : (state.lastRequestId || '7BB');
+        return { id: responseId, data: clean };
     }
-    
+
     return null;
 }

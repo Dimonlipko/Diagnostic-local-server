@@ -102,10 +102,15 @@ function groupParametersByRequest(parameterKeys, registry) {
  * Ця функція ПОВИННА викликатися з webBluetooth.js та webSerial.js
  */
 export function handleCanResponse(canId, dataHex) {
-    // Отримуємо Mode (62) та PID (напр. 0301)
-    const responseMode = dataHex.substring(0, 2) === '07' ? dataHex.substring(2, 4) : dataHex.substring(0, 2);
-    const responsePid = dataHex.substring(0, 2) === '07' ? dataHex.substring(4, 8) : dataHex.substring(2, 6);
+    // 💡 Видаляємо пробіли, якщо вони пролізли через парсер
+    const cleanData = dataHex.replace(/\s+/g, '');
+    
+    if (cleanData.length < 4) return;
 
+    // Визначаємо PID (напр. 620304 -> 0304)
+    const responseMode = cleanData.substring(0, 2); // "62"
+    const responsePid = cleanData.substring(2, 6);  // "0304"
+    
     if (responseMode !== '62') return;
 
     const responseKey = `${canId}:22${responsePid}`;
@@ -114,19 +119,16 @@ export function handleCanResponse(canId, dataHex) {
     if (context) {
         logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
         try {
-            // Визначаємо парсер (працює і для об'єкта, і для масиву parameters)
             const parser = context.parser || context.parameters[0].response.parser;
-            const id = context.id || context.parameters[0].id;
-            
-            const val = parser(dataHex);
-            if (val !== null) context.updateCallback(id, val);
+            // Передаємо в оригінальний парсер чисті дані без пробілів
+            const val = parser(cleanData); 
+            if (val !== null) context.updateCallback(context.id || context.parameters[0].id, val);
         } catch (e) {
             console.error("Помилка парсингу:", e);
         }
         activeRequests.delete(responseKey);
     }
 }
-
 export function stopAllPolling() {
     isPollingActive = false;
     if (state.activePollers) {
