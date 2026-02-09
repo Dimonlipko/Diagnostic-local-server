@@ -1,10 +1,8 @@
-// --- pollingManager.js (ПОВНІСТЮ ОНОВЛЕНИЙ) ---
-
+// --- modules/pollingManager.js ---
 import { state } from './state.js';
 import { sendCanRequest } from './canProtocol.js';
 
-// Глобальна мапа для активних запитів (слухачів)
-// Ключ тепер буде "responseCanId:requestPid" (напр. "7BB:220301")
+let isPollingActive = false;
 const activeRequests = new Map();
 
 function logMessage(message) {
@@ -12,221 +10,130 @@ function logMessage(message) {
 }
 
 /**
- * Запускає опитування на основі списку ключів, зібраних з DOM.
- * @param {string[]} parameterKeys - Масив кореневих ключів (напр. 'inverter_info_220301')
- * @param {object} registry - Повний PARAMETER_REGISTRY
- * @param {function} updateCallback - Функція оновлення UI (напр. window.uiUpdater.updateUiValue)
+ * Швидка логіка для Classic Bluetooth (Serial) - БЕЗ ЗМІН
  */
-function startPolling(parameterKeys, registry, updateCallback) {
-    stopAllPolling(); // Це також очистить activeRequests
-    
-    if (!registry) {
-        logMessage("ПОМИЛКА: Реєстр параметрів (PARAMETER_REGISTRY) не передано.");
-        return;
-    }
-    if (!updateCallback) {
-        logMessage("ПОМИЛКА: Функцію оновлення UI (updateCallback) не передано.");
-        return;
-    }
-    if (!parameterKeys || parameterKeys.length === 0) {
-        logMessage(`Немає параметрів для опитування.`);
-        return;
-    }
-    
-    logMessage(`Запуск опитування для ${parameterKeys.length} ключів...`);
-
-    const requestGroups = groupParametersByRequest(parameterKeys, registry);
-    
-    // --- 💡 ПОЧАТОК ЗМІН ---
-    // Створюємо "шаховий" старт, щоб вони не билися
-    // Чим менше інтервал, тим щільніше вони будуть, але 50мс - безпечно
-    const staggerInterval = 50; 
-
+function startClassicPolling(requestGroups, updateCallback) {
+    const staggerInterval = 50;
     requestGroups.forEach((group, index) => {
         const { request, parameters } = group;
-        const paramId = parameters[0].id; // Напр. 'inverter_info_220301'
-
-        const handlerContext = {
-            request: request,
-            parameters: parameters, 
-            updateCallback: updateCallback
-        };
-
-        // Розраховуємо затримку старту для КОЖНОГО таймера
+        const handlerContext = { request, parameters, updateCallback };
         const startDelay = index * staggerInterval;
 
-        // Запускаємо інтервал не одразу, а з затримкою
         setTimeout(() => {
-            logMessage(`[Polling] Старт таймера для ${paramId} (інтервал: ${request.interval}ms)`);
-            
-            // Запускаємо перший запит негайно (після нашої затримки)
             sendRequestForParameters(handlerContext);
-            
-            // І створюємо інтервал для наступних
             const intervalId = setInterval(() => {
                 sendRequestForParameters(handlerContext);
             }, request.interval);
             
-            if (!state.activePollers) {
-                state.activePollers = [];
-            }
+            if (!state.activePollers) state.activePollers = [];
             state.activePollers.push(intervalId);
-
-        }, startDelay); // 👈 Ось тут і є вся магія!
-
+        }, startDelay);
     });
-    // --- 💡 КІНЕЦЬ ЗМІН ---
 }
 
 /**
- * Групує параметри за однаковими запитами (для data-bind)
+ * Послідовна логіка для BLE (Один за одним)
  */
+async function startBlePollingLoop(parameterKeys, registry, updateCallback) {
+    logMessage("Головний цикл BLE запущено.");
+    while (isPollingActive && state.connectionType === 'ble') {
+        for (const key of parameterKeys) {
+            if (!isPollingActive) break;
+            const paramGroup = registry[key];
+            if (!paramGroup?.request) continue;
+
+            const { canId, data } = paramGroup.request;
+            const responseCanId = paramGroup.response.canId;
+            
+            // Ключ для очікування відповіді
+            const responseKey = `${responseCanId}:22${data.substring(data.length - 4)}`;
+            
+            activeRequests.set(responseKey, {
+                id: key,
+                updateCallback: updateCallback,
+                parser: paramGroup.response.parser
+            });
+
+            await sendCanRequest(canId, data);
+            
+            // Пауза для BLE (даємо час на обробку відповіді)
+            await new Promise(r => setTimeout(r, 40)); 
+        }
+        await new Promise(r => setTimeout(r, 80)); 
+    }
+}
+
+export function startPolling(parameterKeys, registry, updateCallback) {
+    stopAllPolling();
+    if (!parameterKeys?.length) return;
+    isPollingActive = true;
+
+    if (state.connectionType === 'ble') {
+        logMessage("Запуск послідовного опитування (BLE Mode)");
+        startBlePollingLoop(parameterKeys, registry, updateCallback);
+    } else {
+        logMessage("Запуск швидкого опитування (Classic Mode)");
+        const requestGroups = groupParametersByRequest(parameterKeys, registry);
+        startClassicPolling(requestGroups, updateCallback);
+    }
+}
+
+async function sendRequestForParameters(context) {
+    if (!state.isConnected) return;
+    const { request } = context;
+    const param = context.parameters[0];
+    // Формуємо ключ для Classic Serial
+    activeRequests.set(`${param.response.canId}:${request.data}`, context);
+    await sendCanRequest(request.canId, request.data);
+}
+
 function groupParametersByRequest(parameterKeys, registry) {
     const groups = new Map();
-    
     parameterKeys.forEach(key => {
-        const paramGroup = registry[key];
-        if (!paramGroup) {
-            logMessage(`ПОПЕРЕДЖЕННЯ: Параметр "${key}" не знайдено в реєстрі`);
-            return;
-        }
-        
-        // Переконуємось, що це група для опитування (має 'request')
-        if (!paramGroup.request) {
-            return;
-        }
-
-        // Використовуємо сам ключ групи як унікальний
-        if (!groups.has(key)) {
-            groups.set(key, {
-                request: paramGroup.request,
-                parameters: [{
-                    id: key, // 'inverter_info_220301'
-                    ...paramGroup
-                }]
-            });
+        const p = registry[key];
+        if (p?.request && !groups.has(key)) {
+            groups.set(key, { request: p.request, parameters: [{ id: key, ...p }] });
         }
     });
-    
     return Array.from(groups.values());
 }
 
 /**
- * Надсилає запит і реєструє параметри
+ * Ця функція ПОВИННА викликатися з webBluetooth.js та webSerial.js
  */
-async function sendRequestForParameters(context) {
-    const { request } = context;
+export function handleCanResponse(canId, dataHex) {
+    // Отримуємо Mode (62) та PID (напр. 0301)
+    const responseMode = dataHex.substring(0, 2) === '07' ? dataHex.substring(2, 4) : dataHex.substring(0, 2);
+    const responsePid = dataHex.substring(0, 2) === '07' ? dataHex.substring(4, 8) : dataHex.substring(2, 6);
 
-    // 'parameters' - це масив, що містить одну групу (напр. 'inverter_info_220301')
-    const paramGroup = context.parameters[0];
-    const responseCanId = paramGroup.response.canId; // '7BB'
-    const requestPid = paramGroup.request.data;     // '220301'
-    
-    // 1. РЕЄСТРУЄМО СЛУХАЧА ПІД УНІКАЛЬНИМ КЛЮЧЕМ
-    // Ключ = "ID_Відповіді:PID_Запиту" (напр. "7BB:220301")
-    const responseKey = `${responseCanId}:${requestPid}`;
+    if (responseMode !== '62') return;
 
-    // Ми не перевіряємо, чи існує ключ. Ми просто перезаписуємо
-    // контекст очікування щоразу, коли надсилаємо запит.
-    // Це гарантує, що ми чекаємо на відповідь саме на *цей* запит.
-    activeRequests.set(responseKey, context);
-    
-    // logMessage(`Зареєстровано слухача для: ${responseKey}`);
+    const responseKey = `${canId}:22${responsePid}`;
+    const context = activeRequests.get(responseKey);
 
-    // 2. ПОТІМ ВІДПРАВЛЯЄМО ЗАПИТ
-    const success = await sendCanRequest(request.canId, request.data);
-    
-    if (!success) {
-        logMessage(`ПОМИЛКА: не вдалося відправити запит для ${request.canId} (${requestPid})`);
-        // Якщо не вдалося відправити, видаляємо слухача, щоб він не висів вічно
+    if (context) {
+        logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
+        try {
+            // Визначаємо парсер (працює і для об'єкта, і для масиву parameters)
+            const parser = context.parser || context.parameters[0].response.parser;
+            const id = context.id || context.parameters[0].id;
+            
+            const val = parser(dataHex);
+            if (val !== null) context.updateCallback(id, val);
+        } catch (e) {
+            console.error("Помилка парсингу:", e);
+        }
         activeRequests.delete(responseKey);
     }
 }
 
-/**
- * Обробляє вхідну CAN-відповідь
- * Ця функція має викликатися вашим головним CAN-обробником
- */
-export function handleCanResponse(canId, dataHex) {
-    // canId = '7BB'
-    // dataHex = '0762030300000168'
-    
-    // Це відповідь UDS (ISO-15765). Нам потрібно витягти PID.
-    // "62" - це відповідь на "22" (0x22 + 0x40 = 0x62)
-    // "0303" - це PID, який ми запитували.
-    
-    if (dataHex.length < 8) { // Потрібно принаймні "07620301"
-        return; 
-    }
-
-    const responseMode = dataHex.substring(2, 4).toUpperCase(); // "62"
-    const responsePid = dataHex.substring(4, 8).toUpperCase();  // "0301" or "0303"
-    
-    let requestPid;
-    
-    // Конвертуємо "62" -> "22"
-    if (responseMode === '62') {
-        requestPid = '22' + responsePid;
-    } else {
-        // Додайте тут інші правила, якщо вони потрібні
-        // logMessage(`Невідомий режим відповіді: ${responseMode}`);
-        return; 
-    }
-
-    // Створюємо той самий унікальний ключ, що й у sendRequestForParameters
-    const responseKey = `${canId}:${requestPid}`; // "7BB:220301"
-    
-    // Шукаємо *конкретного* слухача
-    const context = activeRequests.get(responseKey);
-    
-    if (!context) {
-        // Немає слухача для цієї відповіді. Це нормально.
-        // Можливо, це відповідь, на яку ми вже не чекаємо, або "шум".
-        return;
-    }
-    
-    logMessage(`[CAN ✓] ID: ${canId} | Key: ${responseKey} | Data: ${dataHex}`);
-    
-    // Ми знайшли ОДИН правильний контекст
-    const paramGroup = context.parameters[0]; // напр. 'inverter_info_220301'
-    
-    try {
-        const parsedValue = paramGroup.response.parser(dataHex);
-        
-        if (parsedValue !== null) {
-            // Викликаємо callback (який є window.uiUpdater.updateUiValue)
-            context.updateCallback(paramGroup.id, parsedValue);
-        }
-
-    } catch (e) {
-        logMessage(`[PARSE PARAM ✗] Помилка парсингу ${paramGroup.id} (key: ${responseKey}): ${e.message}`);
-        console.error(e);
-    }
-    
-    // Очищуємо ТІЛЬКИ ЦЬОГО слухача
-    activeRequests.delete(responseKey);
-}
-
-/**
- * Зупиняє всі активні опитування
- */
 export function stopAllPolling() {
-    if (!state.activePollers) {
+    isPollingActive = false;
+    if (state.activePollers) {
+        state.activePollers.forEach(id => clearInterval(id));
         state.activePollers = [];
     }
-    
-    if (state.activePollers.length > 0) {
-        logMessage("Зупинка опитування...");
-        state.activePollers.forEach(timerId => clearInterval(timerId));
-        state.activePollers = [];
-    }
-    
     activeRequests.clear();
 }
 
-// --- ГОЛОВНЕ ---
-window.pollingManager = {
-    startPolling: startPolling,
-    stopAllPolling: stopAllPolling,
-    handleCanResponse: handleCanResponse
-};
+window.pollingManager = { startPolling, stopAllPolling, handleCanResponse };

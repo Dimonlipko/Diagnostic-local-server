@@ -6,6 +6,7 @@ import { BAUD_RATE } from './config.js';
 import { logMessage, updateUI } from './ui.js'; 
 import { parseCanResponse } from './canProtocol.js';
 import { handleCanResponse, stopAllPolling } from './pollingManager.js';
+import { updateConnectionTabs } from './ui.js';
 
 let lineBuffer = "";
 
@@ -314,6 +315,8 @@ export async function connectAdapter() {
 
         state.isConnected = true; // 💡 ПІДТВЕРДЖЕННЯ: Тепер state.isConnected стає true лише після повної готовності
         logMessage("✓ Стан: Підключено.");
+
+        updateConnectionTabs();
         
         readLoop(); 
         

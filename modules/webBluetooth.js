@@ -1,68 +1,73 @@
+// modules/webBluetooth.js
 import { state } from './state.js';
-import { logMessage } from './ui.js';
+import { logMessage, updateConnectionTabs } from './ui.js';
 import { parseCanResponse } from './canProtocol.js';
 
-export const bluetoothManager = {
-    device: null,
-    characteristic: null,
-    SERVICE_UUID: '0000fff0-0000-1000-8000-00805f9b34fb',
-    CHARACTERISTIC_UUID: '0000fff1-0000-1000-8000-00805f9b34fb',
+export async function connectBleAdapter() {
+    try {
+        logMessage("Пошук BLE пристроїв...");
+        const device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [0xFFF0] }],
+            optionalServices: [0xFFF0]
+        });
 
-    async connect() {
-        try {
-            this.device = await navigator.bluetooth.requestDevice({
-                filters: [{ services: [this.SERVICE_UUID] }]
-            });
+        logMessage(`Підключення до ${device.name}...`);
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(0xFFF0);
 
-            logMessage(`Підключення до ${this.device.name}...`);
-            const server = await this.device.gatt.connect();
-            const service = await server.getPrimaryService(this.SERVICE_UUID);
-            this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
+        // Налаштовуємо канали згідно з тестом
+        const charRead = await service.getCharacteristic(0xFFF1);  // fff1 для вхідних даних
+        const charWrite = await service.getCharacteristic(0xFFF2); // fff2 для вихідних команд
 
-            // Налаштування читання даних
-            await this.characteristic.startNotifications();
-            this.characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                const decoder = new TextDecoder();
-                const rawData = decoder.decode(event.target.value);
-                // Відправляємо дані в ваш основний обробник
-                parseCanResponse(rawData);
-            });
+        state.connectionType = 'ble';
+        state.bleDevice = device;
 
-            // Оновлюємо глобальний стан
-            state.isConnected = true;
-            state.connectionType = 'ble';
-            state.adapterType = 'elm327';
+        // Створюємо універсальний writer
+        state.writer = {
+            write: async (text) => {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                
+                // 💡 ІНДИКАТОР АДАПТЕРА (TX)
+                if (window.uiUpdater && window.uiUpdater.flashAdapterLed) {
+                    window.uiUpdater.flashAdapterLed();
+                }
+
+                await charWrite.writeValueWithoutResponse(data);
+            }
+        };
+
+        // Вмикаємо прослуховування fff1
+        await charRead.startNotifications();
+        charRead.addEventListener('characteristicvaluechanged', (event) => {
+            const decoder = new TextDecoder();
+            const value = decoder.decode(event.target.value);
             
-            // Створюємо "замінник" writer для canProtocol.js
-            state.bleWriter = {
-                write: async (data) => this.send(data)
-            };
+            // 💡 ІНДИКАТОР ШИНИ (RX)
+            if (window.uiUpdater && window.uiUpdater.flashCanLed) {
+                window.uiUpdater.flashCanLed();
+            }
 
-            logMessage("BLE підключено! Можете опитувати авто.");
-            document.getElementById('statusAdapter').classList.add('active');
+            // 1. Відправляємо в парсер для терміналу та виділення ID/Data
+            const parsed = parseCanResponse(value);
 
-        } catch (error) {
-            logMessage(`Помилка BLE: ${error.message}`);
-            state.isConnected = false;
-            throw error;
-        }
-    },
+            // 2. ПЕРЕДАЄМО В МЕНЕДЖЕР ОПИТУВАННЯ
+            if (parsed && parsed.id && parsed.data && window.pollingManager) {
+                window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+            }
+        });
 
-    async send(data) {
-        if (!this.characteristic) return;
-        const encoder = new TextEncoder();
-        // BLE ELM327 зазвичай приймає дані невеликими порціями
-        await this.characteristic.writeValue(encoder.encode(data));
-    },
+        state.isConnected = true;
+        updateConnectionTabs();
+        logMessage("✓ BLE підключено (Режим розділених каналів)");
 
-    async disconnect() {
-        if (this.device && this.device.gatt.connected) {
-            await this.device.gatt.disconnect();
-        }
+        const activePageButton = document.querySelector('.sidebar .nav-button.active');
+        if (activePageButton) activePageButton.click();
+
+        return true;
+    } catch (error) {
+        logMessage(`BLE Помилка: ${error.message}`);
         state.isConnected = false;
-        state.connectionType = null;
-        state.bleWriter = null;
-        logMessage("BLE роз'єднано.");
-        document.getElementById('statusAdapter').classList.remove('active');
+        return false;
     }
-};
+}

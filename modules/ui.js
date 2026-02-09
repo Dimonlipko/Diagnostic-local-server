@@ -27,7 +27,9 @@ export async function loadPage(pageFile) {
     console.log(`Завантаження сторінки: ${pageFile}`);
     
     // Завжди зупиняємо старе опитування перед зміною сторінки
-    stopAllPolling(); 
+    if (window.pollingManager) {
+        window.pollingManager.stopAllPolling(); 
+    }
     
     try {
         const response = await fetch(pageFile);
@@ -45,35 +47,41 @@ export async function loadPage(pageFile) {
         if (logElement) {
             logElement.textContent = state.terminalLog;
         }
-           
+            
         translatePage();
 
-        // --- ЛОГІКА КЕРУВАННЯ ОПИТУВАННЯМ ---
+        // --- ЛОГІКА КЕРУВАННЯ ОПИТУВАННЯМ (ОНОВЛЕНО) ---
         
-        // Перевіряємо, чи ми підключені (через Serial або BLE)
-        const isConnected = !!(state.port || state.bleWriter); 
-        // Визначаємо сторінки, на яких опитування ЗАБОРОНЕНО
-        // Оскільки pageFile може містити шлях 'pages/terminal.html', використовуємо .includes()
+        // 💡 Використовуємо state.isConnected — це найнадійніший прапорець
+        const isConnected = state.isConnected; 
+
+        // Визначаємо "тихі" сторінки
         const isSilentPage = pageFile.includes('terminal.html') || pageFile.includes('update.html');
 
         if (isConnected && !isSilentPage) { 
+            // Збираємо ключі (data-bind) з нової сторінки
             const requiredKeys = getRequiredKeysFromDOM(pageContainer);
             
-            console.log(`[PageLoader] Запуск опитування для ${requiredKeys.size} параметрів...`, Array.from(requiredKeys));
-            
-            if (window.pollingManager && PARAMETER_REGISTRY) {
-                window.pollingManager.startPolling(
-                    Array.from(requiredKeys),
-                    PARAMETER_REGISTRY,
-                    updateUiValue
-                );
+            if (requiredKeys.size > 0) {
+                console.log(`[PageLoader] Запуск опитування для ${requiredKeys.size} параметрів...`, Array.from(requiredKeys));
+                
+                // 💡 Перевіряємо наявність менеджера та реєстру (з window)
+                if (window.pollingManager && window.PARAMETER_REGISTRY) {
+                    window.pollingManager.startPolling(
+                        Array.from(requiredKeys),
+                        window.PARAMETER_REGISTRY,
+                        updateUiValue
+                    );
+                } else {
+                    console.error('[PageLoader] pollingManager або PARAMETER_REGISTRY не знайдено.');
+                }
             } else {
-                const errorMsg = '[PageLoader] pollingManager не доступний.';
-                console.error(errorMsg);
-                logMessage(`ПОМИЛКА: ${errorMsg}`);
+                console.log(`[PageLoader] На сторінці не знайдено елементів для опитування.`);
             }
         } else if (isSilentPage) {
             console.log(`[PageLoader] Опитування вимкнено для сторінки: ${pageFile}`);
+        } else {
+            console.log(`[PageLoader] Адаптер не підключено, опитування не запускається.`);
         }
 
     } catch (error) {
@@ -262,6 +270,24 @@ function updateUiValue(rootKey, data) {
             }
         }
     });
+}
+
+export function updateConnectionTabs() {
+    const btnBT = document.getElementById('btnConnectSerial');
+    const btnBLE = document.getElementById('btnConnectBle');
+    
+    if (!btnBT || !btnBLE) return;
+
+    btnBT.classList.remove('active');
+    btnBLE.classList.remove('active');
+
+    if (state.isConnected) {
+        if (state.connectionType === 'ble') {
+            btnBLE.classList.add('active');
+        } else {
+            btnBT.classList.add('active');
+        }
+    }
 }
 
 function setElementValue(element, value) {

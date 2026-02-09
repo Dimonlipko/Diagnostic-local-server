@@ -4,67 +4,49 @@ import { logMessage } from './ui.js';
 /**
  * УНІВЕРСАЛЬНА функція відправки CAN-запиту
  */
-export async function sendCanRequest(canId, data) {
-    // 1. Отримуємо актуальний writer зі стану
-    const writer = state.writer || state.bleWriter;
+let isWriting = false; 
 
-    // 2. Перевірка наявності writer перед спробою запису
-    if (!writer) {
-        console.error("[Protocol] Помилка: Writer не знайдено в state.");
-        return false;
+/**
+ * Універсальна функція відправки CAN-запиту.
+ * Забезпечує послідовність операцій для BLE та Serial.
+ */
+export async function sendCanRequest(canId, data) {
+    const writer = state.writer;
+    if (!writer) return false;
+
+    // Простий замок: якщо лінія зайнята, чекаємо трохи
+    if (isWriting) {
+        await new Promise(r => setTimeout(r, 50));
+        if (isWriting) return false; 
     }
-    
+
+    isWriting = true;
+
     try {
-        // 3. Якщо передано canId, встановлюємо заголовок (для ELM327)
         if (canId) {
-            state.lastRequestId = canId.toUpperCase();
+            // Встановлюємо ID (ATSH)
             await writer.write(`ATSH${canId}\r`);
-            
-            // Маленька затримка між командами для стабільності
-            const delay = state.connectionType === 'ble' ? 50 : 20;
-            await new Promise(resolve => setTimeout(resolve, delay));
+            // Пауза для BLE, щоб адаптер встиг змінити заголовок
+            await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 20));
         }
-        
-        // 4. Відправляємо основні дані
+
+        // Відправляємо дані (PID)
         await writer.write(`${data}\r`);
+        
+        // Даємо адаптеру час обробити команду перед наступним запитом
+        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 150 : 50));
+        
         return true;
     } catch (e) {
-        // Виводимо помилку в лог інтерфейсу
-        if (typeof logMessage === 'function') {
-            logMessage(`Помилка відправки: ${e.message}`);
-        }
         console.error(`[Protocol] Помилка запису:`, e);
         return false;
+    } finally {
+        isWriting = false; 
     }
 }
 
 /**
- * Відправка для ELM327
- */
-async function sendCanRequest_ELM327(canId, data, writer) {
-    // Якщо canId передано (запит до авто), встановлюємо заголовок
-    if (canId) {
-        state.lastRequestId = canId.toUpperCase();
-        await writer.write(`ATSH${canId}\r`);
-        const delay = state.connectionType === 'ble' ? 30 : 15;
-        await new Promise(resolve => setTimeout(resolve, delay));
-    }
-    
-    // Відправляємо самі дані (або пряму команду терміналу)
-    await writer.write(`${data}\r`);
-}
-
-/**
- * Відправка для SLCAN
- */
-async function sendCanRequest_SLCAN(canId, data) {
-    const dlc = (data.length / 2).toString(16);
-    const message = `t${canId}${dlc}${data}\r`;
-    await state.writer.write(message);
-}
-
-/**
- * УНІВЕРСАЛЬНА функція парсингу CAN-відповіді
+ * Головна функція парсингу, яка об’єднує термінал та логіку даних
  */
 export function parseCanResponse(line) {
     let cleanLine = line.trim();
@@ -73,15 +55,14 @@ export function parseCanResponse(line) {
     }
     if (!cleanLine) return null;
 
-    // 1. Визначаємо, чи ми на сторінці терміналу
+    // Перевірка активної сторінки для фільтрації RAW логів
     const isTerminalPage = !!document.querySelector('.terminal-container') || 
                           !!document.getElementById('terminal-output');
 
-    // 2. Викликаємо твій детальний парсер для перевірки на CAN-пакет
+    // Викликаємо твій оригінальний парсер
     const parsed = parseCanResponse_ELM327(cleanLine);
 
-    // 3. ЛОГІКА ТЕРМІНАЛУ:
-    // Показуємо в терміналі тільки те, що НЕ є CAN-пакетом (команди, вольтаж, помилки)
+    // У терміналі показуємо все, що НЕ є розпізнаним CAN-пакетом
     if (isTerminalPage && !parsed) {
         logMessage(`[RAW IN]: ${cleanLine}`);
     }
@@ -90,55 +71,38 @@ export function parseCanResponse(line) {
 }
 
 /**
- * Твій перевірений парсер ELM327 (інтегрований)
+ * Твій оригінальний парсер ELM327
  */
 function parseCanResponse_ELM327(line) {
-    // Очищаємо від можливих залишків промпта для надійності
     const clean = line.replace('>', '').trim();
 
-    // Перевіряємо чи це не ехо нашої команди
     if (clean.startsWith('ATSH') || clean.match(/^[0-9A-F]{6,}$/i)) {
-        if (clean.match(/^[0-9A-F]{6}$/i)) {
-            return null; // Це ехо запиту типу "220301"
-        }
+        if (clean.match(/^[0-9A-F]{6}$/i)) return null; 
     }
     
     const parts = clean.split(' ');
     
-    // Формат 1: "7BB 62 03 01 ..." (ID + дані з пробілами)
+    // Формат 1: "7BB 62 03 01 ..."
     if (parts.length >= 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
-        const id = parts[0].toUpperCase();
-        const data = parts.slice(1).join('').toUpperCase();
-        return { id, data };
+        return { id: parts[0].toUpperCase(), data: parts.slice(1).join('').toUpperCase() };
     }
     
-    // Формат 2: "7BB62030101..." (ID + дані без пробілів)
+    // Формат 2: "7BB62030101..."
     if (parts.length === 1 && clean.length > 3) {
         const possibleId = clean.substring(0, 3).toUpperCase();
         if (/^[0-9A-F]{3}$/i.test(possibleId)) {
-            const data = clean.substring(3).toUpperCase();
-            return { id: possibleId, data };
+            return { id: possibleId, data: clean.substring(3).toUpperCase() };
         }
     }
     
-    // Формат 3: "62 03 01 FF FF..." (без ID, базуємось на lastRequestId)
+    // Формат 3: "62 03 01..." (без ID)
     if (parts.length >= 2 && /^[0-9A-F]{2}$/i.test(parts[0]) && /^[0-9A-F]{2}$/i.test(parts[1])) {
         if (state.lastRequestId) {
             const data = clean.split(' ').join('').toUpperCase();
-            const responseId = mapRequestToResponseId(state.lastRequestId);
-            return { id: responseId, data };
+            const responseId = (state.lastRequestId === '79B') ? '7BB' : state.lastRequestId;
+            return { id: responseId, data: data };
         }
     }
     
     return null;
-}
-
-/**
- * Допоміжна функція для мапінгу ID (якщо вона у тебе була)
- */
-function mapRequestToResponseId(reqId) {
-    // Наприклад, запит 79B -> відповідь 7BB
-    if (reqId === '79B') return '7BB';
-    if (reqId === '7E0') return '7E8';
-    return reqId; 
 }
