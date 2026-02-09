@@ -24,6 +24,8 @@ export async function sendCanRequest(canId, data) {
 
     try {
         if (canId) {
+            
+            state.lastRequestId = canId;
             // Встановлюємо ID (ATSH)
             await writer.write(`ATSH${canId}\r`);
             // Пауза для BLE, щоб адаптер встиг змінити заголовок
