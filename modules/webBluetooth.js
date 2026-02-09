@@ -1,7 +1,9 @@
 // modules/webBluetooth.js
 import { state } from './state.js';
-import { logMessage, updateConnectionTabs } from './ui.js';
+import { logMessage, updateConnectionTabs, uiUpdater } from './ui.js';
 import { parseCanResponse } from './canProtocol.js';
+
+let bleBuffer = ""; 
 
 export async function connectBleAdapter() {
     try {
@@ -11,63 +13,61 @@ export async function connectBleAdapter() {
             optionalServices: [0xFFF0]
         });
 
-        logMessage(`Підключення до ${device.name}...`);
         const server = await device.gatt.connect();
         const service = await server.getPrimaryService(0xFFF0);
-
-        // Налаштовуємо канали згідно з тестом
-        const charRead = await service.getCharacteristic(0xFFF1);  // fff1 для вхідних даних
-        const charWrite = await service.getCharacteristic(0xFFF2); // fff2 для вихідних команд
+        const charRead = await service.getCharacteristic(0xFFF1);
+        const charWrite = await service.getCharacteristic(0xFFF2);
 
         state.connectionType = 'ble';
         state.bleDevice = device;
 
-        // Створюємо універсальний writer
         state.writer = {
             write: async (text) => {
+                if (uiUpdater?.flashAdapterLed) uiUpdater.flashAdapterLed();
                 const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                
-                // 💡 ІНДИКАТОР АДАПТЕРА (TX)
-                if (window.uiUpdater && window.uiUpdater.flashAdapterLed) {
-                    window.uiUpdater.flashAdapterLed();
-                }
-
-                await charWrite.writeValueWithoutResponse(data);
+                await charWrite.writeValueWithoutResponse(encoder.encode(text));
             }
         };
 
-        // Вмикаємо прослуховування fff1
         await charRead.startNotifications();
+        
         charRead.addEventListener('characteristicvaluechanged', (event) => {
             const decoder = new TextDecoder();
-            const value = decoder.decode(event.target.value);
+            const chunk = decoder.decode(event.target.value);
             
-            // 💡 ІНДИКАТОР ШИНИ (RX)
-            if (window.uiUpdater && window.uiUpdater.flashCanLed) {
-                window.uiUpdater.flashCanLed();
-            }
+            // 🔍 ДЕБАГ: Виводимо кожен фізичний пакет у термінал
+            // Це покаже, чи Android справді "ріже" дані по 20 байт
+            logMessage(`[BLE CHUNK]: "${chunk.replace(/\r/g, '\\r').replace(/\n/g, '\\n')}"`);
 
-            // 1. Відправляємо в парсер для терміналу та виділення ID/Data
-            const parsed = parseCanResponse(value);
+            bleBuffer += chunk;
 
-            // 2. ПЕРЕДАЄМО В МЕНЕДЖЕР ОПИТУВАННЯ
-            if (parsed && parsed.id && parsed.data && window.pollingManager) {
-                window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+            // Чекаємо на символ завершення від ELM327
+            if (bleBuffer.includes('>')) {
+                const cleanResponse = bleBuffer.replace(/>/g, '').trim();
+                
+                logMessage(`[BLE FULL]: ${cleanResponse}`); // Повна зібрана відповідь
+
+                if (uiUpdater?.flashCanLed) uiUpdater.flashCanLed();
+
+                const parsed = parseCanResponse(cleanResponse);
+                if (parsed && parsed.id && parsed.data && window.pollingManager) {
+                    window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+                }
+
+                bleBuffer = ""; // Очищення для наступної команди
             }
         });
 
         state.isConnected = true;
         updateConnectionTabs();
-        logMessage("✓ BLE підключено (Режим розділених каналів)");
-
+        logMessage("✓ BLE підключено");
+        
         const activePageButton = document.querySelector('.sidebar .nav-button.active');
         if (activePageButton) activePageButton.click();
 
         return true;
     } catch (error) {
         logMessage(`BLE Помилка: ${error.message}`);
-        state.isConnected = false;
         return false;
     }
 }
