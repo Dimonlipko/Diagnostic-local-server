@@ -14,7 +14,6 @@ export async function sendCanRequest(canId, data) {
     const writer = state.writer;
     if (!writer) return false;
 
-    // Простий замок: якщо лінія зайнята, чекаємо трохи
     if (isWriting) {
         await new Promise(r => setTimeout(r, 50));
         if (isWriting) return false; 
@@ -24,22 +23,20 @@ export async function sendCanRequest(canId, data) {
 
     try {
         if (canId) {
-            // 💡 ЗАПАМ'ЯТОВУЄМО ID: Це критично для Android, щоб парсер знав, 
-            // що відповідь "62..." належить саме цьому блоку (напр. 7BB)
-            state.lastRequestId = canId;
+            // 💡 Встановлюємо ID ПЕРЕД відправкою команди ATSH
+            state.lastRequestId = canId.toUpperCase();
 
-            // Встановлюємо ID (ATSH)
             await writer.write(`ATSH${canId}\r`);
             
-            // Оптимізація: 80мс зазвичай достатньо для зміни заголовка в BLE
-            await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 80 : 20));
+            // Трохи більше часу для Android BLE на перемикання заголовка
+            await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 20));
         }
 
-        // Відправляємо дані (PID)
+        // Відправляємо PID
         await writer.write(`${data}\r`);
         
-        // Оптимізація: зменшуємо до 120мс для BLE (замість 150)
-        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 120 : 50));
+        // Час на отримання відповіді та обробку адаптером
+        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 150 : 50));
         
         return true;
     } catch (e) {
