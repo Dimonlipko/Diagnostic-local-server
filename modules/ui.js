@@ -242,6 +242,27 @@ export function updateUI(id, data) {
     console.log(`updateUI викликано (застаріла): ID=${id}, Data=${data}`);
 }
 
+export const uiUpdater = {
+    flashAdapterLed: () => {
+        const led = document.getElementById('indicator-adapter');
+        if (led) {
+            led.classList.add('active-tx');
+            setTimeout(() => led.classList.remove('active-tx'), 60);
+        }
+    },
+    flashCanLed: () => {
+        const led = document.getElementById('indicator-can');
+        if (led) {
+            led.classList.add('active-rx');
+            setTimeout(() => led.classList.remove('active-rx'), 60);
+        }
+    },
+    updateUiValue: updateUiValue 
+};
+
+// Для зворотної сумісності, якщо інші модулі шукають його в window
+window.uiUpdater = uiUpdater;
+
 /**
  * Оновлює UI для конкретного параметра
  */
