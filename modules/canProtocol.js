@@ -10,6 +10,8 @@ let isWriting = false;
  * Універсальна функція відправки CAN-запиту.
  * Забезпечує послідовність операцій для BLE та Serial.
  */
+let lastSetHeader = "";
+
 export async function sendCanRequest(canId, data) {
     const writer = state.writer;
     if (!writer) return false;
@@ -24,19 +26,25 @@ export async function sendCanRequest(canId, data) {
 
     try {
         if (canId) {
-            
-            state.lastRequestId = canId;
-            // Встановлюємо ID (ATSH)
-            await writer.write(`ATSH${canId}\r`);
-            // Пауза для BLE, щоб адаптер встиг змінити заголовок
-            await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 20));
+            // 💡 ПЕРЕВІРКА: Шлемо ATSH тільки якщо ID змінився
+            if (canId !== lastSetHeader) {
+                state.lastRequestId = canId;
+                // Встановлюємо ID (ATSH)
+                await writer.write(`ATSH${canId}\r`);
+                
+                // Пауза потрібна ТІЛЬКИ при зміні заголовка
+                await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 20));
+                
+                lastSetHeader = canId; // Запам'ятовуємо новий ID
+            }
         }
 
         // Відправляємо дані (PID)
         await writer.write(`${data}\r`);
         
         // Даємо адаптеру час обробити команду перед наступним запитом
-        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 150 : 50));
+        // Для реактивного циклу BLE цю паузу можна спробувати зменшити до 50-80мс пізніше
+        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 40));
         
         return true;
     } catch (e) {

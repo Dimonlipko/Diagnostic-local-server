@@ -35,32 +35,58 @@ function startClassicPolling(requestGroups, updateCallback) {
  * Послідовна логіка для BLE (Один за одним)
  */
 async function startBlePollingLoop(parameterKeys, registry, updateCallback) {
-    logMessage("Головний цикл BLE запущено.");
-    while (isPollingActive && state.connectionType === 'ble') {
-        for (const key of parameterKeys) {
-            if (!isPollingActive) break;
-            const paramGroup = registry[key];
-            if (!paramGroup?.request) continue;
+    logMessage("[Polling] Запуск реактивного циклу BLE...");
+    isPollingActive = true;
+    
+    let currentIndex = 0;
 
+    const pollNext = async () => {
+        if (!isPollingActive || state.connectionType !== 'ble') return;
+
+        const key = parameterKeys[currentIndex];
+        const paramGroup = registry[key];
+
+        if (paramGroup?.request) {
             const { canId, data } = paramGroup.request;
             const responseCanId = paramGroup.response.canId;
-            
-            // Ключ для очікування відповіді
             const responseKey = `${responseCanId}:22${data.substring(data.length - 4)}`;
-            
+
             activeRequests.set(responseKey, {
                 id: key,
                 updateCallback: updateCallback,
-                parser: paramGroup.response.parser
+                parser: paramGroup.response.parser,
+                // Додаємо callback, який викличе наступний крок
+                onComplete: () => {
+                    currentIndex = (currentIndex + 1) % parameterKeys.length;
+                    // Мінімальна пауза 10мс, щоб не "забити" залізо
+                    setTimeout(pollNext, 5); 
+                }
             });
 
             await sendCanRequest(canId, data);
-            
-            // Пауза для BLE (даємо час на обробку відповіді)
-            await new Promise(r => setTimeout(r, 40)); 
+        } else {
+            // Якщо параметра немає в реєстрі, йдемо далі
+            currentIndex = (currentIndex + 1) % parameterKeys.length;
+            pollNext();
         }
-        await new Promise(r => setTimeout(r, 80)); 
-    }
+    };
+
+    // Запускаємо перший запит
+    pollNext();
+
+    // Захисний таймер: якщо відповідь не прийшла протягом 300мс, штовхаємо чергу далі
+    const watchdog = setInterval(() => {
+        if (!isPollingActive) {
+            clearInterval(watchdog);
+            return;
+        }
+        // Якщо черга "зависла" (наприклад, пакет загубився)
+        currentIndex = (currentIndex + 1) % parameterKeys.length;
+        pollNext();
+    }, 500);
+
+    if (!state.activePollers) state.activePollers = [];
+    state.activePollers.push(watchdog);
 }
 
 export function startPolling(parameterKeys, registry, updateCallback) {
@@ -143,6 +169,11 @@ export function handleCanResponse(canId, dataHex) {
         } catch (e) {
             console.error("Помилка парсингу:", e);
         }
+        
+        if (context.onComplete) {
+            context.onComplete(); 
+        }
+
         // Видаляємо запит з активних, щоб звільнити місце для наступного кола
         activeRequests.delete(responseKey);
     }

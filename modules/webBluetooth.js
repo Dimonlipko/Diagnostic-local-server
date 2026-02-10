@@ -81,6 +81,7 @@ export async function connectBleAdapter() {
             { cmd: "ATL0", desc: "Вимкнення переносів (Linefeeds)", wait: 300 },
             { cmd: "ATH1", desc: "Заголовки (ID) ON", wait: 300 },
             { cmd: "ATSP6", desc: "Встановлення протоколу CAN", wait: 400 },
+            { cmd: "ATST10", desc: "Adaptive Timeout (Fast)", wait: 100 },
             { cmd: "ATSH79B", desc: "Встановлення ID запиту", wait: 300 }
         ];
 
