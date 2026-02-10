@@ -128,59 +128,53 @@ function groupParametersByRequest(parameterKeys, registry) {
  * Ця функція ПОВИННА викликатися з webBluetooth.js та webSerial.js
  */
 export function handleCanResponse(canId, dataHex) {
-    // 1. ПЕРЕВІРКА НА СМІТТЯ (мінімальна довжина для UDS відповіді)
+    // 1. ПЕРЕВІРКА НА СМІТТЯ
     if (!dataHex || dataHex.length < 10) return; 
 
-    // 2. ПЕРЕВІРКА ЦІЛІСНОСТІ (Твій підхід по першому байту)
+    // 2. ПЕРЕВІРКА ЦІЛІСНОСТІ (PCI byte)
     const pciLength = parseInt(dataHex.substring(0, 2), 16);
     const actualDataBytes = dataHex.substring(2).length / 2;
+    if (pciLength !== actualDataBytes) return;
 
-    // Якщо довжина в першому байті не збігається з отриманою - ігноруємо
-    if (pciLength !== actualDataBytes) {
-        // console.warn(`[Polling] Неповний пакет: PCI ${pciLength} != Data ${actualDataBytes}`);
-        return;
-    }
-
-    // 3. ВИЗНАЧЕННЯ MODE ТА PID (З урахуванням того, що PCI на початку)
-    // dataHex: [PCI][Mode][PID_H][PID_L]...
-    // індекси:  01   23    45     67
+    // 3. ВИЗНАЧЕННЯ MODE ТА PID
     const responseMode = dataHex.substring(2, 4);
     const responsePid = dataHex.substring(4, 8);
-
     if (responseMode !== '62') return;
 
+    // Створюємо ключ, щоб знайти контекст запиту
     const responseKey = `${canId}:22${responsePid}`;
     const context = activeRequests.get(responseKey);
 
-    if (context) {
-        logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
-        try {
-            // Визначаємо парсер
-            const parser = context.parser || context.parameters[0].response.parser;
-            const id = context.id || context.parameters[0].id;
-            
-            // 💡 ПЕРЕДАЄМО ПОВНИЙ dataHex (з 07/05 на початку)
-            // Тепер твої substring(8, 10) у parameterRegistry знову працюватимуть!
-            const val = parser(dataHex); 
-            
-            if (val !== null) {
-                context.updateCallback(id, val);
-            }
-        } catch (e) {
-            console.error("Помилка парсингу:", e);
-        }
-        
-        if (context.onComplete) {
-            context.onComplete(); 
-        }
-
-        // Видаляємо запит з активних, щоб звільнити місце для наступного кола
-        activeRequests.delete(responseKey);
+    // 💡 КЛЮЧОВА ЗМІНА: Перевірка на відповідність ID
+    // Якщо прийшло "792", а ми чекаємо "7BB", context буде undefined
+    if (!context) {
+        // console.log(`[Filter] Ігноруємо чужі дані: ID ${canId}`);
+        return; 
     }
+
+    // Якщо ми тут, значить ID збігся (напр. 7BB) і PID наш
+    logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
+    
+    try {
+        const parser = context.parser || (context.parameters && context.parameters[0].response.parser);
+        const id = context.id || (context.parameters && context.parameters[0].id);
+        
+        const val = parser(dataHex); 
+        if (val !== null) {
+            context.updateCallback(id, val);
+        }
+    } catch (e) {
+        console.error("Помилка парсингу:", e);
+    }
+
+    if (context.onComplete) context.onComplete();
+    activeRequests.delete(responseKey);
 }
 
 export function stopAllPolling() {
     isPollingActive = false;
+    //isWriting = false;
+    state.lastSetHeader = "";
     if (state.activePollers) {
         state.activePollers.forEach(id => clearInterval(id));
         state.activePollers = [];

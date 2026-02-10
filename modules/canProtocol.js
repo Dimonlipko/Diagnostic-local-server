@@ -1,24 +1,19 @@
 import { state } from './state.js';
 import { logMessage } from './ui.js';
 
-/**
- * УНІВЕРСАЛЬНА функція відправки CAN-запиту
- */
-let isWriting = false; 
 
-/**
- * Універсальна функція відправки CAN-запиту.
- * Забезпечує послідовність операцій для BLE та Serial.
- */
-let lastSetHeader = "";
+let isWriting = false;
 
 export async function sendCanRequest(canId, data) {
     const writer = state.writer;
     if (!writer) return false;
 
-    // Простий замок: якщо лінія зайнята, чекаємо трохи
-    if (isWriting) {
-        await new Promise(r => setTimeout(r, 50));
+    const isBle = state.connectionType === 'ble';
+
+    // 1. ЗАМОК (Тільки для BLE)
+    // Для Classic ми не блокуємо запити, щоб не переривати паралельні інтервали
+    if (isBle && isWriting) {
+        await new Promise(r => setTimeout(r, 20));
         if (isWriting) return false; 
     }
 
@@ -26,25 +21,26 @@ export async function sendCanRequest(canId, data) {
 
     try {
         if (canId) {
-            // 💡 ПЕРЕВІРКА: Шлемо ATSH тільки якщо ID змінився
-            if (canId !== lastSetHeader) {
+            // Оптимізація заголовка ТІЛЬКИ для BLE
+            if (!isBle || canId !== state.lastSetHeader) {
                 state.lastRequestId = canId;
-                // Встановлюємо ID (ATSH)
                 await writer.write(`ATSH${canId}\r`);
                 
-                // Пауза потрібна ТІЛЬКИ при зміні заголовка
-                await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 20));
+                // Classic: 20мс (як було), BLE: 60мс (для стабільності)
+                await new Promise(r => setTimeout(r, isBle ? 60 : 20));
                 
-                lastSetHeader = canId; // Запам'ятовуємо новий ID
+                if (isBle) state.lastSetHeader = canId;
             }
         }
 
-        // Відправляємо дані (PID)
+        // 2. ВІДПРАВКА ДАНИХ
         await writer.write(`${data}\r`);
         
-        // Даємо адаптеру час обробити команду перед наступним запитом
-        // Для реактивного циклу BLE цю паузу можна спробувати зменшити до 50-80мс пізніше
-        await new Promise(r => setTimeout(r, state.connectionType === 'ble' ? 100 : 40));
+        // 3. ПАУЗА ПІСЛЯ ЗАПИТУ
+        // Classic: твої робочі 50мс
+        // BLE: ТІЛЬКИ 20мс (решту часу ми чекаємо в реактивній черзі)
+        const postWait = isBle ? 20 : 50; 
+        await new Promise(r => setTimeout(r, postWait));
         
         return true;
     } catch (e) {
