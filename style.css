@@ -8,7 +8,6 @@
 
 body, html {
     height: 100%;
-    /* ВИКОРИСТОВУЄМО ЧИСТИЙ ШРИФТ ДЛЯ ВСЬОГО САЙТУ */
     font-family: 'Roboto', sans-serif; 
     background-color: #f0f2f5;
     color: #333;
@@ -53,7 +52,6 @@ body {
 }
 .sidebar-title small {
     color: #aaa; 
-    /* ТІЛЬКИ ТУТ ЗАЛИШАЄМО ORBITRON */
     font-family: 'Orbitron', sans-serif; 
     font-size: 0.9em; 
     font-weight: 400; 
@@ -75,7 +73,11 @@ body {
     color: #ccc;
     font-size: 1.05em; 
     cursor: pointer;
+    
+    /* ЗМІНЕНО: Додано прозорі рамки зверху і знизу, щоб текст не скакав */
+    border-top: 2px solid transparent;
     border-bottom: 2px solid transparent;
+    
     text-align: left; 
     display: flex; 
     align-items: center;
@@ -89,12 +91,16 @@ body {
     width: 20px;
     height: 20px;
     object-fit: contain;
-    /* fill: currentColor; */ 
 }
 
 .sidebar button.nav-button:hover { background-color: #444; }
-/* Використовуємо #00DDC0 для активного стану в сайдбарі */
-.sidebar button.nav-button.active { border-bottom: 2px solid #00DDC0; color: white; }
+
+/* ЗМІНЕНО: Додано border-top для активного стану */
+.sidebar button.nav-button.active { 
+    border-top: 2px solid #00DDC0;
+    border-bottom: 2px solid #00DDC0; 
+    color: white; 
+}
 
 /* --- СТИЛІ ДЛЯ ПІДМЕНЮ (В БІЧНОМУ МЕНЮ - СТАРЕ) --- */
 .has-submenu > .nav-button {
@@ -159,7 +165,6 @@ body {
     margin-right: 5px;
     transition: background-color 0.3s;
 }
-/* Зелений статус залишаємо зеленим (бо це "OK"), або міняємо на бірюзовий за бажанням. Залишу стандартний зелений для статусу підключення */
 .status-light.connected { background-color: #28a745; }
 .status-light.receiving { background-color: #ffc107; animation: pulse 1s infinite; }
 .status-label { margin-right: 10px; }
@@ -180,34 +185,49 @@ body {
 
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-/* СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ */
+/* --- СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ (ОНОВЛЕНО) --- */
 .lang-switcher {
     margin-left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
 }
+
 .lang-switcher button {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.5em; 
-    opacity: 0.6; 
-    transition: opacity 0.2s;
-    padding: 0 5px; 
+    padding: 0;
+    
+    color: #999; /* Сірий для неактивного */
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    
+    transition: all 0.2s;
 }
+
+/* ЗМІНЕНО: При наведенні стає темно-сірим */
 .lang-switcher button:hover {
-    opacity: 1;
+    color: #555; 
 }
+
+/* ЗМІНЕНО: Активна мова - Чорна */
 .lang-switcher button.active {
-    opacity: 1; 
-    text-decoration: none; 
+    color: #000000; 
+    font-weight: 700;
 }
-.lang-switcher span {
-    color: #ccc;
-    font-size: 1.5em;
-    vertical-align: middle;
+
+.lang-separator {
+    color: #ddd; 
+    font-size: 1.2rem;
+    font-weight: 300;
+    user-select: none;
 }
 
 /* ============================================================ */
-/* === НОВІ СТИЛІ ПІДМЕНЮ (TESLA TOOLBOX 3.0 STYLE) === */
+/* === СТИЛІ ПІДМЕНЮ (TESLA TOOLBOX 3.0 STYLE) === */
 /* ============================================================ */
 
 #dynamic-sub-menu {
@@ -234,7 +254,6 @@ body {
     border-radius: 4px;
     padding: 10px 16px;
     
-    /* Чистий шрифт */
     font-family: 'Roboto', sans-serif; 
     font-size: 0.95rem;
     font-weight: 500;
@@ -249,7 +268,6 @@ body {
     justify-content: center;
     gap: 8px; 
     
-    /* Гнучкість */
     flex: 1 1 auto; 
     text-align: center;
     min-width: 120px; 
@@ -286,15 +304,15 @@ body {
 
 /* === АКТИВНА КНОПКА (Світла тема + Бірюзовий акцент) === */
 .sub-menu-btn.active {
-    background-color: rgba(0, 221, 192, 0.15); /* Прозорий бірюзовий */
-    border-color: #00DDC0;     /* Бірюзова рамка */
-    color: #000000;            /* Чорний текст */
+    background-color: rgba(0, 221, 192, 0.15); 
+    border-color: #00DDC0;     
+    color: #000000;            
     font-weight: bold;
 }
 
 .sub-menu-btn.active svg {
     opacity: 1;
-    stroke: #000000; /* Чорна іконка для контрасту з текстом */
+    stroke: #000000; 
     stroke-width: 2.5px;
 }
 
@@ -316,7 +334,7 @@ body {
 .page-content.active { display: block; }
 h2 { margin-bottom: 15px; font-weight: 500; }
 
-/* --- СТИЛІ КНОПОК ЗАПИСУ (ОНОВЛЕНО) --- */
+/* --- СТИЛІ КНОПОК ЗАПИСУ --- */
 .write-button {
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
@@ -335,19 +353,19 @@ h2 { margin-bottom: 15px; font-weight: 500; }
 
 /* Ховер ефект для кнопок запису: СІРИЙ */
 .write-button:hover {
-    background-color: #f0f0f0; /* Сірий фон */
-    border-color: #cccccc;     /* Сіра рамка */
-    color: #000000;            /* Чорний текст */
+    background-color: #f0f0f0; 
+    border-color: #cccccc;     
+    color: #000000;            
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Активний стан (клік): ВДАВЛЕННЯ БЕЗ ІНВЕРСІЇ */
 .write-button:active {
-    background-color: #d0f2ef; /* Легкий бірюзовий відтінок */
+    background-color: #d0f2ef; 
     border-color: #00DDC0;
-    color: #000000;            /* Чорний текст */
+    color: #000000;            
     transform: translateY(1px);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Внутрішня тінь */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); 
 }
 
 /* --- Стилі для полів вводу (ПРИБРАНО ЧОРНУ РАМКУ) --- */
@@ -362,13 +380,12 @@ input[type="text"], input[type="number"], select {
 
 /* Стиль при фокусі (натисканні) */
 input[type="text"]:focus, input[type="number"]:focus, select:focus {
-    outline: none; /* Прибирає стандартну чорну рамку браузера */
-    border-color: #00DDC0; /* Бірюзова рамка */
-    box-shadow: 0 0 0 2px rgba(0, 221, 192, 0.2); /* Легке бірюзове світіння */
+    outline: none; 
+    border-color: #00DDC0; 
+    box-shadow: 0 0 0 2px rgba(0, 221, 192, 0.2); 
 }
 
 input[readonly] { background-color: #f5f5f5; color: #555; }
-/* Readonly поля не повинні світитися */
 input[readonly]:focus {
     border-color: #ccc;
     box-shadow: none;
@@ -376,7 +393,7 @@ input[readonly]:focus {
 
 label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
 
-/* Група кнопок ON/OFF (також оновлено на бірюзовий) */
+/* Група кнопок ON/OFF */
 .button-group { display: flex; margin-top: 5px; }
 .button-group button {
     flex-grow: 1;
@@ -387,7 +404,7 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     font-weight: 500;
 }
 .button-group button.active {
-    background-color: #00DDC0; /* Бірюзовий фон */
+    background-color: #00DDC0; 
     color: white;
     border-color: #00DDC0;
 }
@@ -543,10 +560,16 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
         width: 100%;
         padding: 15px 25px;
         font-size: 1em;
+        /* ЗМІНЕНО: Прозора рамка для десктопу також */
+        border-top: 1px solid transparent;
         border-bottom: 1px solid #444;
         align-items: center; 
     }
-    .sidebar button.nav-button.active { border-bottom: 1px solid #00DDC0; }
+    /* ЗМІНЕНО: Додано border-top для активного стану на десктопі */
+    .sidebar button.nav-button.active { 
+        border-top: 2px solid #00DDC0;
+        border-bottom: 2px solid #00DDC0; 
+    }
     
     .has-submenu > .nav-button {
         justify-content: space-between; 
@@ -847,9 +870,8 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     }
 }
 
-/* === СТИЛІ ДЛЯ ТЕРМІНАЛУ (ОНОВЛЕНО) === */
+/* === СТИЛІ ДЛЯ ТЕРМІНАЛУ === */
 
-/* Поле виводу логів */
 #log {
     background-color: #1e1e1e;
     color: #00ff00;
@@ -874,14 +896,13 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
 /* Поле вводу */
 #terminal-input {
     flex-grow: 1;
-    /* Інші стилі вже успадковані від input */
 }
 
 /* Кнопка "Надіслати" в стилі кнопок запису */
 #terminal-send {
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
-    padding: 8px 24px; /* Трохи ширша */
+    padding: 8px 24px; 
     border-radius: 4px;
     font-family: 'Roboto', sans-serif;
     font-weight: 600;
@@ -892,7 +913,6 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     width: auto;
 }
 
-/* Ховер ефект (як у .write-button) */
 #terminal-send:hover {
     background-color: #f0f0f0;
     border-color: #cccccc;
@@ -900,7 +920,6 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Активний стан (як у .write-button) */
 #terminal-send:active {
     background-color: #d0f2ef;
     border-color: #00DDC0;
