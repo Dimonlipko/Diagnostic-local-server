@@ -1,4 +1,4 @@
-// --- app.js (ВИПРАВЛЕНО ВІДОБРАЖЕННЯ ІКОНОК) ---
+// --- app.js (ОНОВЛЕНО: Додано відключення BLE) ---
 
 import { state } from './modules/state.js';
 import { menuConfig, DEFAULT_PAGE } from './modules/config.js'; 
@@ -6,7 +6,8 @@ import { setLanguage, initLanguageSwitcher } from './modules/translator.js';
 import { loadPage, initPageEventListeners, logMessage } from './modules/ui.js';
 import { connectAdapter, disconnectAdapter } from './modules/webSerial.js';
 import { sendCanRequest } from './modules/canProtocol.js'; 
-import { connectBleAdapter } from './modules/webBluetooth.js';
+// Додаємо імпорт функції відключення BLE
+import { connectBleAdapter, disconnectBleAdapter } from './modules/webBluetooth.js';
 
 // ===============================================
 // БЛОК НАВІГАЦІЇ
@@ -17,8 +18,12 @@ const pageContainer = document.getElementById('page-container');
 const sidebarButtons = document.querySelectorAll('.menu-trigger'); 
 
 function setupSidebarEvents() {
+    if (!sidebarButtons.length) {
+        console.warn("Sidebar buttons not found. Check classes in index.html");
+    }
     sidebarButtons.forEach(btn => {
         btn.addEventListener('click', () => {
+            // Знімаємо активний клас з усіх кнопок сайдбару
             sidebarButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
@@ -31,19 +36,27 @@ function setupSidebarEvents() {
 }
 
 function handleMenuClick(sectionKey) {
+    // Перевірка на існування конфігурації
+    if (!menuConfig) {
+        console.error("Critical: menuConfig is undefined. Check modules/config.js");
+        return;
+    }
+
     const config = menuConfig[sectionKey];
 
     if (!config) {
-        console.error(`Немає конфігурації для розділу: ${sectionKey}`);
+        console.error(`No config found for section: ${sectionKey}`);
         return;
     }
 
     // 1. Очищуємо та ховаємо підменю
-    subMenuContainer.innerHTML = '';
-    subMenuContainer.className = 'sub-menu-hidden';
+    if (subMenuContainer) {
+        subMenuContainer.innerHTML = '';
+        subMenuContainer.className = 'sub-menu-hidden';
+    }
 
     // 2. Логіка відображення
-    if (config.type === 'submenu') {
+    if (config.type === 'submenu' && subMenuContainer) {
         // Показуємо панель
         subMenuContainer.className = 'sub-menu-visible';
 
@@ -52,31 +65,32 @@ function handleMenuClick(sectionKey) {
             const subBtn = document.createElement('button');
             subBtn.className = 'sub-menu-btn';
             
-            // --- ОСЬ ЦЕЙ БЛОК ВІДПОВІДАЄ ЗА ІКОНКИ ---
-            // Якщо в конфігу є іконка (SVG код), вставляємо її
+            // --- ВСТАВКА ІКОНКИ ---
             if (item.icon) {
                 subBtn.innerHTML = item.icon; 
             }
 
-            // Текст вставляємо окремо в span, щоб працював переклад і стилі
+            // --- ВСТАВКА ТЕКСТУ ---
             const textSpan = document.createElement('span');
             textSpan.innerText = item.label;
             textSpan.setAttribute('data-lang-key', item.langKey);
             
-            // Додаємо текст після іконки
             subBtn.appendChild(textSpan);
-            // ------------------------------------------
             
+            // Обробник кліку
             subBtn.onclick = () => {
-                document.querySelectorAll('.sub-menu-btn').forEach(b => b.classList.remove('active'));
+                // Оновлюємо активний стан
+                const allSubBtns = subMenuContainer.querySelectorAll('.sub-menu-btn');
+                allSubBtns.forEach(b => b.classList.remove('active'));
                 subBtn.classList.add('active');
+                
                 loadPageWrapper(item.link);
             };
             
             subMenuContainer.appendChild(subBtn);
         });
 
-        // Активуємо першу кнопку візуально
+        // Активуємо першу кнопку візуально, якщо вона є
         if (subMenuContainer.firstChild) {
             subMenuContainer.firstChild.classList.add('active');
         }
@@ -91,7 +105,11 @@ function handleMenuClick(sectionKey) {
 }
 
 function loadPageWrapper(url) {
-    loadPage(url, pageContainer); 
+    if (pageContainer) {
+        loadPage(url, pageContainer); 
+    } else {
+        console.error("Page container not found!");
+    }
 }
 
 // ===============================================
@@ -216,10 +234,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnBle) btnBle.classList.toggle('active', activeType === 'ble');
     }
 
+    // Обробник Serial (BT)
     if (btnSerial) {
         btnSerial.addEventListener('click', async () => {
             if (state.isConnected) {
-                await disconnectAdapter();
+                // Якщо вже підключено (будь-чим) - відключаємо
+                if (state.connectionType === 'ble') {
+                    // Якщо раптом було BLE, а тиснуть BT (хоча UI має це блокувати, але на всяк випадок)
+                    if (typeof disconnectBleAdapter === 'function') {
+                        await disconnectBleAdapter();
+                    }
+                } else {
+                    await disconnectAdapter();
+                }
                 updateUIConnectionState(null);
                 return;
             }
@@ -233,17 +260,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Обробник BLE
     if (btnBle) {
         btnBle.addEventListener('click', async () => {
             if (state.isConnected) {
+                // Логіка відключення при повторному натисканні
                 if (state.connectionType === 'ble') {
-                    state.isConnected = false; 
+                    // Викликаємо функцію відключення BLE, якщо вона існує
+                    if (typeof disconnectBleAdapter === 'function') {
+                        await disconnectBleAdapter();
+                    } else {
+                        // Фолбек, якщо функції немає (хоча має бути імпортована)
+                        console.warn("disconnectBleAdapter not found, force closing state");
+                        state.isConnected = false;
+                        state.bleServer = null;
+                    }
                 } else {
+                    // Якщо було підключено через Serial
                     await disconnectAdapter();
                 }
                 updateUIConnectionState(null);
                 return;
             }
+            
+            // Логіка підключення
             try {
                 logMessage("Запуск BLE...");
                 const success = await connectBleAdapter();

@@ -1,43 +1,14 @@
 <h2 data-lang-key="terminal_title">Термінал (Debug)</h2>
-<p data-lang-key="terminal_subtitle">Сирий потік даних з адаптера для дебагу:</p>
-<pre id="log"></pre>
+<p data-lang-key="terminal_subtitle" style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+    Сирий потік даних з адаптера для дебагу:
+</p>
 
-<div class="terminal-container">
-    <div id="terminal-output" class="terminal-log"></div>
-    
-    <div class="terminal-controls">
-        <input type="text" id="terminal-input" placeholder="Введіть команду (напр. ATZ)..." />
-        <button id="terminal-send-btn">Надіслати</button>
-    </div>
+<!-- Вікно логів (стилізоване в style.css як #log) -->
+<div id="log"></div>
+
+<!-- Панель вводу (стилізована в style.css як .terminal-input-area) -->
+<div class="terminal-input-area">
+    <input type="text" id="terminal-input" placeholder="Введіть команду (напр. ATZ)..." />
+    <!-- ID кнопки змінено на 'terminal-send', щоб відповідати style.css -->
+    <button id="terminal-send">Надіслати</button>
 </div>
-
-<style>
-    .terminal-controls {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-    }
-    #terminal-input {
-        flex: 1;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        color: #00ff00;
-        padding: 8px;
-        font-family: 'Orbitron', monospace;
-    }
-    #terminal-send-btn {
-        background: #00ff00;
-        color: #000;
-        border: none;
-        padding: 8px 20px;
-        cursor: pointer;
-        font-weight: bold;
-        border-radius: 4px;
-    }
-    #terminal-send-btn:active {
-        background: #00cc00;
-    }
-</style>

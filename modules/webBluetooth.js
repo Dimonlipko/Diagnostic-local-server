@@ -5,6 +5,9 @@ import { parseCanResponse } from './canProtocol.js';
 // Глобальний буфер для зклеювання розірваних BLE пакетів
 let bleBuffer = "";
 
+// Допоміжна функція затримки
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 export async function connectBleAdapter() {
     try {
         logMessage("Пошук BLE пристроїв...");
@@ -24,6 +27,7 @@ export async function connectBleAdapter() {
         state.bleDevice = device;
         bleBuffer = ""; // Очищуємо буфер при новому підключенні
 
+        // Налаштування "письменника" з логікою повторних спроб
         state.writer = {
             write: async (text) => {
                 const encoder = new TextEncoder();
@@ -34,7 +38,23 @@ export async function connectBleAdapter() {
                     window.uiUpdater.flashAdapterLed();
                 }
 
-                await charWrite.writeValueWithoutResponse(data);
+                // Логіка Retry для стабільності (вирішує GATT busy)
+                let retries = 3;
+                while (retries > 0) {
+                    try {
+                        if (charWrite.service.device.gatt.connected) {
+                            await charWrite.writeValueWithoutResponse(data);
+                        } else {
+                            console.warn("BLE Write skipped: disconnected");
+                        }
+                        return; // Успіх - виходимо
+                    } catch (e) {
+                        console.warn(`BLE Write failed (${retries}): ${e.message}`);
+                        retries--;
+                        if (retries === 0) throw e; // Якщо спроби вичерпані - кидаємо помилку далі
+                        await sleep(150); // Чекаємо перед наступною спробою
+                    }
+                }
             }
         };
 
@@ -73,6 +93,9 @@ export async function connectBleAdapter() {
         });
 
         // --- КРОК ІНІЦІАЛІЗАЦІЇ ---
+        logMessage("Стабілізація з'єднання...");
+        await sleep(500); // Даємо час GATT стабілізуватися перед інітом
+
         logMessage("Ініціалізація ELM327...");
 
         const initCommands = [
@@ -88,7 +111,7 @@ export async function connectBleAdapter() {
         for (const item of initCommands) {
             logMessage(`[INIT] ${item.desc}...`);
             await state.writer.write(item.cmd);
-            await new Promise(r => setTimeout(r, item.wait));
+            await sleep(item.wait);
         }
 
         state.isConnected = true;
@@ -101,7 +124,44 @@ export async function connectBleAdapter() {
         return true;
     } catch (error) {
         logMessage(`BLE Помилка: ${error.message}`);
+        
+        // Спробуємо коректно відключитись при помилці ініціалізації
+        if (state.bleDevice && state.bleDevice.gatt.connected) {
+            state.bleDevice.gatt.disconnect();
+        }
+        
         state.isConnected = false;
         return false;
+    }
+}
+
+// --- НОВА ФУНКЦІЯ ВІДКЛЮЧЕННЯ ---
+export async function disconnectBleAdapter() {
+    try {
+        if (state.bleDevice && state.bleDevice.gatt && state.bleDevice.gatt.connected) {
+            logMessage("Відключення BLE...");
+            state.bleDevice.gatt.disconnect();
+        } else {
+            // Якщо вже відключено або не знайдено, просто логуємо
+            // logMessage("BLE вже відключено.");
+        }
+
+        // Скидання стану
+        state.isConnected = false;
+        state.connectionType = null;
+        state.bleDevice = null;
+        state.writer = null;
+        bleBuffer = "";
+
+        updateConnectionTabs();
+        logMessage("BLE Відключено.");
+
+        // Примусове оновлення кнопки в UI, якщо updateConnectionTabs цього не робить
+        const btnBle = document.getElementById('btnConnectBle');
+        if (btnBle) btnBle.classList.remove('active');
+
+    } catch (error) {
+        logMessage(`Помилка відключення BLE: ${error.message}`);
+        console.error(error);
     }
 }
