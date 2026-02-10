@@ -1,20 +1,103 @@
-// --- app.js (ПОВНІСТЮ ОНОВЛЕНИЙ) ---
+// --- app.js (ВИПРАВЛЕНО ВІДОБРАЖЕННЯ ІКОНОК) ---
 
 import { state } from './modules/state.js';
-import { DEFAULT_PAGE } from './modules/config.js';
+import { menuConfig, DEFAULT_PAGE } from './modules/config.js'; 
 import { setLanguage, initLanguageSwitcher } from './modules/translator.js';
-import { initNavigation, loadPage, initPageEventListeners, logMessage } from './modules/ui.js';
+import { loadPage, initPageEventListeners, logMessage } from './modules/ui.js';
 import { connectAdapter, disconnectAdapter } from './modules/webSerial.js';
 import { sendCanRequest } from './modules/canProtocol.js'; 
-import { connectBleAdapter } from './modules/webBluetooth.js'; // Використовуємо універсальну функцію
+import { connectBleAdapter } from './modules/webBluetooth.js';
 
 // ===============================================
-// БЛОК ДЛЯ ЗАПИСУ ДАНИХ
+// БЛОК НАВІГАЦІЇ
 // ===============================================
 
-/**
- * Форматує значення від користувача у готове CAN-повідомлення.
- */
+const subMenuContainer = document.getElementById('dynamic-sub-menu');
+const pageContainer = document.getElementById('page-container');
+const sidebarButtons = document.querySelectorAll('.menu-trigger'); 
+
+function setupSidebarEvents() {
+    sidebarButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            sidebarButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const section = btn.getAttribute('data-section');
+            if (section) {
+                handleMenuClick(section);
+            }
+        });
+    });
+}
+
+function handleMenuClick(sectionKey) {
+    const config = menuConfig[sectionKey];
+
+    if (!config) {
+        console.error(`Немає конфігурації для розділу: ${sectionKey}`);
+        return;
+    }
+
+    // 1. Очищуємо та ховаємо підменю
+    subMenuContainer.innerHTML = '';
+    subMenuContainer.className = 'sub-menu-hidden';
+
+    // 2. Логіка відображення
+    if (config.type === 'submenu') {
+        // Показуємо панель
+        subMenuContainer.className = 'sub-menu-visible';
+
+        // Генеруємо кнопки підменю
+        config.items.forEach(item => {
+            const subBtn = document.createElement('button');
+            subBtn.className = 'sub-menu-btn';
+            
+            // --- ОСЬ ЦЕЙ БЛОК ВІДПОВІДАЄ ЗА ІКОНКИ ---
+            // Якщо в конфігу є іконка (SVG код), вставляємо її
+            if (item.icon) {
+                subBtn.innerHTML = item.icon; 
+            }
+
+            // Текст вставляємо окремо в span, щоб працював переклад і стилі
+            const textSpan = document.createElement('span');
+            textSpan.innerText = item.label;
+            textSpan.setAttribute('data-lang-key', item.langKey);
+            
+            // Додаємо текст після іконки
+            subBtn.appendChild(textSpan);
+            // ------------------------------------------
+            
+            subBtn.onclick = () => {
+                document.querySelectorAll('.sub-menu-btn').forEach(b => b.classList.remove('active'));
+                subBtn.classList.add('active');
+                loadPageWrapper(item.link);
+            };
+            
+            subMenuContainer.appendChild(subBtn);
+        });
+
+        // Активуємо першу кнопку візуально
+        if (subMenuContainer.firstChild) {
+            subMenuContainer.firstChild.classList.add('active');
+        }
+
+        // Завантажуємо сторінку за замовчуванням
+        loadPageWrapper(config.defaultPage);
+
+    } else {
+        // Варіант без підменю (пряме посилання)
+        loadPageWrapper(config.link);
+    }
+}
+
+function loadPageWrapper(url) {
+    loadPage(url, pageContainer); 
+}
+
+// ===============================================
+// БЛОК ДЛЯ ЗАПИСУ ДАНИХ (БЕЗ ЗМІН)
+// ===============================================
+
 function formatCanMessage(param, value) {
     if (!window.PARAMETER_REGISTRY) {
         logMessage("ПОМИЛКА: Внутрішня: PARAMETER_REGISTRY не знайдено.");
@@ -66,9 +149,6 @@ function formatCanMessage(param, value) {
     };
 }
 
-/**
- * РЕАЛЬНИЙ обробник для onWrite
- */
 async function handleWrite(paramKey, value) {
     if (!state.isConnected) {
         logMessage("ПОМИЛKA: Адаптер не підключено.");
@@ -93,16 +173,15 @@ async function handleWrite(paramKey, value) {
 }
 
 // ===============================================
-// ІНІЦІАЛІЗАЦІЯ ТА ОБРОБНИКИ UI
+// ІНІЦІАЛІЗАЦІЯ
 // ===============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM завантажено, ініціалізація...');
 
     initLanguageSwitcher();
-    initNavigation();
+    setupSidebarEvents();
 
-    // Ініціалізація подій для сторінок (Кнопки запису, Термінал тощо)
     initPageEventListeners({
         onWrite: handleWrite,
         onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`),
@@ -116,16 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const writer = state.writer || state.bleWriter;
             if (writer) {
                 try {
-                    // Перериваємо поточну операцію адаптера
                     await writer.write('\r'); 
                     await new Promise(r => setTimeout(r, 100));
-
                     logMessage(`> ${command.toUpperCase()}`);
-                    
-                    // Вимикаємо ехо перед відправкою для чистоти терміналу
                     await writer.write('ATE0\r');
                     await new Promise(r => setTimeout(r, 50));
-                    
                     await writer.write(command.toUpperCase() + '\r');
                 } catch (err) {
                     logMessage(`ПОМИЛКА ТЕРМІНАЛУ: ${err.message}`);
@@ -134,18 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- КЕРУВАННЯ ПІДКЛЮЧЕННЯМ (НОВЕ: 2 іконки) ---
-
     const btnSerial = document.getElementById('btnConnectSerial');
     const btnBle = document.getElementById('btnConnectBle');
 
-    // Функція оновлення вигляду іконок
     function updateUIConnectionState(activeType) {
         if (btnSerial) btnSerial.classList.toggle('active', activeType === 'serial');
         if (btnBle) btnBle.classList.toggle('active', activeType === 'ble');
     }
 
-    // Обробник для USB / Serial
     if (btnSerial) {
         btnSerial.addEventListener('click', async () => {
             if (state.isConnected) {
@@ -163,13 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Обробник для Bluetooth BLE
     if (btnBle) {
         btnBle.addEventListener('click', async () => {
             if (state.isConnected) {
-                // Універсальне відключення
                 if (state.connectionType === 'ble') {
-                    // Якщо у тебе є метод bluetoothManager.disconnect() - виклич його тут
                     state.isConnected = false; 
                 } else {
                     await disconnectAdapter();
@@ -187,14 +254,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- ЗАВАНТАЖЕННЯ СТОРІНОК ТА МОВИ ---
-
     const savedLang = localStorage.getItem('appLanguage') || 'uk';
     setLanguage(savedLang);
 
-    const defaultNavButton = document.querySelector(`[data-page-file="${DEFAULT_PAGE}"]`);
-    if (defaultNavButton) {
-        defaultNavButton.classList.add('active');
-        loadPage(DEFAULT_PAGE);
+    // Вантажимо сторінку за замовчуванням (Термінал)
+    const defaultBtn = document.querySelector(`[data-section="terminal"]`);
+    if (defaultBtn) {
+        defaultBtn.click();
     }
 });

@@ -1,79 +1,59 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <!-- Додано <meta> для мобільної версії -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diag tool Electric Engines</title>
     <link rel="icon" href="logo flash.png">
     
-    <!-- НОВИЙ ШРИФТ ДЛЯ ПІДПИСУ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
+
     <nav class="sidebar">
-        <!-- ОНОВЛЕНО: Текст замінено на логотип -->
         <div class="sidebar-title">
             <img src="logo.png" alt="Electric Engines Logo" 
                  onerror="this.onerror=null; this.alt='Electric Engines'; this.style.color='#fff'; this.style.fontWeight='bold';">
             <small>diagnostic tool</small>
         </div>
         
-        <!-- ОНОВЛЕНО: Структура меню -->
         <div class="nav-item">
-            <button class="nav-button" data-page-file="pages/inverter.html" data-lang-key="menu_inverter"><span>⚡️ Інвертор</span></button>
+            <button class="nav-button menu-trigger" data-section="inverter" data-lang-key="menu_inverter">
+                <span>⚡️ Інвертор</span>
+            </button>
         </div>
         
-        <!-- НОВЕ ПІДМЕНЮ БМС -->
-        <div class="nav-item has-submenu">
-            <!-- Ця кнопка тепер ТІЛЬКИ відкриває/закриває підменю -->
-            <button class="nav-button" id="bms-toggle-button" data-lang-key="menu_bms">
+        <div class="nav-item">
+            <button class="nav-button menu-trigger" data-section="bms" data-lang-key="menu_bms">
                 <span>🔋 БМС</span>
-                <span class="submenu-arrow">›</span>
             </button>
-            <div class="submenu">
-                <!-- 
-                  ВАЖЛИВО: Переконайтеся, що ви ПЕРЕЙМЕНУВАЛИ 'pages/bms.html' 
-                  на 'pages/bms_params.html' у вашій папці
-                -->
-                <button class="nav-button" data-page-file="pages/bms_params.html" data-lang-key="menu_bms_params">Параметри</button>
-                <button class="nav-button" data-page-file="pages/bms_cells.html" data-lang-key="menu_bms_cells">Комірки</button>
-                <button class="nav-button" data-page-file="pages/bms_temp_map.html" data-lang-key="menu_bms_temp_map">T-Мапа</button>
-                <button class="nav-button" data-page-file="pages/bms_soc_map.html" data-lang-key="menu_bms_soc_map">SOC-Мапа</button>
-            </div>
+        </div>
+        
+        <div class="nav-item">
+            <button class="nav-button menu-trigger" data-section="ecu" data-lang-key="menu_ecu">
+                <span>⚙️ ECU</span>
+            </button>
         </div>
 
         <div class="nav-item">
-                <button class="nav-button" data-page-file="pages/internal.html" data-lang-key="menu_internal"><span>🎛️ Internal</span></button>
-        </div>
-        
-        <div class="nav-item">
-            <button class="nav-button" data-page-file="pages/settings.html" data-lang-key="menu_settings"><span>⚙️ Налаштування</span></button>
-        </div>
-        <div class="nav-item">
-            <button class="nav-button" data-page-file="pages/update.html" data-lang-key="menu_update"><span>⬆️ Оновлення</span></button>
-        </div>
-        <div class="nav-item">
-            <button class="nav-button" data-page-file="pages/terminal.html" data-lang-key="menu_terminal"><span>💻 Термінал</span></button>
+            <button class="nav-button menu-trigger" data-section="terminal" data-lang-key="menu_terminal">
+                <span>💻 Термінал</span>
+            </button>
         </div>
     </nav>
 
     <div class="main-wrapper">
+        
         <header class="top-bar">
-            <!-- ЗМІНЕНО: Група статусу та мови переїхала в .header-right -->
-            
             <div class="lang-switcher">
-                <!-- ОНОВЛЕНО: Текст замінено на емодзі -->
                 <button id="lang-uk" data-lang="uk">🇺🇦</button>
                 <span>|</span>
                 <button id="lang-en" data-lang="en">🇬🇧</button>
             </div>
 
-            <!-- НОВА ОБГОРТКА .header-right -->
             <div class="header-right">
                 <div class="status-group">
                     <div id="statusAdapter" class="status-light"></div>
@@ -88,18 +68,16 @@
                     <button id="btnConnectSerial" class="nav-conn-btn">BT</button>
                     <button id="btnConnectBle" class="nav-conn-btn">BLE</button>
                 </div>
-                <!-- ОНОВЛЕНО: Текст кнопки замінено на іконку -->
-                <!--<button id="connectButton" data-lang-key="btn_connect" title="Підключити"><span>🔌</span></button>-->
             </div>
-
         </header>
 
-        <main class="content-area" id="page-container">
-            <!-- Вміст буде завантажено сюди -->
-        </main>
+        <nav id="dynamic-sub-menu" class="sub-menu-hidden"></nav>
+
+        <main id="page-container" class="content-area">
+            </main>
+
     </div>
 
     <script src="app.js" type="module" defer></script>
 </body>
 </html>
-

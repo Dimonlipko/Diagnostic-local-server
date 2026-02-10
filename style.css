@@ -1,439 +1,476 @@
 /* --- ПОЧАТОК CSS --- */
-        
-        /* --- Скидання стилів --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body, html {
-            height: 100%;
-            font-family: sans-serif;
-            background-color: #f0f2f5;
-        }
+/* Імпорт чистого шрифту для інтерфейсу (як у Tesla) */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-        /* --- МАКЕТ: МОБІЛЬНА ВЕРСІЯ (за замовчуванням) --- */
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+/* --- Скидання стилів --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .sidebar {
-            background-color: #333;
-            color: white;
-            flex-shrink: 0;
-            display: flex;
-            flex-wrap: wrap; /* Дозволяє кнопкам переноситись */
-            justify-content: center;
-            padding: 5px 0;
-        }
-        
-        /* --- ОНОВЛЕНО СТИЛІ ДЛЯ ЛОГОТИПУ --- */
-        .sidebar-title { 
-            display: none; /* Сховано на мобілках */
-            padding: 10px 0;
-            width: 100%; /* Додано, щоб забезпечити центрування */
-        }
-        .sidebar-title img {
-            width: 80%; /* Логотип займає 80% ширини бічної панелі */
-            max-width: 150px; /* Але не більше 150px */
-            height: auto;
-            margin-bottom: 5px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .sidebar-title small {
-            color: #aaa; /* Трохи світліший сірий */
-            font-family: 'Orbitron', sans-serif; /* ЗАСТОСОВАНО ШРИФТ */
-            font-size: 0.9em; /* Трохи збільшено */
-            font-weight: 400; /* Стандартна вага для Orbitron */
-            display: block; /* Щоб був під логотипом */
-            text-align: center;
-            margin-top: 10px; /* ЗБІЛЬШЕНО ВІДСТАНЬ */
-            letter-spacing: 1.5px; /* Додано відстань між буквами, як у лого */
-        }
-        /* --- КІНЕЦЬ ОНОВЛЕННЯ --- */
-        
-        /* --- ОНОВЛЕНО: СТИЛІ ДЛЯ МЕНЮ --- */
-        .nav-item {
-            /* На мобілках кожна кнопка займає не всю ширину, тому скидаємо */
-            width: auto;
-        }
-        
-        .sidebar button.nav-button {
-            padding: 10px 12px;
-            background: none;
-            border: none;
-            color: #ccc;
-            font-size: 0.9em;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            /* width: 100%; /* Кнопки меню займають всю ширину - прибрано для мобілок */
-            text-align: left; /* Вирівнюємо текст зліва */
-            display: flex; /* Потрібно для стрілки */
-            align-items: center;
-        }
-        .sidebar button.nav-button:hover { background-color: #444; }
-        .sidebar button.nav-button.active { border-bottom: 2px solid #00DDC0; color: white; }
+body, html {
+    height: 100%;
+    /* ВИКОРИСТОВУЄМО ЧИСТИЙ ШРИФТ ДЛЯ ВСЬОГО САЙТУ */
+    font-family: 'Roboto', sans-serif; 
+    background-color: #f0f2f5;
+    color: #333;
+}
 
-        /* --- НОВЕ: СТИЛІ ДЛЯ ПІДМЕНЮ --- */
-        .has-submenu > .nav-button {
-            justify-content: space-between;
-        }
-        .submenu-arrow {
-            transition: transform 0.2s ease;
-            font-size: 1.2em;
-            margin-left: 5px; /* Відступ стрілки від тексту */
-        }
-        .submenu {
-            display: none; /* Повністю ховаємо на мобілках */
-            width: 100%;
-            background-color: #222;
-        }
-        .submenu .nav-button {
-            padding-left: 25px; /* Відступ для вкладеності */
-            font-size: 0.9em;
-            width: 100%;
-        }
-        .nav-item.open .submenu {
-            display: block; /* Анімація відкриття */
-        }
-        .nav-item.open .submenu-arrow {
-            transform: rotate(90deg); /* Обертаємо стрілку */
-        }
-        /* --- КІНЕЦЬ СТИЛІВ ПІДМЕНЮ --- */
+/* Кнопки та інпути успадковують чистий шрифт */
+button, input, select, textarea {
+    font-family: 'Roboto', sans-serif;
+}
 
-        .main-wrapper {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            /* Висота мінус верхня панель. Можливо, доведеться підігнати */
-            height: calc(100vh - 50px); 
-        }
-        .top-bar {
-            background-color: white;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            font-size: 0.9em;
-        }
-        
-        /* --- ОНОВЛЕНО: СТИЛІ ДЛЯ ПРАВОЇ ЧАСТИНИ HEADER --- */
-        .header-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-        }
-        .status-group {
-            display: flex;
-            align-items: center;
-            margin-right: 15px;
-            /* Робимо меншими */
-            font-size: 0.9em;
-            color: #555;
-        }
-        .status-light {
-            width: 10px; height: 10px; /* Зроблено меншими */
-            border-radius: 50%;
-            background-color: #e0e0e0;
-            margin-right: 5px;
-            transition: background-color 0.3s;
-        }
-        .status-light.connected { background-color: #28a745; }
-        .status-light.receiving { background-color: #ffc107; animation: pulse 1s infinite; }
-        .status-label { margin-right: 10px; }
-        
-        #connectButton { 
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5em; /* Розмір іконки */
-            padding: 5px 8px;
-            color: #333;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        #connectButton:hover {
-            opacity: 1;
-        }
-        /* --- КІНЕЦЬ ОНОВЛЕННЯ --- */
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+/* --- МАКЕТ: МОБІЛЬНА ВЕРСІЯ (за замовчуванням) --- */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
 
-        /* СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ (ОНОВЛЕНО) */
-        .lang-switcher {
-            margin-left: 20px;
-        }
-        .lang-switcher button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5em; /* Зроблено емодзі більшими */
-            opacity: 0.6; /* Неактивні прапори прозорі */
-            transition: opacity 0.2s;
-            padding: 0 5px; /* Невеликий відступ */
-        }
-        .lang-switcher button:hover {
-            opacity: 1;
-        }
-        .lang-switcher button.active {
-            opacity: 1; /* Активний прапор непрозорий */
-            text-decoration: none; /* Прибрано підкреслення */
-        }
-        .lang-switcher span {
-            color: #ccc;
-            font-size: 1.5em;
-            vertical-align: middle;
-        }
+.sidebar {
+    background-color: #333;
+    color: white;
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    padding: 5px 0;
+}
 
-        .content-area { padding: 15px; flex-grow: 1; overflow-y: auto; }
-        .page-content { display: none; }
-        .page-content.active { display: block; }
-        h2 { margin-bottom: 15px; }
+/* --- СТИЛІ ДЛЯ ЛОГОТИПУ --- */
+.sidebar-title { 
+    display: none; 
+    padding: 10px 0;
+    width: 100%; 
+}
+.sidebar-title img {
+    width: 80%; 
+    max-width: 150px; 
+    height: auto;
+    margin-bottom: 5px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.sidebar-title small {
+    color: #aaa; 
+    /* ТІЛЬКИ ТУТ ЗАЛИШАЄМО ORBITRON */
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 0.9em; 
+    font-weight: 400; 
+    display: block; 
+    text-align: center;
+    margin-top: 10px; 
+    letter-spacing: 1.5px; 
+}
 
-        /* --- СТИЛІ КОМПОНЕНТІВ (загальні) --- */
-        .write-button {
-            background-color: #ffc;
-            border: 1px solid #e6b400;
-            padding: 5px 10px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-        }
-        .write-button:hover { background-color: #ffe; }
+/* --- СТИЛІ ДЛЯ МЕНЮ --- */
+.nav-item {
+    width: auto;
+}
 
-        input[type="text"], input[type="number"], select {
-            padding: 5px;
-            border: 1px solid #ccc;
-            width: 100%;
-            margin-top: 2px;
-        }
-        input[readonly] { background-color: #eee; }
-        label { font-weight: bold; margin-top: 10px; display: block; }
+.sidebar button.nav-button {
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.05em; 
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-align: left; 
+    display: flex; 
+    align-items: center;
+    gap: 8px;
+    font-weight: 500; 
+}
 
-        /* Група кнопок ON/OFF */
-        .button-group { display: flex; margin-top: 5px; }
-        .button-group button {
-            flex-grow: 1;
-            padding: 5px;
-            border: 1px solid #ccc;
-            background-color: #f0f0f0;
-            cursor: pointer;
-        }
-        .button-group button.active {
-            background-color: #00DDC0;
-            color: white;
-            border-color: #00DDC0;
-        }
-        .button-group button:first-child { border-radius: 4px 0 0 4px; }
-        .button-group button:last-child { border-radius: 0 4px 4px 0; }
+/* Стиль для іконок/картинок у боковому меню */
+.sidebar button.nav-button img, 
+.sidebar button.nav-button svg {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    /* fill: currentColor; */ 
+}
 
-        /* --- СІТКИ (мобільна версія) --- */
-        .inverter-layout, .bms-layout {
-            display: grid;
-            grid-template-columns: 1fr; /* 1 колонка на мобілках */
-            gap: 20px;
-        }
-        .rw-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 колонки на мобілках */
-            gap: 10px;
-            align-items: end; /* Вирівняти по нижньому краю */
-        }
-        .rw-grid label { text-align: left; grid-column: 1 / -1; } /* Лейбл на всю ширину */
-        .rw-grid input[readonly] { grid-column: 1 / -1; } /* Read-only на всю ширину */
-        .rw-grid input { width: 100%; }
-        .rw-grid .write-button { width: 100%; }
-        
-        /* --- СІТКА ВІДОБРАЖЕННЯ КОМІРОК (СТИЛЬ HEATMAP - МОБІЛЬНА ВЕРСІЯ) --- */
-        /* ЦЕ БАЗОВІ СТИЛІ ДЛЯ МОБІЛЬНИХ */
-        .cell-map-grid {
-            display: grid;
-            /* * МОБІЛЬНА ВЕРСІЯ: 4 комірки в ряд (як на скріншоті-приклад).
-             * Це grid-макет, де елементи йдуть 1, 2, 3, 4 в першому ряду.
-             */
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            background-color: transparent;
-            
-            /* ДОДАНО: Вмикаємо лічильник комірок */
-            counter-reset: cell-counter;
-        }
+.sidebar button.nav-button:hover { background-color: #444; }
+/* Використовуємо #00DDC0 для активного стану в сайдбарі */
+.sidebar button.nav-button.active { border-bottom: 2px solid #00DDC0; color: white; }
 
-        .cell-item {
-            background-color: transparent;
-            border: none;
-            padding: 0;
-            display: flex;
-            /* Скидаємо margin-bottom, який міг бути доданий в @media */
-            margin-bottom: 0; 
-            
-            /* ДОДАНО: Потрібно для позиціонування номера */
-            position: relative;
-        }
-        
-        /* ДОДАНО: Стиль для CSS-лічильника (номера комірки) */
-        .cell-item::before {
-            counter-increment: cell-counter;
-            content: counter(cell-counter);
-            
-            /* Позиціонування */
-            position: absolute;
-            left: 4px;
-            top: 2px;
-            
-            /* Стиль */
-            font-size: 10px;
-            font-weight: 600;
-            color: rgba(0, 0, 0, 0.4); /* Напівпрозорий чорний */
-            z-index: 1; /* Поверх <input> */
-        }
+/* --- СТИЛІ ДЛЯ ПІДМЕНЮ (В БІЧНОМУ МЕНЮ - СТАРЕ) --- */
+.has-submenu > .nav-button {
+    justify-content: space-between;
+}
+.submenu-arrow {
+    transition: transform 0.2s ease;
+    font-size: 1.2em;
+    margin-left: 5px; 
+}
+.submenu {
+    display: none; 
+    width: 100%;
+    background-color: #222;
+}
+.submenu .nav-button {
+    padding-left: 25px; 
+    font-size: 0.9em;
+    width: 100%;
+}
+.nav-item.open .submenu {
+    display: block; 
+}
+.nav-item.open .submenu-arrow {
+    transform: rotate(90deg); 
+}
 
-        /* Повністю ховаємо лейбли (Cell [01] тощо) */
-        .cell-item label {
-            display: none;
-        }
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px); 
+}
+.top-bar {
+    background-color: white;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 0.9em;
+}
 
-        /* Перетворюємо <input> на кольоровий блок */
-        .cell-item input[type="text"] {
-            border: none;
-            outline: none;
-            box-shadow: none;
-            margin-top: 0;
-            text-align: center;
-            color: #000;
-            font-family: sans-serif;
-            font-weight: 500;
-            font-size: 14px;
-            width: 100%;
-            border-radius: 4px;
-            background-color: #e0e0e0; /* Нейтральний сірий (базовий) */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            user-select: none;
-            
-            /* ДОДАНО: Зсуваємо текст, щоб не накладався на номер */
-            padding: 10px 5px 10px 18px; /* Додано відступ зліва */
-            position: relative; 
-        }
+/* --- ПРАВА ЧАСТИНА HEADER --- */
+.header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+.status-group {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+    font-size: 0.9em;
+    color: #555;
+    font-weight: 500;
+}
+.status-light {
+    width: 10px; height: 10px; 
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    margin-right: 5px;
+    transition: background-color 0.3s;
+}
+/* Зелений статус залишаємо зеленим (бо це "OK"), або міняємо на бірюзовий за бажанням. Залишу стандартний зелений для статусу підключення */
+.status-light.connected { background-color: #28a745; }
+.status-light.receiving { background-color: #ffc107; animation: pulse 1s infinite; }
+.status-label { margin-right: 10px; }
 
-        /* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
-        /* ТЕПЕР ЦЕЙ БЛОК ЙДЕ ПІСЛЯ МОБІЛЬНИХ СТИЛІВ І БУДЕ ЇХ ПЕРЕЗАПИСУВАТИ */
-        @media (min-width: 768px) {
-            body { flex-direction: row; }
-            .sidebar {
-                width: 200px;
-                flex-shrink: 0;
-                display: block; /* Повертаємо вертикальне меню */
-                padding-top: 20px;
-            }
-            .sidebar-title { 
-                display: block; /* ПОКАЗУЄМО логотип на десктопі */
-                text-align: center; 
-                margin-bottom: 20px; 
-            }
-            
-            /* ОНОВЛЕНО: На десктопі кнопки теж на всю ширину */
-            .nav-item {
-                width: 100%; /* Повертаємо повну ширину для контейнерів */
-            }
-            .sidebar button.nav-button {
-                display: flex; /* Використовуємо flex для вирівнювання */
-                width: 100%;
-                padding: 15px 20px;
-                font-size: 1em;
-                border-bottom: 1px solid #444;
-                align-items: center; /* Вирівнюємо текст і стрілку */
-            }
-            .sidebar button.nav-button.active { border-bottom: 1px solid #00DDC0; }
-            
-            .has-submenu > .nav-button {
-                justify-content: space-between; /* Розносимо текст і стрілку */
-            }
-            /* НОВЕ: стилі для підменю на десктопі */
-            .submenu {
-                display: block; /* Завжди block на десктопі */
-                max-height: 0; /* Але приховано */
-                overflow: hidden;
-                transition: max-height 0.3s ease-out;
-            }
-            .nav-item.open .submenu {
-                max-height: 500px; /* Анімація відкриття */
-            }
-            .submenu .nav-button {
-                padding-left: 40px; /* Відступ для підменю */
-                border-bottom-color: #2a2a2a; /* Темніший бордер */
-            }
-            
-            .main-wrapper { height: 100vh; }
-            .top-bar { font-size: 1em; }
-            .status-light { width: 15px; height: 15px; }
-            #connectButton { font-size: 1.5em; } /* Розмір іконки */
-            .content-area { padding: 20px; }
-            
-            .inverter-layout, .bms-layout {
-                grid-template-columns: 1fr 1fr; /* 2 колонки на десктопі */
-                gap: 40px;
-            }
-            
-            /* --- ВНЕСЕНО ЗМІНИ ДЛЯ ДЕСКТОПНОЇ СІТКИ КОМІРОК --- */
-            .cell-map-grid {
-                /* * ДЕСКТОП ВЕРСІЯ: Перемикаємось на CSS Columns.
-                 * Тепер сітка буде з 8 колонок (по 12 комірок в кожній).
-                 */
-                display: block; /* Скидаємо grid */
-                column-count: 8;  /* 8 колонок */
-                column-gap: 10px; /* Зменшено відступ */
-            }
+#connectButton { 
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5em; 
+    padding: 5px 8px;
+    color: #333;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+#connectButton:hover {
+    opacity: 1;
+}
 
-            /* .cell-item (всередині .cell-map-grid) */
-            .cell-map-grid .cell-item {
-                /* Запобігаємо розриву одного .cell-item між колонками */
-                break-inside: avoid;
-                
-                /* Додаємо відступ знизу, оскільки 'gap' більше не працює у .cell-map-grid */
-                margin-bottom: 4px; 
-            }
-            
-            /* РОБИМО КОМІРКИ "ЩІЛЬНІШИМИ" ДЛЯ ДЕСКТОПУ (НОВЕ) */
-            .cell-map-grid .cell-item input[type="text"] {
-                font-size: 13px;  /* Зменшуємо шрифт */
-                padding-top: 6px;    /* Зменшуємо вертикальний відступ */
-                padding-bottom: 6px; 
-                padding-left: 18px; /* Залишаємо місце для номера */
-            }
-            
-            .cell-map-grid .cell-item::before {
-                 left: 5px; /* Трохи коригуємо для нового padding */
-                 top: 1px; 
-                 font-size: 9px; /* Робимо номер ще меншим */
-            }
-            /* --- КІНЕЦЬ ЗМІН --- */
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        } /* --- КІНЕЦЬ @media (min-width: 768px) --- */
+/* СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ */
+.lang-switcher {
+    margin-left: 20px;
+}
+.lang-switcher button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5em; 
+    opacity: 0.6; 
+    transition: opacity 0.2s;
+    padding: 0 5px; 
+}
+.lang-switcher button:hover {
+    opacity: 1;
+}
+.lang-switcher button.active {
+    opacity: 1; 
+    text-decoration: none; 
+}
+.lang-switcher span {
+    color: #ccc;
+    font-size: 1.5em;
+    vertical-align: middle;
+}
 
-        /* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
-        @media (min-width: 1024px) {
-            .rw-grid {
-                grid-template-columns: 200px 100px 100px 80px; /* 4 колонки як на скріні */
-                gap: 10px;
-                align-items: center;
-            }
-            .rw-grid label { grid-column: 1 / 2; text-align: right; }
-            .rw-grid input[readonly] { grid-column: 2 / 3; }
-            .rw-grid input { grid-column: 3 / 4; }
-            .rw-grid .write-button { grid-column: 4 / 5; }
-        }
+/* ============================================================ */
+/* === НОВІ СТИЛІ ПІДМЕНЮ (TESLA TOOLBOX 3.0 STYLE) === */
+/* ============================================================ */
 
-        /* --- СІТКА ДАТЧИКІВ ТЕМПЕРАТУРИ (СТИЛЬ HEATMAP - МОБІЛЬНА ВЕРСІЯ) --- */
+#dynamic-sub-menu {
+    background-color: #f4f4f4; 
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 15px;
+    
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 10px;       
+    align-items: center;
+    
+    transition: all 0.3s ease;
+}
+
+.sub-menu-hidden {
+    display: none !important;
+}
+
+/* СТИЛЬ КНОПОК ПІДМЕНЮ */
+.sub-menu-btn {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    
+    /* Чистий шрифт */
+    font-family: 'Roboto', sans-serif; 
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+    
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    
+    /* Гнучкість */
+    flex: 1 1 auto; 
+    text-align: center;
+    min-width: 120px; 
+    max-width: 250px;
+    
+    position: relative; 
+    overflow: hidden;
+}
+
+/* Стилі для іконок SVG */
+.sub-menu-btn svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    min-width: 20px; 
+    opacity: 0.6;
+    transition: all 0.2s;
+    
+    stroke: currentColor; 
+    fill: none;
+}
+
+/* Ефект наведення */
+.sub-menu-btn:hover {
+    background-color: #fafafa;
+    border-color: #ccc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.sub-menu-btn:hover svg {
+    opacity: 1;
+}
+
+/* === АКТИВНА КНОПКА (Світла тема + Бірюзовий акцент) === */
+.sub-menu-btn.active {
+    background-color: rgba(0, 221, 192, 0.15); /* Прозорий бірюзовий */
+    border-color: #00DDC0;     /* Бірюзова рамка */
+    color: #000000;            /* Чорний текст */
+    font-weight: bold;
+}
+
+.sub-menu-btn.active svg {
+    opacity: 1;
+    stroke: #000000; /* Чорна іконка для контрасту з текстом */
+    stroke-width: 2.5px;
+}
+
+/* Бірюзова смужка зліва */
+.sub-menu-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #00DDC0;
+}
+
+/* ============================================================ */
+
+.content-area { padding: 15px; flex-grow: 1; overflow-y: auto; }
+.page-content { display: none; }
+.page-content.active { display: block; }
+h2 { margin-bottom: 15px; font-weight: 500; }
+
+/* --- СТИЛІ КНОПОК ЗАПИСУ (ОНОВЛЕНО) --- */
+.write-button {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    
+    font-family: 'Roboto', sans-serif;
+    font-weight: 600;
+    color: #333;
+    
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.1s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Ховер ефект для кнопок запису: СІРИЙ */
+.write-button:hover {
+    background-color: #f0f0f0; /* Сірий фон */
+    border-color: #cccccc;     /* Сіра рамка */
+    color: #000000;            /* Чорний текст */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Активний стан (клік): ВДАВЛЕННЯ БЕЗ ІНВЕРСІЇ */
+.write-button:active {
+    background-color: #d0f2ef; /* Легкий бірюзовий відтінок */
+    border-color: #00DDC0;
+    color: #000000;            /* Чорний текст (змінено з #008c7a на #000000) */
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Внутрішня тінь */
+}
+
+/* --- Стилі для полів вводу (ПРИБРАНО ЧОРНУ РАМКУ) --- */
+input[type="text"], input[type="number"], select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+    margin-top: 2px;
+    border-radius: 4px; 
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Стиль при фокусі (натисканні) */
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    outline: none; /* Прибирає стандартну чорну рамку браузера */
+    border-color: #00DDC0; /* Бірюзова рамка */
+    box-shadow: 0 0 0 2px rgba(0, 221, 192, 0.2); /* Легке бірюзове світіння */
+}
+
+input[readonly] { background-color: #f5f5f5; color: #555; }
+/* Readonly поля не повинні світитися */
+input[readonly]:focus {
+    border-color: #ccc;
+    box-shadow: none;
+}
+
+label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
+
+/* Група кнопок ON/OFF (також оновлено на бірюзовий) */
+.button-group { display: flex; margin-top: 5px; }
+.button-group button {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    font-weight: 500;
+}
+.button-group button.active {
+    background-color: #00DDC0; /* Бірюзовий фон */
+    color: white;
+    border-color: #00DDC0;
+}
+.button-group button:first-child { border-radius: 4px 0 0 4px; }
+.button-group button:last-child { border-radius: 0 4px 4px 0; }
+
+/* --- СІТКИ (мобільна версія) --- */
+.inverter-layout, .bms-layout {
+    display: grid;
+    grid-template-columns: 1fr; 
+    gap: 20px;
+}
+.rw-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 10px;
+    align-items: end; 
+}
+.rw-grid label { text-align: left; grid-column: 1 / -1; } 
+.rw-grid input[readonly] { grid-column: 1 / -1; } 
+.rw-grid input { width: 100%; }
+.rw-grid .write-button { width: 100%; }
+
+/* --- СІТКА КОМІРОК --- */
+.cell-map-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background-color: transparent;
+    counter-reset: cell-counter;
+}
+
+.cell-item {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    margin-bottom: 0; 
+    position: relative;
+}
+
+.cell-item::before {
+    counter-increment: cell-counter;
+    content: counter(cell-counter);
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.5); 
+    z-index: 1; 
+}
+
+.cell-item label { display: none; }
+
+.cell-item input[type="text"] {
+    border: none;
+    outline: none;
+    box-shadow: none;
+    margin-top: 0;
+    text-align: center;
+    color: #222;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    width: 100%;
+    border-radius: 4px;
+    background-color: #e0e0e0; 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    user-select: none;
+    padding: 12px 5px 12px 18px; 
+    position: relative; 
+}
+
+/* --- СІТКА ДАТЧИКІВ ТЕМПЕРАТУРИ --- */
 .temp-map-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 колонки на мобільному */
-    gap: 4px;
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 6px;
     background-color: transparent;
-    counter-reset: temp-counter; /* Лічильник для температур */
+    counter-reset: temp-counter; 
 }
 
 .temp-item {
@@ -445,86 +482,160 @@
     position: relative;
 }
 
-/* Номер датчика */
 .temp-item::before {
     counter-increment: temp-counter;
     content: counter(temp-counter);
     position: absolute;
-    left: 4px;
-    top: 2px;
+    left: 6px;
+    top: 4px;
     font-size: 10px;
     font-weight: 600;
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0.5);
     z-index: 1;
 }
 
-/* Стиль самого <input> з температурою */
 .temp-item input[type="text"] {
     border: none;
     outline: none;
     box-shadow: none;
     margin-top: 0;
     text-align: center;
-    color: #000;
-    font-family: sans-serif;
+    color: #222;
+    font-family: 'Roboto', sans-serif;
     font-weight: 500;
     font-size: 14px;
     width: 100%;
     border-radius: 4px;
-    background-color: #e0e0e0; /* Базовий сірий */
+    background-color: #e0e0e0;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     user-select: none;
-    padding: 10px 5px 10px 18px; /* Відступ для номера */
+    padding: 12px 5px 12px 18px; 
     position: relative; 
     transition: background-color 0.3s;
 }
 
-/* --- Класи Heatmap для ТЕМПЕРАТУРИ (додає JavaScript або статично) --- */
-.temp-v-cold {
-    background-color: #a9d0f5 !important; /* Холодний синій */
-    color: #000 !important;
-}
-.temp-v-normal {
-    background-color: #c8f5a9 !important; /* Нормальний зелений */
-    color: #000 !important;
-}
-.temp-v-warm {
-    background-color: #f5e0a9 !important; /* Теплий жовтий */
-    color: #000 !important;
-}
-.temp-v-hot {
-    background-color: #f5a9a9 !important; /* Гарячий червоний */
-    color: #000 !important;
-}
-
+/* Heatmap кольори */
+.temp-v-cold { background-color: #a9d0f5 !important; color: #000 !important; }
+.temp-v-normal { background-color: #c8f5a9 !important; color: #000 !important; }
+.temp-v-warm { background-color: #f5e0a9 !important; color: #000 !important; }
+.temp-v-hot { background-color: #f5a9a9 !important; color: #000 !important; }
 
 /* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
 @media (min-width: 768px) {
+    body { flex-direction: row; }
+    .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        display: block; 
+        padding-top: 20px;
+    }
+    .sidebar-title { 
+        display: block; 
+        text-align: center; 
+        margin-bottom: 25px; 
+    }
     
-    /* (Оскільки у нас всього 4 датчики, логіка 8 колонок не потрібна) */
-    /* На десктопі вони просто стануть більшими */
+    .nav-item { width: 100%; }
+    .sidebar button.nav-button {
+        display: flex; 
+        width: 100%;
+        padding: 15px 25px;
+        font-size: 1em;
+        border-bottom: 1px solid #444;
+        align-items: center; 
+    }
+    .sidebar button.nav-button.active { border-bottom: 1px solid #00DDC0; }
+    
+    .has-submenu > .nav-button {
+        justify-content: space-between; 
+    }
+    
+    .submenu {
+        display: block; 
+        max-height: 0; 
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    .nav-item.open .submenu {
+        max-height: 500px; 
+    }
+    .submenu .nav-button {
+        padding-left: 45px; 
+        border-bottom-color: #2a2a2a; 
+    }
+    
+    .main-wrapper { height: 100vh; }
+    .top-bar { font-size: 1em; }
+    .status-light { width: 15px; height: 15px; }
+    #connectButton { font-size: 1.5em; } 
+    .content-area { padding: 30px; }
+    
+    .inverter-layout, .bms-layout {
+        grid-template-columns: 1fr 1fr; 
+        gap: 40px;
+    }
+    
+    /* ДЕСКТОП СІТКА КОМІРОК */
+    .cell-map-grid {
+        display: block; 
+        column-count: 8;  
+        column-gap: 15px; 
+    }
+
+    .cell-map-grid .cell-item {
+        break-inside: avoid;
+        margin-bottom: 8px; 
+    }
+    
+    .cell-map-grid .cell-item input[type="text"] {
+        font-size: 14px;  
+        padding-top: 8px;    
+        padding-bottom: 8px; 
+        padding-left: 25px; 
+    }
+    
+    .cell-map-grid .cell-item::before {
+         left: 8px; 
+         top: 3px; 
+         font-size: 10px; 
+    }
+
+    /* ДЕСКТОП СІТКА ТЕМПЕРАТУР */
     .temp-map-grid {
-         /* 4 колонки виглядають добре і на десктопі, якщо їх всього 4 */
         grid-template-columns: repeat(4, 1fr);
-        /* Можемо зробити їх ширшими, обмеживши контейнер */
-        max-width: 600px; 
+        max-width: 700px; 
+        gap: 15px;
     }
 
     .temp-item input[type="text"] {
-        font-size: 16px; /* Трохи більший шрифт */
+        font-size: 16px; 
         padding-top: 15px;
         padding-bottom: 15px; 
     }
     
     .temp-item::before {
          font-size: 11px;
-         left: 5px;
-         top: 4px; 
+         left: 8px;
+         top: 6px; 
     }
+}
 
-    /* --- Картка оновлення --- */
+/* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
+@media (min-width: 1024px) {
+    .rw-grid {
+        grid-template-columns: 200px 100px 100px 120px; 
+        gap: 15px;
+        align-items: center;
+    }
+    .rw-grid label { grid-column: 1 / 2; text-align: right; }
+    .rw-grid input[readonly] { grid-column: 2 / 3; }
+    .rw-grid input { grid-column: 3 / 4; }
+    .rw-grid .write-button { grid-column: 4 / 5; }
+}
+
+/* --- Картка оновлення --- */
 .update-card {
     background-color: #ffffff;
     padding: 30px;
@@ -532,7 +643,6 @@
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     width: 100%;
     max-width: 600px;
-    /* Центруємо картку, якщо вона в .content-area */
     margin: 0 auto; 
     transition: all 0.3s ease;
 }
@@ -543,7 +653,7 @@
     padding: 25px;
     border-radius: 8px;
     text-align: center;
-    background-color: #96dfd4;
+    background-color: #e0fbf8; /* Світло-бірюзовий фон */
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;
 }
@@ -552,12 +662,8 @@
     border-color: #9fe0d6;
 }
 
-/* Ховаємо стандартний input[type="file"] */
-#file-input {
-    display: none;
-}
+#file-input { display: none; }
 
-/* Стилізована кнопка, яка насправді є <label> */
 .file-select-button {
     font-size: 16px;
     font-weight: 600;
@@ -565,7 +671,6 @@
     cursor: pointer;
 }
 
-/* Текст з назвою обраного файлу */
 #file-name {
     margin-top: 15px;
     display: block;
@@ -574,14 +679,13 @@
     font-size: 14px;
 }
 
-/* --- Кнопка "Залити прошивку" --- */
 #upload-button {
     width: 100%;
     padding: 15px;
     font-size: 16px;
     font-weight: 600;
     color: white;
-    background-color: #2ecc71; /* Зелений колір */
+    background-color: #00DDC0; /* Бірюзовий */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -590,18 +694,18 @@
 }
 
 #upload-button:disabled {
-    background-color: #bdc3c7; /* Сірий колір */
+    background-color: #bdc3c7; 
     cursor: not-allowed;
     opacity: 0.7;
 }
 #upload-button:not(:disabled):hover {
-    background-color: #27ae60;
+    background-color: #00b39b; /* Темніший бірюзовий */
 }
 
-/* --- Область прогресу (схована за замовчуванням) --- */
+/* --- Область прогресу --- */
 .progress-area {
     margin-top: 25px;
-    display: none; /* Ховаємо, поки не почнеться оновлення */
+    display: none; 
 }
 
 .progress-bar-container {
@@ -613,9 +717,9 @@
 }
 
 .progress-bar {
-    width: 0%; /* Початкова ширина */
+    width: 0%; 
     height: 100%;
-    background-color: #34db7f; /* Синій колір прогресу */
+    background-color: #00DDC0; /* Бірюзовий */
     border-radius: 5px;
     transition: width 0.1s ease-in-out;
     text-align: center;
@@ -632,16 +736,16 @@
     color: #333;
 }
 
-/* --- ОВЕРЛЕЙ БЛОКУВАННЯ (схований за замовчуванням) --- */
+/* --- ОВЕРЛЕЙ БЛОКУВАННЯ --- */
 .overlay {
-    position: fixed; /* 'fixed' працює відносно вікна браузера */
+    position: fixed; 
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
-    display: none; /* Ховаємо */
+    display: none; 
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -657,82 +761,100 @@
     margin-bottom: 10px;
 }
 
-/* Контейнер, що тримає кнопки на відстані */
+/* Кнопки підключення (BT / BLE) */
 .connection-header {
     display: flex;
-    justify-content: flex-end; /* Вирівнювання вправо, як на скріні */
-    gap: 20px;
-    padding: 15px 25px;
-    background: transparent; /* Щоб зливалося з білим фоном сторінки */
+    justify-content: flex-end; 
+    gap: 10px; 
+    padding: 0 10px; 
+    background: transparent; 
 }
 
-/* Стиль окремої "плитки" кнопки */
 .nav-conn-btn {
-    background: #ffffff; /* Білий фон кнопки */
-    border: none;
-    color: #333333; /* Темний текст для контрасту */
-    font-size: 18px;
-    font-weight: 700;
-    width: 80px;
-    height: 50px;
+    background-color: #ffffff; 
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    color: #333;
+    font-size: 0.9rem; 
+    font-weight: 500;
+    
+    /* Адаптивність */
+    padding: 8px 16px;
+    width: auto; 
+    height: auto; 
+    min-width: 60px;
+    
     cursor: pointer;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     
-    /* Тінь, щоб кнопки "виступали" над фоном */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 4px; /* Легке закруглення кутів */
-    
+    overflow: hidden; 
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Стан активної кнопки */
-.nav-conn-btn.active {
-    color: #28a745; /* Зелений текст для активної */
+.nav-conn-btn:hover {
+    background-color: #fafafa;
+    border-color: #ccc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Зелена смужка знизу тільки для активної */
-.nav-conn-btn.active::after {
+/* Активний стан кнопок підключення */
+.nav-conn-btn.active {
+    background-color: #e0fbf8; /* Світло-бірюзовий */
+    border-color: #00DDC0;
+    color: #008c7a;            /* Темно-бірюзовий текст */
+    font-weight: bold;
+}
+
+/* Бірюзова смужка зліва */
+.nav-conn-btn.active::before {
     content: '';
     position: absolute;
-    bottom: 0;
     left: 0;
-    width: 100%;
-    height: 4px;
-    background: #28a745; /* Насичений зелений */
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 -2px 10px rgba(40, 167, 69, 0.4);
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #00DDC0;
 }
 
-/* Ефект при натисканні */
+/* Видаляємо стару нижню смужку */
+.nav-conn-btn.active::after {
+    display: none;
+}
+
 .nav-conn-btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transform: translateY(1px);
+    box-shadow: none;
 }
 
-/* Трохи притемняємо неактивну кнопку при наведенні */
 .nav-conn-btn:not(.active) {
-    opacity: 0.8;
-    background: #f8f9fa;
+    opacity: 1; 
 }
 
+/* --- Мобільна адаптація кнопок підключення --- */
+@media (max-width: 480px) {
+    .nav-conn-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    .connection-header {
+        gap: 5px;
+    }
 }
 
-        /* Стиль для Терміналу */
-        #log {
-            background-color: #1e1e1e;
-            color: #00ff00;
-            height: 70vh;
-            overflow-y: scroll;
-            padding: 10px;
-            white-space: pre-wrap;
-            font-family: monospace;
-        }
-        
-        /* БЛОК HEATMAP (який був у кінці) ТЕПЕР ПЕРЕМІЩЕНО ВИЩЕ, 
-           ПЕРЕД @media-запитами, ТОМУ ТУТ БІЛЬШЕ НІЧОГО НЕМАЄ */
-        
-        /* --- КІНЕЦЬ CSS --- */
+/* Стиль для Терміналу */
+#log {
+    background-color: #1e1e1e;
+    color: #00ff00;
+    height: 70vh;
+    overflow-y: scroll;
+    padding: 10px;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+/* --- КІНЕЦЬ CSS --- */
