@@ -1,7 +1,9 @@
-// modules/webBluetooth.js
 import { state } from './state.js';
 import { logMessage, updateConnectionTabs } from './ui.js';
 import { parseCanResponse } from './canProtocol.js';
+
+// Глобальний буфер для зклеювання розірваних BLE пакетів
+let bleBuffer = "";
 
 export async function connectBleAdapter() {
     try {
@@ -15,20 +17,19 @@ export async function connectBleAdapter() {
         const server = await device.gatt.connect();
         const service = await server.getPrimaryService(0xFFF0);
 
-        // Налаштовуємо канали згідно з тестом
-        const charRead = await service.getCharacteristic(0xFFF1);  // fff1 для вхідних даних
-        const charWrite = await service.getCharacteristic(0xFFF2); // fff2 для вихідних команд
+        const charRead = await service.getCharacteristic(0xFFF1);
+        const charWrite = await service.getCharacteristic(0xFFF2);
 
         state.connectionType = 'ble';
         state.bleDevice = device;
+        bleBuffer = ""; // Очищуємо буфер при новому підключенні
 
-        // Створюємо універсальний writer
         state.writer = {
             write: async (text) => {
                 const encoder = new TextEncoder();
-                const data = encoder.encode(text);
+                const command = text.endsWith('\r') ? text : text + '\r';
+                const data = encoder.encode(command);
                 
-                // 💡 ІНДИКАТОР АДАПТЕРА (TX)
                 if (window.uiUpdater && window.uiUpdater.flashAdapterLed) {
                     window.uiUpdater.flashAdapterLed();
                 }
@@ -37,29 +38,61 @@ export async function connectBleAdapter() {
             }
         };
 
-        // Вмикаємо прослуховування fff1
         await charRead.startNotifications();
+        
+        // --- ОБРОБНИК ВХІДНИХ ДАНИХ З БУФЕРОМ ---
         charRead.addEventListener('characteristicvaluechanged', (event) => {
             const decoder = new TextDecoder();
-            const value = decoder.decode(event.target.value);
+            const chunk = decoder.decode(event.target.value);
             
-            // 💡 ІНДИКАТОР ШИНИ (RX)
+            // Накопичуємо дані в буфер
+            bleBuffer += chunk;
+
+            // ELM327 сигналізує про кінець відповіді символом ">"
+            if (bleBuffer.includes('>')) {
+                const parts = bleBuffer.split('\r');
+                
+                for (let part of parts) {
+                    // Очищаємо від службових символів
+                    const cleanLine = part.replace(/>/g, '').trim().toUpperCase();
+                    
+                    if (cleanLine && cleanLine !== 'OK' && !cleanLine.startsWith('AT')) {
+                        const parsed = parseCanResponse(cleanLine);
+                        if (parsed && parsed.id && parsed.data && window.pollingManager) {
+                            window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+                        }
+                    }
+                }
+                // Очищуємо буфер після обробки повної відповіді
+                bleBuffer = ""; 
+            }
+
             if (window.uiUpdater && window.uiUpdater.flashCanLed) {
                 window.uiUpdater.flashCanLed();
             }
-
-            // 1. Відправляємо в парсер для терміналу та виділення ID/Data
-            const parsed = parseCanResponse(value);
-
-            // 2. ПЕРЕДАЄМО В МЕНЕДЖЕР ОПИТУВАННЯ
-            if (parsed && parsed.id && parsed.data && window.pollingManager) {
-                window.pollingManager.handleCanResponse(parsed.id, parsed.data);
-            }
         });
+
+        // --- КРОК ІНІЦІАЛІЗАЦІЇ ---
+        logMessage("Ініціалізація ELM327...");
+
+        const initCommands = [
+            { cmd: "ATZ", desc: "Скидання адаптера", wait: 1200 },
+            { cmd: "ATE0", desc: "Вимкнення ехо", wait: 500 },
+            { cmd: "ATL0", desc: "Вимкнення переносів (Linefeeds)", wait: 300 },
+            { cmd: "ATH1", desc: "Заголовки (ID) ON", wait: 300 },
+            { cmd: "ATSP6", desc: "Встановлення протоколу CAN", wait: 400 },
+            { cmd: "ATSH79B", desc: "Встановлення ID запиту", wait: 300 }
+        ];
+
+        for (const item of initCommands) {
+            logMessage(`[INIT] ${item.desc}...`);
+            await state.writer.write(item.cmd);
+            await new Promise(r => setTimeout(r, item.wait));
+        }
 
         state.isConnected = true;
         updateConnectionTabs();
-        logMessage("✓ BLE підключено (Режим розділених каналів)");
+        logMessage("✓ BLE підключено та налаштовано!");
 
         const activePageButton = document.querySelector('.sidebar .nav-button.active');
         if (activePageButton) activePageButton.click();

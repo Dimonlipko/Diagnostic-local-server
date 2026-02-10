@@ -163,17 +163,42 @@ export function initPageEventListeners(handlers) {
     
     console.log('Ініціалізація обробників подій сторінок...');
     
-    pageContainer.addEventListener('click', (event) => {
+    pageContainer.addEventListener('click', async (event) => {
         const target = event.target;
 
         // --- ОБРОБКА КНОПКИ ЗАПИСУ ПАРАМЕТРІВ ---
+        // --- ОБРОБКА КНОПКИ ЗАПИСУ З ПАУЗОЮ ПОЛІНГУ ---
         if (target.classList.contains('write-button') && handlers.onWrite) {
             const paramName = target.dataset.paramName;
             const targetId = target.dataset.targetId;
             const inputElement = document.getElementById(targetId);
             
             if (inputElement && inputElement.value !== '') {
-                handlers.onWrite(paramName, inputElement.value);
+                // 1. Зупиняємо полінг перед записом
+                if (window.pollingManager) {
+                    window.pollingManager.stopAllPolling();
+                    logMessage(`[WRITE] Полінг зупинено для запису ${paramName}...`);
+                }
+
+                // Короткий відпочинок для адаптера (200мс)
+                await new Promise(r => setTimeout(r, 200));
+
+                // 2. Викликаємо сам запис
+                await handlers.onWrite(paramName, inputElement.value);
+
+                // 3. Пауза, щоб ECU встиг оновити дані (500мс)
+                await new Promise(r => setTimeout(r, 500));
+
+                // 4. Автоматичний перезапуск полінгу для поточної сторінки
+                const requiredKeys = getRequiredKeysFromDOM(pageContainer);
+                if (requiredKeys.size > 0 && window.pollingManager) {
+                    window.pollingManager.startPolling(
+                        Array.from(requiredKeys),
+                        window.PARAMETER_REGISTRY,
+                        updateUiValue
+                    );
+                    logMessage(`[WRITE] Опитування відновлено.`);
+                }
             } else if (!inputElement) {
                 logMessage(`ПОМИЛКА: Не знайдено input з ID: ${targetId}`);
             } else {

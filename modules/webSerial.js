@@ -178,15 +178,13 @@ async function initializeAdapter() {
     } else if (state.adapterType === 'elm327') {
         logMessage('Ініціалізація ELM327...');
         
-        if (!state.echoOff) {
-            logMessage('Вимикаємо ехо (ATE0)...');
-            await state.writer.write("ATE0\r");
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
         logMessage('Скидаємо налаштування (ATZ)...');
         await state.writer.write("ATZ\r");
         await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+        logMessage('Вимикаємо ехо (ATE0)...');
+        await state.writer.write("ATE0\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         logMessage('Вимикаємо пробіли (ATS0)...');
         await state.writer.write("ATS0\r");
