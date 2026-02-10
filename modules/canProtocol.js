@@ -76,35 +76,39 @@ export function parseCanResponse(line) {
  * Твій оригінальний парсер ELM327
  */
 function parseCanResponse_ELM327(line) {
-    const clean = line.replace('>', '').trim();
+    const clean = line.replace(/\s+/g, '').replace('>', '').trim().toUpperCase();
+    if (!clean || clean === "OK" || clean === "STOPPED") return null;
 
-    if (clean.startsWith('ATSH') || clean.match(/^[0-9A-F]{6,}$/i)) {
-        if (clean.match(/^[0-9A-F]{6}$/i)) return null; 
+    // 🔍 DEBUG: Вхідні дані
+    console.log(`[DEBUG RAW IN]: "${clean}" | Len: ${clean.length}`);
+
+    // Ігноруємо ЕХО
+    if (clean.startsWith('22') || clean.startsWith('AT')) {
+        console.log(`[DEBUG PARSER]: Ігноруємо ЕХО запиту/команди: ${clean}`);
+        return null;
     }
-    
-    const parts = clean.split(' ');
-    
-    // Формат 1: "7BB 62 03 01 ..."
-    if (parts.length >= 2 && parts[0].length === 3 && /^[0-9A-F]{3}$/i.test(parts[0])) {
-        return { id: parts[0].toUpperCase(), data: parts.slice(1).join('').toUpperCase() };
-    }
-    
-    // Формат 2: "7BB62030101..."
-    if (parts.length === 1 && clean.length > 3) {
-        const possibleId = clean.substring(0, 3).toUpperCase();
-        if (/^[0-9A-F]{3}$/i.test(possibleId)) {
-            return { id: possibleId, data: clean.substring(3).toUpperCase() };
-        }
-    }
-    
-    // Формат 3: "62 03 01..." (без ID)
-    if (parts.length >= 2 && /^[0-9A-F]{2}$/i.test(parts[0]) && /^[0-9A-F]{2}$/i.test(parts[1])) {
+
+    let id = "";
+    let data = "";
+
+    // Формат: "7BB07620301..." (Злитий з ID)
+    if (clean.length > 3 && clean.startsWith('7')) {
+        id = clean.substring(0, 3);
+        data = clean.substring(3);
+        console.log(`[DEBUG PARSER]: Формат з ID -> ID: ${id}, Data: ${data}`);
+    } 
+    // Формат: "620301..." (Без ID)
+    else if (clean.startsWith('62')) {
         if (state.lastRequestId) {
-            const data = clean.split(' ').join('').toUpperCase();
-            const responseId = (state.lastRequestId === '79B') ? '7BB' : state.lastRequestId;
-            return { id: responseId, data: data };
+            id = (state.lastRequestId === '79B') ? '7BB' : state.lastRequestId;
+            data = clean;
+            console.log(`[DEBUG PARSER]: Формат без ID -> Підставлено: ${id}, Data: ${data}`);
+        } else {
+            console.warn(`[DEBUG PARSER]: FAIL - Прийшло '62', але lastRequestId порожній!`);
+            return null;
         }
     }
-    
+
+    if (id && data) return { id, data };
     return null;
 }

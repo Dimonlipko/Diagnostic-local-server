@@ -102,9 +102,24 @@ function groupParametersByRequest(parameterKeys, registry) {
  * Ця функція ПОВИННА викликатися з webBluetooth.js та webSerial.js
  */
 export function handleCanResponse(canId, dataHex) {
-    // Отримуємо Mode (62) та PID (напр. 0301)
-    const responseMode = dataHex.substring(0, 2) === '07' ? dataHex.substring(2, 4) : dataHex.substring(0, 2);
-    const responsePid = dataHex.substring(0, 2) === '07' ? dataHex.substring(4, 8) : dataHex.substring(2, 6);
+    // 1. ПЕРЕВІРКА НА СМІТТЯ (мінімальна довжина для UDS відповіді)
+    if (!dataHex || dataHex.length < 10) return; 
+
+    // 2. ПЕРЕВІРКА ЦІЛІСНОСТІ (Твій підхід по першому байту)
+    const pciLength = parseInt(dataHex.substring(0, 2), 16);
+    const actualDataBytes = dataHex.substring(2).length / 2;
+
+    // Якщо довжина в першому байті не збігається з отриманою - ігноруємо
+    if (pciLength !== actualDataBytes) {
+        // console.warn(`[Polling] Неповний пакет: PCI ${pciLength} != Data ${actualDataBytes}`);
+        return;
+    }
+
+    // 3. ВИЗНАЧЕННЯ MODE ТА PID (З урахуванням того, що PCI на початку)
+    // dataHex: [PCI][Mode][PID_H][PID_L]...
+    // індекси:  01   23    45     67
+    const responseMode = dataHex.substring(2, 4);
+    const responsePid = dataHex.substring(4, 8);
 
     if (responseMode !== '62') return;
 
@@ -114,15 +129,21 @@ export function handleCanResponse(canId, dataHex) {
     if (context) {
         logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
         try {
-            // Визначаємо парсер (працює і для об'єкта, і для масиву parameters)
+            // Визначаємо парсер
             const parser = context.parser || context.parameters[0].response.parser;
             const id = context.id || context.parameters[0].id;
             
-            const val = parser(dataHex);
-            if (val !== null) context.updateCallback(id, val);
+            // 💡 ПЕРЕДАЄМО ПОВНИЙ dataHex (з 07/05 на початку)
+            // Тепер твої substring(8, 10) у parameterRegistry знову працюватимуть!
+            const val = parser(dataHex); 
+            
+            if (val !== null) {
+                context.updateCallback(id, val);
+            }
         } catch (e) {
             console.error("Помилка парсингу:", e);
         }
+        // Видаляємо запит з активних, щоб звільнити місце для наступного кола
         activeRequests.delete(responseKey);
     }
 }
