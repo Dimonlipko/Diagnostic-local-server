@@ -35,21 +35,25 @@ body {
     padding: 5px 0;
 }
 
-/* --- СТИЛІ ДЛЯ ЛОГОТИПУ --- */
+/* --- СТИЛІ ДЛЯ ЛОГОТИПУ (ОНОВЛЕНО ДЛЯ SVG) --- */
 .sidebar-title { 
     display: none; 
     padding: 10px 0;
     width: 100%; 
 }
-.sidebar-title img {
-    width: 80%; 
-    max-width: 150px; 
+
+/* Додано селектор для svg та збільшено розміри */
+.sidebar-title img,
+.sidebar-title svg {
+    width: 90%;        /* Збільшено ширину */
+    max-width: 200px;  /* Збільшено ліміт ширини */
     height: auto;
     margin-bottom: 5px;
     display: block;
     margin-left: auto;
     margin-right: auto;
 }
+
 .sidebar-title small {
     color: #aaa; 
     font-family: 'Orbitron', sans-serif; 
