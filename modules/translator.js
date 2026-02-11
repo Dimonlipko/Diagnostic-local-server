@@ -20,9 +20,12 @@ export function translatePage() {
         if (t[key]) {
             // Перевіряємо, чи є вкладений span (для стрілки)
             const firstChild = el.firstElementChild; // Шукаємо <span>
-            
+
             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                 if (el.placeholder) el.placeholder = t[key];
+            } else if (el.tagName === 'OPTION') {
+                // Для елементів <option> в <select>
+                el.textContent = t[key];
             } else if (firstChild && firstChild.tagName === 'SPAN' && el.classList.contains('nav-button')) {
                 // Якщо це кнопка меню зі span (напр. "⚡️ Інвертор" або "🔋 БМС")
                 firstChild.textContent = t[key];

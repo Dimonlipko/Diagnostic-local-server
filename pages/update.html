@@ -7,31 +7,31 @@
 <!-- Оверлей, який блокує екран під час оновлення -->
 <div class="overlay" id="update-overlay">
     <div class="overlay-content">
-        <h3>Йде оновлення прошивки...</h3>
-        <p>Будь ласка, не закривайте і не оновлюйте цю сторінку!</p>
-        <p>Це може пошкодити ваш пристрій.</p>
+        <h3 data-lang-key="update_overlay_title">Йде оновлення прошивки...</h3>
+        <p data-lang-key="update_overlay_text1">Будь ласка, не закривайте і не оновлюйте цю сторінку!</p>
+        <p data-lang-key="update_overlay_text2">Це може пошкодити ваш пристрій.</p>
     </div>
 </div>
 
 <!-- Основна картка оновлення -->
 <div class="update-card" id="update-card-content">
-    <h2>Оновлення прошивки пристрою</h2>
+    <h2 data-lang-key="update_title">Оновлення прошивки пристрою</h2>
 
     <!-- 1. Область вибору файлу -->
     <label for="file-input" class="file-input-area" id="file-input-label">
-        <span class="file-select-button">Натисніть, щоб обрати файл</span>
-        <span id="file-name">Файл не обрано</span>
+        <span class="file-select-button" data-lang-key="update_file_select">Натисніть, щоб обрати файл</span>
+        <span id="file-name" data-lang-key="update_file_not_selected">Файл не обрано</span>
     </label>
     <input type="file" id="file-input" accept=".bin,.img,.hex">
-    
+
     <!-- 2. Кнопка "Залити прошивку" -->
-    <button id="upload-button" disabled>Залити прошивку</button>
+    <button id="upload-button" disabled data-lang-key="update_upload_button">Залити прошивку</button>
 
     <!-- 3. Область прогресу -->
     <div class="progress-area" id="progress-area">
         <div class="progress-bar-container">
             <div class="progress-bar" id="progress-bar">0%</div>
         </div>
-        <div id="status-text">Очікування...</div>
+        <div id="status-text" data-lang-key="update_status_waiting">Очікування...</div>
     </div>
 </div>
