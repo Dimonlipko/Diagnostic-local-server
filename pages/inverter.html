@@ -1,46 +1,32 @@
 <h2 data-lang-key="inverter_title">Інвертор</h2>
-<div class="inverter-layout">
-    
-    <!-- Ліва колонка (Read-Only) -->
-    <div class="inverter-column">
-        <label data-lang-key="inv_hv_voltage">Invertor high voltage</label>
-        <!-- 
-            data-bind="inverter_info_220301.voltage" 
-            - "inverter_info_220301" - це ключ в PARAMETER_REGISTRY
-            - ".voltage" - це властивість в об'єкті, який повертає парсер
-        -->
-        <input type="text" id="readInvertorHighVoltage" value="0 V" readonly data-bind="inverter_info_220301.voltage">
-        
-        <label data-lang-key="inv_temp">Invertor temperature</label>
-        <input type="text" id="readInvertorTemperature" value="0 °C" readonly data-bind="inverter_info_220302.invTemp">
-        
-        <label data-lang-key="inv_motor_temp">Motor temperature</label>
-        <input type="text" id="readMotorTemperature" value="0 °C" readonly data-bind="inverter_info_220302.motorTemp">
-        
-        <label data-lang-key="inv_selector">Selector position</label>
-        <input type="text" id="readSelectorPosition" value="N" readonly data-bind="inverter_info_220302.selector">
-        
-        <label data-lang-key="inv_rpm">Motor RPM</label>
-        <input type="text" id="readMotorRPM" value="0 rpm" readonly data-bind="inverter_info_220303.rpm">
-        
-        <label data-lang-key="inv_pedal">Pedal position</label>
-        <input type="text" id="readPedalPosition" value="0" readonly data-bind="inverter_info_220303.pedal">
-        
-        <label data-lang-key="inv_torque_req">Torque request</label>
-        <input type="text" id="readTorqueRequest" value="0 Nm" readonly data-bind="inverter_info_220304.torqueReq">
-    </div>
-    
-    <!-- Права колонка (Read-Only) -->
-    <div class="inverter-column">
-        <label data-lang-key="inv_ready">Ready</label>
-        <input type="text" id="readReady" value="No" readonly data-bind="inverter_info_220301.ready">
-        
-        <label data-lang-key="inv_error">Invertor error</label>
-        <input type="text" id="readInvertorError" value="No" readonly data-bind="inverter_info_220302.error">
-        
-        <label data-lang-key="inv_status">Status</label>
-        <input type="text" id="readStatus" value="OK" readonly data-bind="inverter_info_220301.status">
-    </div>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="inv_hv_voltage">Invertor high voltage</label>
+    <input type="text" id="readInvertorHighVoltage" value="0 V" readonly data-bind="inverter_info_220301.voltage">
+    <label data-lang-key="inv_ready">Ready</label>
+    <input type="text" id="readReady" value="No" readonly data-bind="inverter_info_220301.ready">
+
+    <label data-lang-key="inv_temp">Invertor temperature</label>
+    <input type="text" id="readInvertorTemperature" value="0 °C" readonly data-bind="inverter_info_220302.invTemp">
+    <label data-lang-key="inv_error">Invertor error</label>
+    <input type="text" id="readInvertorError" value="No" readonly data-bind="inverter_info_220302.error">
+
+    <label data-lang-key="inv_motor_temp">Motor temperature</label>
+    <input type="text" id="readMotorTemperature" value="0 °C" readonly data-bind="inverter_info_220302.motorTemp">
+    <label data-lang-key="inv_status">Status</label>
+    <input type="text" id="readStatus" value="OK" readonly data-bind="inverter_info_220301.status">
+
+    <label data-lang-key="inv_selector">Selector position</label>
+    <input type="text" id="readSelectorPosition" value="N" readonly data-bind="inverter_info_220302.selector">
+
+    <label data-lang-key="inv_rpm">Motor RPM</label>
+    <input type="text" id="readMotorRPM" value="0 rpm" readonly data-bind="inverter_info_220303.rpm">
+
+    <label data-lang-key="inv_pedal">Pedal position</label>
+    <input type="text" id="readPedalPosition" value="0" readonly data-bind="inverter_info_220303.pedal">
+
+    <label data-lang-key="inv_torque_req">Torque request</label>
+    <input type="text" id="readTorqueRequest" value="0 Nm" readonly data-bind="inverter_info_220304.torqueReq">
 </div>
 
 <hr style="margin: 20px 0;">

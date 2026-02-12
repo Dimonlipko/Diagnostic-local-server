@@ -224,10 +224,73 @@ body {
 }
 
 .lang-separator {
-    color: #ddd; 
+    color: #ddd;
     font-size: 1.2rem;
     font-weight: 300;
     user-select: none;
+}
+
+/* Мобільна адаптація header */
+@media (max-width: 768px) {
+    .top-bar {
+        padding: 8px 10px;
+        font-size: 0.85em;
+    }
+
+    .status-group {
+        margin-right: 10px;
+        font-size: 0.8em;
+    }
+
+    .status-light {
+        width: 8px;
+        height: 8px;
+        margin-right: 4px;
+    }
+
+    .lang-switcher {
+        margin-left: 12px;
+        gap: 6px;
+    }
+
+    .lang-switcher button {
+        font-size: 1rem;
+    }
+
+    .lang-separator {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-bar {
+        padding: 6px 8px;
+        font-size: 0.8em;
+    }
+
+    .status-group {
+        margin-right: 8px;
+        font-size: 0.75em;
+    }
+
+    .status-light {
+        width: 7px;
+        height: 7px;
+        margin-right: 3px;
+    }
+
+    .lang-switcher {
+        margin-left: 8px;
+        gap: 4px;
+    }
+
+    .lang-switcher button {
+        font-size: 0.9rem;
+    }
+
+    .lang-separator {
+        font-size: 0.9rem;
+    }
 }
 
 /* ============================================================ */
@@ -423,14 +486,27 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
 }
 .rw-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; 
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
-    align-items: end; 
+    align-items: end;
 }
 .rw-grid label { text-align: left; grid-column: 1 / -1; }
 .rw-grid input[readonly] { grid-column: 1 / -1; }
 .rw-grid input { width: 100%; }
+.rw-grid select { width: 100%; }
 .rw-grid .write-button { width: 100%; }
+.rw-grid .toggle-on { grid-column: 1 / 2; }
+.rw-grid .toggle-off { grid-column: 2 / 3; }
+
+.bms-readonly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.bms-readonly-grid label { text-align: left; }
+.bms-readonly-grid input { width: 100%; }
 
 /* --- РЯДКИ ПАРАМЕТРІВ --- */
 .param-row {
@@ -477,21 +553,148 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     margin: 0;
 }
 
+/* Мобільна адаптація BMS Parameters */
+@media (max-width: 768px) {
+    .param-row.readonly {
+        grid-template-columns: 1fr 140px;
+        gap: 8px;
+    }
+
+    .param-row.toggle {
+        grid-template-columns: 1fr 100px 1fr 1fr;
+        gap: 6px;
+    }
+
+    .param-row.writable {
+        grid-template-columns: 1fr 100px 100px auto;
+        gap: 6px;
+    }
+
+    .param-row.select {
+        grid-template-columns: 1fr 100px 100px auto;
+        gap: 6px;
+    }
+
+    .param-row label {
+        font-size: 13px;
+    }
+
+    .param-row input,
+    .param-row select {
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+
+    .param-row button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .param-row {
+        margin-bottom: 12px;
+    }
+
+    .param-row.readonly {
+        grid-template-columns: 1fr 110px;
+        gap: 6px;
+    }
+
+    .param-row.toggle {
+        grid-template-columns: 1fr auto auto;
+        gap: 6px;
+    }
+
+    .param-row.toggle label {
+        grid-column: 1 / -1;
+    }
+
+    .param-row.toggle button {
+        min-width: 60px;
+        white-space: nowrap;
+    }
+
+    .param-row.writable {
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+    }
+
+    .param-row.writable label {
+        grid-column: 1 / -1;
+    }
+
+    .param-row.writable input[readonly] {
+        grid-column: 1 / -1;
+    }
+
+    .param-row.writable input[type="text"]:not([readonly]) {
+        width: 100%;
+    }
+
+    .param-row.writable button {
+        min-width: 70px;
+        white-space: nowrap;
+    }
+
+    .param-row.select {
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+    }
+
+    .param-row.select label {
+        grid-column: 1 / -1;
+    }
+
+    .param-row.select input[readonly] {
+        grid-column: 1 / -1;
+    }
+
+    .param-row.select select {
+        width: 100%;
+    }
+
+    .param-row.select button {
+        min-width: 70px;
+        white-space: nowrap;
+    }
+
+    .param-row label {
+        font-size: 12px;
+    }
+
+    .param-row input,
+    .param-row select {
+        font-size: 13px;
+        padding: 7px;
+    }
+
+    .param-row button {
+        font-size: 12px;
+        padding: 7px;
+    }
+}
+
 /* --- INTERNAL MONITOR LAYOUT --- */
-.internal-param {
+.internal-param,
+.inverter-param {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
     align-items: center;
     margin-bottom: 10px;
 }
 
-.internal-param label {
+.internal-param label,
+.inverter-param label {
     margin: 0;
+    text-align: left;
 }
 
-.internal-param input {
+.internal-param input,
+.inverter-param input {
     margin: 0;
+    width: 100%;
 }
 
 .internal-test-output {
@@ -520,7 +723,8 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
         grid-template-columns: 1fr;
     }
 
-    .internal-param {
+    .internal-param,
+    .inverter-param {
         grid-template-columns: 1fr 120px;
         gap: 8px;
         margin-bottom: 8px;
@@ -528,7 +732,8 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
 }
 
 @media (max-width: 480px) {
-    .internal-param {
+    .internal-param,
+    .inverter-param {
         grid-template-columns: 1fr 100px;
         gap: 6px;
         margin-bottom: 6px;
@@ -701,10 +906,10 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     .status-light { width: 15px; height: 15px; }
     #connectButton { font-size: 1.5em; } 
     .content-area { padding: 30px; }
-    
+
     .inverter-layout, .bms-layout {
-        grid-template-columns: 1fr 1fr; 
-        gap: 40px;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
     }
     
     /* ДЕСКТОП СІТКА КОМІРОК */
@@ -747,22 +952,83 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     
     .temp-item::before {
          font-size: 11px;
-         left: 8px;
-         top: 6px; 
+    }
+
+    /* Tablet layout for rw-grid */
+    .rw-grid {
+        grid-template-columns: 180px 80px 80px 100px;
+        gap: 12px;
+    }
+    .rw-grid label { grid-column: 1 / 2; text-align: right; }
+    .rw-grid input[readonly] { grid-column: 2 / 3; }
+    .rw-grid input { grid-column: 3 / 4; }
+    .rw-grid select { grid-column: 3 / 4; }
+    .rw-grid .write-button { grid-column: 4 / 5; }
+    .rw-grid .toggle-on { grid-column: 3 / 4; }
+    .rw-grid .toggle-off { grid-column: 4 / 5; }
+
+    .bms-readonly-grid {
+        grid-template-columns: 140px 80px 140px 80px;
+        gap: 10px;
+    }
+    .bms-readonly-grid label { text-align: right; }
+
+    .internal-param,
+    .inverter-param {
+        grid-template-columns: 140px 80px;
+    }
+
+    .internal-param label,
+    .inverter-param label {
+        text-align: right;
     }
 }
 
 /* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
 @media (min-width: 1024px) {
     .rw-grid {
-        grid-template-columns: 200px 100px 100px 120px; 
+        grid-template-columns: 200px 100px 100px 120px;
         gap: 15px;
         align-items: center;
     }
     .rw-grid label { grid-column: 1 / 2; text-align: right; }
     .rw-grid input[readonly] { grid-column: 2 / 3; }
     .rw-grid input { grid-column: 3 / 4; }
+    .rw-grid select { grid-column: 3 / 4; }
     .rw-grid .write-button { grid-column: 4 / 5; }
+    .rw-grid .toggle-on { grid-column: 3 / 4; }
+    .rw-grid .toggle-off { grid-column: 4 / 5; }
+
+    .bms-readonly-grid {
+        grid-template-columns: 180px 100px 180px 100px;
+        gap: 15px;
+    }
+    .bms-readonly-grid label { text-align: right; }
+
+    .internal-param,
+    .inverter-param {
+        grid-template-columns: 180px 100px;
+    }
+
+    .internal-param label,
+    .inverter-param label {
+        text-align: right;
+    }
+}
+
+/* --- Internal Monitor Layout --- */
+.internal-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+/* Великі монітори - 4 колонки (2 секції по 2 колонки) */
+@media (min-width: 1500px) {
+    .internal-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
 }
 
 /* --- Картка оновлення --- */
