@@ -283,18 +283,15 @@ export async function connectAdapter() {
         return;
     }
     
-    const statusAdapter = document.getElementById('statusAdapter');
-    
     try {
         logMessage('Очікуємо вибору COM-порту...');
         const port = await navigator.serial.requestPort();
-        
+
         await port.open({ baudRate: BAUD_RATE, dataTerminalReady: true });
-        
-        state.port = port; 
+
+        state.port = port;
         state.connectionType = 'serial'; // 💡 ДОДАНО: Чітка ідентифікація типу підключення
-        
-        if (statusAdapter) statusAdapter.classList.add('connected');
+
         logMessage(`Порт відкрито. Швидкість: ${BAUD_RATE}`);
         
         // Налаштування потоку запису (Writer)
@@ -342,8 +339,7 @@ export async function connectAdapter() {
         if(state.port) {
             try { await state.port.close(); } catch(e) {}
         }
-        
-        if (statusAdapter) statusAdapter.classList.remove('connected');
+
         state.port = null;
         state.reader = null;
         state.writer = null;
@@ -442,11 +438,8 @@ export async function disconnectAdapter() {
     state.adapterType = 'unknown';
 
     // 8. Оновлюємо UI
-    const statusAdapter = document.getElementById('statusAdapter');
-    if (statusAdapter) statusAdapter.classList.remove('connected');
-    
     const connectButton = document.getElementById('connectButton');
     if (connectButton) connectButton.textContent = 'Підключити';
-    
+
     logMessage("✓ Адаптер відключено.");
 }

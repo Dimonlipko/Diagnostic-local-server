@@ -251,10 +251,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             try {
+                // Додаємо клас "connecting" для анімації завантаження
+                btnSerial.classList.add('connecting');
                 logMessage("Запуск Web Serial...");
                 const success = await connectAdapter();
+                // Прибираємо "connecting" після завершення
+                btnSerial.classList.remove('connecting');
                 if (success) updateUIConnectionState('serial');
             } catch (err) {
+                btnSerial.classList.remove('connecting');
                 logMessage(`ПОМИЛКА Serial: ${err.message}`);
             }
         });
@@ -282,13 +287,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateUIConnectionState(null);
                 return;
             }
-            
+
             // Логіка підключення
             try {
+                // Додаємо клас "connecting" для анімації завантаження
+                btnBle.classList.add('connecting');
                 logMessage("Запуск BLE...");
                 const success = await connectBleAdapter();
+                // Прибираємо "connecting" після завершення
+                btnBle.classList.remove('connecting');
                 if (success) updateUIConnectionState('ble');
             } catch (err) {
+                btnBle.classList.remove('connecting');
                 logMessage(`ПОМИЛКА BLE: ${err.message}`);
             }
         });

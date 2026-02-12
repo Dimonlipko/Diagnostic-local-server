@@ -421,7 +421,7 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 14) return null;
-                const cutMap = { "0": "No", "1": "Yes" };
+                const cutMap = { "0": "OFF", "1": "ON" };
                 const cutRaw = parseInt(dataHex.substring(12, 14), 16); // Байт 6
                 return {
                     cutCharge: cutMap[cutRaw.toString()] || 'Unknown'

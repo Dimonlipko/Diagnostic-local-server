@@ -184,9 +184,29 @@ export function initPageEventListeners(handlers) {
         if (target.classList.contains('write-button') && handlers.onWrite) {
             const paramName = target.dataset.paramName;
             const targetId = target.dataset.targetId;
-            const inputElement = document.getElementById(targetId);
-            
-            if (inputElement && inputElement.value !== '') {
+            const directValue = target.dataset.value; // Пряме значення з кнопки
+
+            let valueToWrite = null;
+
+            // Визначаємо звідки брати значення
+            if (directValue !== undefined) {
+                // Кнопка з прямим значенням (для ON/OFF команд)
+                valueToWrite = directValue;
+            } else if (targetId) {
+                // Кнопка з посиланням на input
+                const inputElement = document.getElementById(targetId);
+                if (inputElement && inputElement.value !== '') {
+                    valueToWrite = inputElement.value;
+                } else if (!inputElement) {
+                    logMessage(`ПОМИЛКА: Не знайдено input з ID: ${targetId}`);
+                    return;
+                } else {
+                    logMessage('ПОПЕРЕДЖЕННЯ: Значення для запису порожнє.');
+                    return;
+                }
+            }
+
+            if (valueToWrite !== null) {
                 // 1. Зупиняємо полінг перед записом
                 if (window.pollingManager) {
                     window.pollingManager.stopAllPolling();
@@ -197,7 +217,7 @@ export function initPageEventListeners(handlers) {
                 await new Promise(r => setTimeout(r, 200));
 
                 // 2. Викликаємо сам запис
-                await handlers.onWrite(paramName, inputElement.value);
+                await handlers.onWrite(paramName, valueToWrite);
 
                 // 3. Пауза, щоб ECU встиг оновити дані (500мс)
                 await new Promise(r => setTimeout(r, 500));
@@ -212,10 +232,6 @@ export function initPageEventListeners(handlers) {
                     );
                     logMessage(`[WRITE] Опитування відновлено.`);
                 }
-            } else if (!inputElement) {
-                logMessage(`ПОМИЛКА: Не знайдено input з ID: ${targetId}`);
-            } else {
-                logMessage('ПОПЕРЕДЖЕННЯ: Значення для запису порожнє.');
             }
         }
 
@@ -313,7 +329,7 @@ function updateUiValue(rootKey, data) {
 export function updateConnectionTabs() {
     const btnBT = document.getElementById('btnConnectSerial');
     const btnBLE = document.getElementById('btnConnectBle');
-    
+
     if (!btnBT || !btnBLE) return;
 
     btnBT.classList.remove('active');
@@ -324,6 +340,20 @@ export function updateConnectionTabs() {
             btnBLE.classList.add('active');
         } else {
             btnBT.classList.add('active');
+        }
+
+        // Автоматично запускаємо polling для поточної сторінки
+        const pageContainer = document.getElementById('page-container');
+        if (pageContainer && window.pollingManager && window.PARAMETER_REGISTRY) {
+            const requiredKeys = getRequiredKeysFromDOM(pageContainer);
+            if (requiredKeys.size > 0) {
+                window.pollingManager.startPolling(
+                    Array.from(requiredKeys),
+                    window.PARAMETER_REGISTRY,
+                    updateUiValue
+                );
+                logMessage(`[POLLING] Автоматично запущено опитування для поточної сторінки (${requiredKeys.size} параметрів)`);
+            }
         }
     }
 }

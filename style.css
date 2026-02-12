@@ -427,10 +427,55 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     gap: 10px;
     align-items: end; 
 }
-.rw-grid label { text-align: left; grid-column: 1 / -1; } 
-.rw-grid input[readonly] { grid-column: 1 / -1; } 
+.rw-grid label { text-align: left; grid-column: 1 / -1; }
+.rw-grid input[readonly] { grid-column: 1 / -1; }
 .rw-grid input { width: 100%; }
 .rw-grid .write-button { width: 100%; }
+
+/* --- РЯДКИ ПАРАМЕТРІВ --- */
+.param-row {
+    display: grid;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.param-row.readonly {
+    grid-template-columns: 200px 1fr;
+}
+
+.param-row.toggle {
+    grid-template-columns: 200px 150px 1fr 1fr;
+}
+
+.param-row.writable {
+    grid-template-columns: 200px 150px 1fr auto;
+}
+
+.param-row.select {
+    grid-template-columns: 200px 150px 1fr auto;
+}
+
+.param-row label {
+    text-align: left;
+    margin: 0;
+}
+
+.param-row input[readonly] {
+    margin: 0;
+}
+
+.param-row input[type="text"]:not([readonly]) {
+    margin: 0;
+}
+
+.param-row select {
+    margin: 0;
+}
+
+.param-row button {
+    margin: 0;
+}
 
 /* --- СІТКА КОМІРОК --- */
 .cell-map-grid {
@@ -834,8 +879,8 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
 .nav-conn-btn.active {
     background-color: #e0fbf8; /* Світло-бірюзовий */
     border-color: #00DDC0;
-    color: #008c7a;            /* Темно-бірюзовий текст */
-    font-weight: bold;
+    color: #000000;            /* Чорний текст */
+    font-weight: 700;          /* Жирний шрифт */
 }
 
 /* Бірюзова смужка зліва */
@@ -847,6 +892,39 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     bottom: 0;
     width: 4px;
     background-color: #00DDC0;
+}
+
+/* Стан завантаження (ініціалізація) */
+.nav-conn-btn.connecting {
+    background-color: #f0f9ff; /* Світлий фон */
+    border-color: #00DDC0;
+    color: #000000;
+    font-weight: 700;
+    overflow: hidden;
+}
+
+/* Анімація завантаження - біжуча смужка */
+.nav-conn-btn.connecting::after {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0, 221, 192, 0.4) 50%,
+        transparent 100%);
+    animation: loading-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+    0% {
+        left: -30%;
+    }
+    100% {
+        left: 100%;
+    }
 }
 
 /* Видаляємо стару нижню смужку */
