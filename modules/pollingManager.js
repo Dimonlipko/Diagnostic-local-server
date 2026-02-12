@@ -49,17 +49,24 @@ async function startBlePollingLoop(parameterKeys, registry, updateCallback) {
         if (paramGroup?.request) {
             const { canId, data } = paramGroup.request;
             const responseCanId = paramGroup.response.canId;
-            const responseKey = `${responseCanId}:22${data.substring(data.length - 4)}`;
+
+            // Ключ = все після "22" (service code)
+            // Для "22011200" -> ключ "011200"
+            // Для "220113" -> ключ "0113"
+            const expectedDid = data.substring(2).toUpperCase();
+
+            const responseKey = `${responseCanId}:${expectedDid}`;
 
             activeRequests.set(responseKey, {
                 id: key,
                 updateCallback: updateCallback,
                 parser: paramGroup.response.parser,
+                expectedDid: expectedDid, // Зберігаємо очікуваний DID для порівняння
                 // Додаємо callback, який викличе наступний крок
                 onComplete: () => {
                     currentIndex = (currentIndex + 1) % parameterKeys.length;
                     // Мінімальна пауза 10мс, щоб не "забити" залізо
-                    setTimeout(pollNext, 5); 
+                    setTimeout(pollNext, 5);
                 }
             });
 
@@ -108,8 +115,17 @@ async function sendRequestForParameters(context) {
     if (!state.isConnected) return;
     const { request } = context;
     const param = context.parameters[0];
+
+    // Ключ = все після "22" (service code)
+    const expectedDid = request.data.substring(2).toUpperCase();
+
     // Формуємо ключ для Classic Serial
-    activeRequests.set(`${param.response.canId}:${request.data}`, context);
+    const responseKey = `${param.response.canId}:${expectedDid}`;
+
+    // Додаємо expectedDid до контексту
+    context.expectedDid = expectedDid;
+
+    activeRequests.set(responseKey, context);
     await sendCanRequest(request.canId, request.data);
 }
 
@@ -128,32 +144,57 @@ function groupParametersByRequest(parameterKeys, registry) {
  * Ця функція ПОВИННА викликатися з webBluetooth.js та webSerial.js
  */
 export function handleCanResponse(canId, dataHex) {
+    console.log(`[handleCanResponse] ВИКЛИКАНО: canId=${canId}, dataHex=${dataHex}`);
+
     // 1. ПЕРЕВІРКА НА СМІТТЯ
-    if (!dataHex || dataHex.length < 10) return; 
-
-    // 2. ПЕРЕВІРКА ЦІЛІСНОСТІ (PCI byte)
-    const pciLength = parseInt(dataHex.substring(0, 2), 16);
-    const actualDataBytes = dataHex.substring(2).length / 2;
-    if (pciLength !== actualDataBytes) return;
-
-    // 3. ВИЗНАЧЕННЯ MODE ТА PID
-    const responseMode = dataHex.substring(2, 4);
-    const responsePid = dataHex.substring(4, 8);
-    if (responseMode !== '62') return;
-
-    // Створюємо ключ, щоб знайти контекст запиту
-    const responseKey = `${canId}:22${responsePid}`;
-    const context = activeRequests.get(responseKey);
-
-    // 💡 КЛЮЧОВА ЗМІНА: Перевірка на відповідність ID
-    // Якщо прийшло "792", а ми чекаємо "7BB", context буде undefined
-    if (!context) {
-        // console.log(`[Filter] Ігноруємо чужі дані: ID ${canId}`);
-        return; 
+    if (!dataHex || dataHex.length < 8) {
+        console.log(`[handleCanResponse] ВІДХИЛЕНО: довжина ${dataHex?.length} < 8`);
+        return;
     }
 
-    // Якщо ми тут, значить ID збігся (напр. 7BB) і PID наш
-    logMessage(`[CAN ✓] Впізнано: ${responseKey}`);
+    // 2. ВИЗНАЧЕННЯ MODE (має бути позитивна відповідь 0x62)
+    const pciLength = parseInt(dataHex.substring(0, 2), 16);
+    const responseMode = dataHex.substring(2, 4);
+    console.log(`[handleCanResponse] PCI=${pciLength}, Mode=${responseMode}`);
+
+    if (responseMode !== '62') {
+        console.log(`[handleCanResponse] ВІДХИЛЕНО: режим не 62`);
+        return;
+    }
+
+    // 3. Витягуємо весь PID з відповіді
+    // Структура: [PCI][62][PID...][DATA...]
+    // Для 220107: "0462220107XXYY" або "07622201070XXYY"
+    // Для 220113: "04620113XX"
+    // Для 22011200: "076201120000XXYY"
+
+    // Знаходимо всі можливі співпадіння ключів
+    let context = null;
+    let responseKey = null;
+
+    // Знаходимо контекст, порівнюючи DID з відповіді з очікуваним DID
+    for (const [key, ctx] of activeRequests.entries()) {
+        const expectedDid = ctx.expectedDid;
+        if (!expectedDid) continue;
+
+        // Витягуємо DID з відповіді (після PCI та response code '62')
+        // Структура: [PCI][62][DID...][DATA...]
+        const didLen = expectedDid.length; // 4 символи (2 байти) або 6 символів (3 байти)
+        const responseDid = dataHex.substring(4, 4 + didLen).toUpperCase();
+
+        // Порівнюємо точно DID
+        if (responseDid === expectedDid) {
+            context = ctx;
+            responseKey = key;
+            logMessage(`[CAN ✓] Знайдено контекст: ${responseKey} (DID: ${responseDid})`);
+            break;
+        }
+    }
+
+    if (!context) {
+        console.log(`[Polling] Контекст не знайдено для відповіді від ${canId}, dataHex=${dataHex}`);
+        return;
+    }
     
     try {
         const parser = context.parser || (context.parameters && context.parameters[0].response.parser);

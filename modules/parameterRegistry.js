@@ -1382,11 +1382,12 @@ export const PARAMETER_REGISTRY = {
     'soc_info_220113': {
         request: {
             canId: '79B',
-            data: '22011300',
+            data: '220113',
             interval: 1000
         },
         response: {
             canId: '7BB',
+            didBytes: 2, // DID 0113 = 2 байти
             parser: (dataHex) => {
                 if (dataHex.length < 8) return null;
 
@@ -1395,6 +1396,8 @@ export const PARAMETER_REGISTRY = {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
+                // Для 2-байтного DID (0113): дані на позиції байта 4
+                // Структура: [PCI][62][01][13][DATA]
                 const calibrationMode = bytes[4]; // 0 = OFF, 1 = ON
 
                 return {
@@ -1415,15 +1418,18 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011200 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]); // Signed 16-bit
+                // Для 3-байтного DID (011200): дані на позиції байтів 5 та 6
+                // Структура: [PCI][62][01][12][00][DATA_HIGH][DATA_LOW]
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc0: `${voltage} mV`
@@ -1443,15 +1449,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011201 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc10: `${voltage} mV`
@@ -1471,15 +1478,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011202 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc20: `${voltage} mV`
@@ -1499,15 +1507,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011203 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc30: `${voltage} mV`
@@ -1527,15 +1536,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011204 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc40: `${voltage} mV`
@@ -1555,15 +1565,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011205 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc50: `${voltage} mV`
@@ -1583,15 +1594,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011206 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc60: `${voltage} mV`
@@ -1611,15 +1623,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011207 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc70: `${voltage} mV`
@@ -1639,15 +1652,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011208 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc80: `${voltage} mV`
@@ -1667,15 +1681,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 011209 = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc90: `${voltage} mV`
@@ -1695,15 +1710,16 @@ export const PARAMETER_REGISTRY = {
         },
         response: {
             canId: '7BB',
+            didBytes: 3, // DID 01120a = 3 байти
             parser: (dataHex) => {
-                if (dataHex.length < 10) return null;
+                if (dataHex.length < 16) return null;
 
                 const bytes = [];
                 for (let i = 0; i < dataHex.length; i += 2) {
                     bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
                 }
 
-                const voltage = parseInt16(bytes[5], bytes[6]);
+                const voltage = (bytes[5] << 8) | bytes[6];
 
                 return {
                     soc100: `${voltage} mV`

@@ -75,11 +75,16 @@ export async function connectBleAdapter() {
                 for (let part of parts) {
                     // Очищаємо від службових символів
                     const cleanLine = part.replace(/>/g, '').trim().toUpperCase();
-                    
+
                     if (cleanLine && cleanLine !== 'OK' && !cleanLine.startsWith('AT')) {
                         const parsed = parseCanResponse(cleanLine);
+                        console.log(`[BLE Debug] parsed=${JSON.stringify(parsed)}, pollingManager=${!!window.pollingManager}`);
+
                         if (parsed && parsed.id && parsed.data && window.pollingManager) {
+                            console.log(`[BLE Debug] Викликаємо handleCanResponse(${parsed.id}, ${parsed.data})`);
                             window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+                        } else {
+                            console.log(`[BLE Debug] НЕ викликаємо handleCanResponse: parsed=${!!parsed}, id=${!!parsed?.id}, data=${!!parsed?.data}, pollingManager=${!!window.pollingManager}`);
                         }
                     }
                 }
