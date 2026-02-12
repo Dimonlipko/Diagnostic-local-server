@@ -1,5 +1,178 @@
-<h2 data-lang-key="menu_bms_soc_map">SOC Мапа</h2>
-<p data-lang-key="bms_soc_map_description">
-    Тут буде візуалізація заряду (SOC) по комірках.
-</p>
+<h2 data-lang-key="menu_bms_soc_map">BMS SOC table</h2>
 
+<div class="soc-table-container">
+    <table class="soc-table">
+        <tbody>
+            <!-- Calibration Mode -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_calibration_mode">Calibration SOC by cell</td>
+                <td class="soc-value">
+                    <input type="text" id="readCalibrationMode" value="OFF" readonly data-bind="soc_info_220113.calibration">
+                </td>
+                <td class="soc-write">
+                    <select id="writeCalibrationMode">
+                        <option value="0">OFF</option>
+                        <option value="1">ON</option>
+                    </select>
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeCalibrationBtn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 0% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_0">SOC 0%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC0" value="0 mV" readonly data-bind="soc_info_22011200.soc0">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC0Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC0Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 10% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_10">SOC 10%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC10" value="0 mV" readonly data-bind="soc_info_22011201.soc10">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC10Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC10Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 20% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_20">SOC 20%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC20" value="0 mV" readonly data-bind="soc_info_22011202.soc20">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC20Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC20Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 30% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_30">SOC 30%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC30" value="0 mV" readonly data-bind="soc_info_22011203.soc30">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC30Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC30Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 40% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_40">SOC 40%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC40" value="0 mV" readonly data-bind="soc_info_22011204.soc40">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC40Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC40Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 50% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_50">SOC 50%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC50" value="0 mV" readonly data-bind="soc_info_22011205.soc50">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC50Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC50Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 60% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_60">SOC 60%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC60" value="0 mV" readonly data-bind="soc_info_22011206.soc60">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC60Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC60Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 70% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_70">SOC 70%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC70" value="0 mV" readonly data-bind="soc_info_22011207.soc70">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC70Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC70Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 80% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_80">SOC 80%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC80" value="0 mV" readonly data-bind="soc_info_22011208.soc80">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC80Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC80Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 90% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_90">SOC 90%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC90" value="0 mV" readonly data-bind="soc_info_22011209.soc90">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC90Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC90Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+
+            <!-- SOC 100% -->
+            <tr>
+                <td class="soc-label" data-lang-key="soc_100">SOC 100%</td>
+                <td class="soc-value">
+                    <input type="text" id="readSOC100" value="0 mV" readonly data-bind="soc_info_2201120a.soc100">
+                </td>
+                <td class="soc-write">
+                    <input type="number" id="writeSOC100Input" placeholder="mV">
+                </td>
+                <td class="soc-button">
+                    <button class="write-button" id="writeSOC100Btn" data-lang-key="soc_write_btn">Write</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

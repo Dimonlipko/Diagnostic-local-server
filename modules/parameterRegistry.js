@@ -998,6 +998,346 @@ export const PARAMETER_REGISTRY = {
     },
     'write_type_bms': {
         writeConfig: { canId: '79B', dataPrefix: '2e041402', bytes: 1 }
+    },
+
+    // ========================================
+    // SOC CALIBRATION MAP
+    // ========================================
+
+    /**
+     * Запит 220113: Режим калібрування SOC
+     */
+    'soc_info_220113': {
+        request: {
+            canId: '79B',
+            data: '22011300',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 8) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const calibrationMode = bytes[4]; // 0 = OFF, 1 = ON
+
+                return {
+                    calibration: calibrationMode === 1 ? 'ON' : 'OFF'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011200: SOC 0%
+     */
+    'soc_info_22011200': {
+        request: {
+            canId: '79B',
+            data: '22011200',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]); // Signed 16-bit
+
+                return {
+                    soc0: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011201: SOC 10%
+     */
+    'soc_info_22011201': {
+        request: {
+            canId: '79B',
+            data: '22011201',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc10: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011202: SOC 20%
+     */
+    'soc_info_22011202': {
+        request: {
+            canId: '79B',
+            data: '22011202',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc20: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011203: SOC 30%
+     */
+    'soc_info_22011203': {
+        request: {
+            canId: '79B',
+            data: '22011203',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc30: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011204: SOC 40%
+     */
+    'soc_info_22011204': {
+        request: {
+            canId: '79B',
+            data: '22011204',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc40: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011205: SOC 50%
+     */
+    'soc_info_22011205': {
+        request: {
+            canId: '79B',
+            data: '22011205',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc50: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011206: SOC 60%
+     */
+    'soc_info_22011206': {
+        request: {
+            canId: '79B',
+            data: '22011206',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc60: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011207: SOC 70%
+     */
+    'soc_info_22011207': {
+        request: {
+            canId: '79B',
+            data: '22011207',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc70: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011208: SOC 80%
+     */
+    'soc_info_22011208': {
+        request: {
+            canId: '79B',
+            data: '22011208',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc80: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22011209: SOC 90%
+     */
+    'soc_info_22011209': {
+        request: {
+            canId: '79B',
+            data: '22011209',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc90: `${voltage} mV`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 2201120a: SOC 100%
+     */
+    'soc_info_2201120a': {
+        request: {
+            canId: '79B',
+            data: '2201120a',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const voltage = parseInt16(bytes[5], bytes[6]);
+
+                return {
+                    soc100: `${voltage} mV`
+                };
+            }
+        }
     }
 
 };

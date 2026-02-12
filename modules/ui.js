@@ -2,6 +2,8 @@ import { state } from './state.js';
 import { translatePage } from './translator.js';
 import { stopAllPolling } from './pollingManager.js';
 import { PARAMETER_REGISTRY } from './parameterRegistry.js';
+import { initUpdatePage, cleanupUpdatePage } from './updatePage.js';
+import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 
 let logElement = null;
 
@@ -82,6 +84,17 @@ export async function loadPage(pageFile) {
             console.log(`[PageLoader] Опитування вимкнено для сторінки: ${pageFile}`);
         } else {
             console.log(`[PageLoader] Адаптер не підключено, опитування не запускається.`);
+        }
+
+        // Ініціалізація спеціальних сторінок
+        if (pageFile.includes('update.html')) {
+            console.log('[PageLoader] Ініціалізація сторінки оновлення прошивки...');
+            initUpdatePage();
+        }
+
+        if (pageFile.includes('bms_soc_map.html')) {
+            console.log('[PageLoader] Ініціалізація сторінки SOC Map...');
+            initSocMapPage();
         }
 
     } catch (error) {

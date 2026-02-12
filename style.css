@@ -931,4 +931,112 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     transform: translateY(1px);
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
+
+/* --- SOC TABLE STYLES --- */
+.soc-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 15px;
+}
+
+.soc-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.soc-table td {
+    padding: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 13px;
+}
+
+.soc-table tr:last-child td {
+    border-bottom: none;
+}
+
+.soc-label {
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    width: 25%;
+}
+
+.soc-value {
+    width: 20%;
+}
+
+.soc-value input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f5f5f5;
+    font-size: 13px;
+}
+
+.soc-write {
+    width: 35%;
+}
+
+.soc-write input,
+.soc-write select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.soc-button {
+    width: 20%;
+    text-align: right;
+}
+
+.soc-button button {
+    padding: 6px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Мобільна адаптація SOC таблиці */
+@media (max-width: 768px) {
+    .soc-table td {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+
+    .soc-label {
+        width: 30%;
+        font-size: 11px;
+    }
+
+    .soc-value {
+        width: 22%;
+    }
+
+    .soc-write {
+        width: 28%;
+    }
+
+    .soc-button {
+        width: 20%;
+    }
+
+    .soc-button button {
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+
+    .soc-value input,
+    .soc-write input,
+    .soc-write select {
+        padding: 5px 6px;
+        font-size: 12px;
+    }
+}
+
 /* --- КІНЕЦЬ CSS --- */
