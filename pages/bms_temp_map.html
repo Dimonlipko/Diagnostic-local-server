@@ -1,43 +1,52 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Датчики Температури</title>
-    <!-- Посилання на окремий файл стилів -->
-    <link rel="stylesheet" href="temperature_sensors.css">
-</head>
-<body>
+<h2 data-lang-key="menu_bms_temp_map">BMS Temperature Map</h2>
 
-    <h2 data-lang-key="menu_bms_temp_map">Температура батареї</h2>
-
-    <div class="temp-map-grid">
-        
-        <!-- Датчик 1 -->
-        <div class="temp-item">
-            <!-- 
-                Клас "temp-v-normal" розфарбовує комірку.
-                Використовуйте: temp-v-cold, temp-v-normal, temp-v-warm, temp-v-hot 
-            -->
-            <input type="text" class="temp-v-normal" id="temp_v_01" value="25.4 °C" readonly data-bind="bms_temps_1_32.cell_1">
-        </div>
-        
-        <!-- Датчик 2 -->
-        <div class="temp-item">
-            <input type="text" class="temp-v-normal" id="temp_v_02" value="26.1 °C" readonly data-bind="bms_temps_1_32.cell_2">
-        </div>
-        
-        <!-- Датчик 3 -->
-        <div class="temp-item">
-            <input type="text" class="temp-v-warm" id="temp_v_03" value="38.0 °C" readonly data-bind="bms_temps_1_32.cell_3">
-        </div>
-        
-        <!-- Датчик 4 -->
-        <div class="temp-item">
-            <input type="text" class="temp-v-normal" id="temp_v_04" value="25.8 °C" readonly data-bind="bms_temps_1_32.cell_4">
-        </div>
-
+<div class="temp-map-grid">
+    <div class="temp-item">
+        <input type="text" id="temp_1" value="0 °C" readonly data-bind="bms_temp_1.temp_1">
     </div>
-
-</body>
-</html>
+    <div class="temp-item">
+        <input type="text" id="temp_2" value="0 °C" readonly data-bind="bms_temp_2.temp_2">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_3" value="0 °C" readonly data-bind="bms_temp_3.temp_3">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_4" value="0 °C" readonly data-bind="bms_temp_4.temp_4">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_5" value="0 °C" readonly data-bind="bms_temp_5.temp_5">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_6" value="0 °C" readonly data-bind="bms_temp_6.temp_6">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_7" value="0 °C" readonly data-bind="bms_temp_7.temp_7">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_8" value="0 °C" readonly data-bind="bms_temp_8.temp_8">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_9" value="0 °C" readonly data-bind="bms_temp_9.temp_9">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_10" value="0 °C" readonly data-bind="bms_temp_10.temp_10">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_11" value="0 °C" readonly data-bind="bms_temp_11.temp_11">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_12" value="0 °C" readonly data-bind="bms_temp_12.temp_12">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_13" value="0 °C" readonly data-bind="bms_temp_13.temp_13">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_14" value="0 °C" readonly data-bind="bms_temp_14.temp_14">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_15" value="0 °C" readonly data-bind="bms_temp_15.temp_15">
+    </div>
+    <div class="temp-item">
+        <input type="text" id="temp_16" value="0 °C" readonly data-bind="bms_temp_16.temp_16">
+    </div>
+</div>

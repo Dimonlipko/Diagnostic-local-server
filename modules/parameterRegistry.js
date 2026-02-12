@@ -1001,6 +1001,378 @@ export const PARAMETER_REGISTRY = {
     },
 
     // ========================================
+    // BMS TEMPERATURE MAP (16 sensors)
+    // ========================================
+
+    /**
+     * Запити 220207-220227: Temperature sensors 1-16
+     * Відповідь: 6202XX... + 2 bytes unsigned at byte 4, offset -40
+     */
+    'bms_temp_1': {
+        request: { canId: '79B', data: '220207', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_1: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_2': {
+        request: { canId: '79B', data: '220208', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_2: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_3': {
+        request: { canId: '79B', data: '220209', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_3: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_4': {
+        request: { canId: '79B', data: '220210', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_4: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_5': {
+        request: { canId: '79B', data: '220211', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_5: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_6': {
+        request: { canId: '79B', data: '220212', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_6: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_7': {
+        request: { canId: '79B', data: '220213', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_7: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_8': {
+        request: { canId: '79B', data: '220214', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_8: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_9': {
+        request: { canId: '79B', data: '220215', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_9: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_10': {
+        request: { canId: '79B', data: '220216', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_10: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_11': {
+        request: { canId: '79B', data: '220217', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_11: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_12': {
+        request: { canId: '79B', data: '220218', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_12: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_13': {
+        request: { canId: '79B', data: '220219', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_13: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_14': {
+        request: { canId: '79B', data: '220225', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_14: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_15': {
+        request: { canId: '79B', data: '220226', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_15: `${temp} °C` };
+            }
+        }
+    },
+
+    'bms_temp_16': {
+        request: { canId: '79B', data: '220227', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+                const rawValue = (bytes[4] << 8) | bytes[5];
+                const temp = rawValue - 40;
+                return { temp_16: `${temp} °C` };
+            }
+        }
+    },
+
+    // ========================================
+    // BMS CELL MAP (96 cells)
+    // ========================================
+
+    /**
+     * Запит 2141: BMS Cell Map (Cells 1-62)
+     * Відповідь: 6141... + 62 cells * 2 bytes each
+     * Формат: 2 bytes unsigned, multiply by 0.001 for voltage in V
+     */
+    'bms_cells_1_62': {
+        request: {
+            canId: '79B',
+            data: '2141',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                // Мінімальна довжина: 6141 (4 байти) + 62 cells * 2 bytes = 128 байтів = 256 hex chars
+                if (dataHex.length < 130) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const result = {};
+
+                // Cells 1-62: starting at byte 3 (index 3), increment by 2
+                for (let cellNum = 1; cellNum <= 62; cellNum++) {
+                    const byteIndex = 3 + (cellNum - 1) * 2; // 3, 5, 7, 9...
+
+                    if (byteIndex + 1 >= bytes.length) break;
+
+                    // 2 bytes unsigned (big endian)
+                    const rawValue = (bytes[byteIndex] << 8) | bytes[byteIndex + 1];
+                    const voltage = (rawValue * 0.001).toFixed(3);
+
+                    // Format to match HTML: cell_1, cell_2, ... cell_62
+                    const cellKey = `cell_${cellNum}`;
+                    result[cellKey] = `${voltage} V`;
+                }
+
+                return result;
+            }
+        }
+    },
+
+    /**
+     * Запит 2142: BMS Cell Map (Cells 63-96)
+     * Відповідь: 6142... + 34 cells * 2 bytes each
+     * Формат: 2 bytes unsigned, multiply by 0.001 for voltage in V
+     */
+    'bms_cells_63_96': {
+        request: {
+            canId: '79B',
+            data: '2142',
+            interval: 1000
+        },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                // Мінімальна довжина: 6142 (4 байти) + 34 cells * 2 bytes = 72 байти = 144 hex chars
+                if (dataHex.length < 80) return null;
+
+                const bytes = [];
+                for (let i = 0; i < dataHex.length; i += 2) {
+                    bytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+                }
+
+                const result = {};
+
+                // Cells 63-96: starting at byte 3 (index 3), increment by 2
+                for (let cellNum = 63; cellNum <= 96; cellNum++) {
+                    const byteIndex = 3 + (cellNum - 63) * 2; // 3, 5, 7, 9...
+
+                    if (byteIndex + 1 >= bytes.length) break;
+
+                    // 2 bytes unsigned (big endian)
+                    const rawValue = (bytes[byteIndex] << 8) | bytes[byteIndex + 1];
+                    const voltage = (rawValue * 0.001).toFixed(3);
+
+                    // Format to match HTML: cell_63, cell_64, ... cell_96
+                    const cellKey = `cell_${cellNum}`;
+                    result[cellKey] = `${voltage} V`;
+                }
+
+                return result;
+            }
+        }
+    },
+
+    // ========================================
     // SOC CALIBRATION MAP
     // ========================================
 

@@ -198,6 +198,24 @@ export const translations = {
         'soc_write_90': 'Записати SOC 90%',
         'soc_write_100': 'Записати SOC 100%',
         'soc_write_btn': 'Записати',
+
+        // BMS Temperature Map
+        'temp_sensor_1': 'Датчик 1',
+        'temp_sensor_2': 'Датчик 2',
+        'temp_sensor_3': 'Датчик 3',
+        'temp_sensor_4': 'Датчик 4',
+        'temp_sensor_5': 'Датчик 5',
+        'temp_sensor_6': 'Датчик 6',
+        'temp_sensor_7': 'Датчик 7',
+        'temp_sensor_8': 'Датчик 8',
+        'temp_sensor_9': 'Датчик 9',
+        'temp_sensor_10': 'Датчик 10',
+        'temp_sensor_11': 'Датчик 11',
+        'temp_sensor_12': 'Датчик 12',
+        'temp_sensor_13': 'Датчик 13',
+        'temp_sensor_14': 'Датчик 14',
+        'temp_sensor_15': 'Датчик 15',
+        'temp_sensor_16': 'Датчик 16',
     },
     'en': {
         'menu_title': 'CAN Monitor',
@@ -393,6 +411,24 @@ export const translations = {
         'soc_write_90': 'Write SOC 90%',
         'soc_write_100': 'Write SOC 100%',
         'soc_write_btn': 'Write',
+
+        // BMS Temperature Map
+        'temp_sensor_1': 'Sensor 1',
+        'temp_sensor_2': 'Sensor 2',
+        'temp_sensor_3': 'Sensor 3',
+        'temp_sensor_4': 'Sensor 4',
+        'temp_sensor_5': 'Sensor 5',
+        'temp_sensor_6': 'Sensor 6',
+        'temp_sensor_7': 'Sensor 7',
+        'temp_sensor_8': 'Sensor 8',
+        'temp_sensor_9': 'Sensor 9',
+        'temp_sensor_10': 'Sensor 10',
+        'temp_sensor_11': 'Sensor 11',
+        'temp_sensor_12': 'Sensor 12',
+        'temp_sensor_13': 'Sensor 13',
+        'temp_sensor_14': 'Sensor 14',
+        'temp_sensor_15': 'Sensor 15',
+        'temp_sensor_16': 'Sensor 16',
     }
 };
 
