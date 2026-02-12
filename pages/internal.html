@@ -1,121 +1,179 @@
 <h2 data-lang-key="internal_title">Internal Monitor</h2>
 
 <div class="inverter-layout">
-    
+
     <div class="inverter-column">
         <h3 style="color: #2196F3; font-size: 14px; margin-bottom: 10px;" data-lang-key="int_analog_inputs">Analog Inputs (ADC)</h3>
 
-        <label data-lang-key="int_12v_adc">12v ADC</label>
-        <input type="text" id="read12vADC" value="0 V" readonly data-bind="internal_info_220401.adc12v">
-        
-        <label data-lang-key="int_5v_adc">5v ADC</label>
-        <input type="text" id="read5vADC" value="0 V" readonly data-bind="internal_info_220401.adc5v">
-        
-        <label data-lang-key="int_a1_adc">A1 ADC</label>
-        <input type="text" id="readA1ADC" value="0 V" readonly data-bind="internal_info_220402.adcA1">
-        
-        <label data-lang-key="int_a2_adc">A2 ADC</label>
-        <input type="text" id="readA2ADC" value="0 V" readonly data-bind="internal_info_220402.adcA2">
-        
-        <label data-lang-key="int_a4_adc">A4 ADC</label>
-        <input type="text" id="readA4ADC" value="0 V" readonly data-bind="internal_info_220403.adcA4">
-        
-        <label data-lang-key="int_a5_pedal">A5 ADC (Pedal 1)</label>
-        <input type="text" id="readA5Pedal" value="0 V" readonly data-bind="internal_info_220403.pedal1">
+        <div class="internal-param">
+            <label data-lang-key="int_12v_adc">12v ADC</label>
+            <input type="text" id="read12vADC" value="0 V" readonly data-bind="internal_info_220401.adc12v">
+        </div>
 
-        <label data-lang-key="int_a7_adc">A7 ADC</label>
-        <input type="text" id="readA7ADC" value="0 V" readonly data-bind="internal_info_220404.adcA7">
+        <div class="internal-param">
+            <label data-lang-key="int_5v_adc">5v ADC</label>
+            <input type="text" id="read5vADC" value="0 V" readonly data-bind="internal_info_220401.adc5v">
+        </div>
 
-        <label data-lang-key="int_a8_adc">A8 ADC</label>
-        <input type="text" id="readA8ADC" value="0 V" readonly data-bind="internal_info_220404.adcA8">
+        <div class="internal-param">
+            <label data-lang-key="int_a1_adc">A1 ADC</label>
+            <input type="text" id="readA1ADC" value="0 V" readonly data-bind="internal_info_220402.adcA1">
+        </div>
 
-        <label data-lang-key="int_a9_brake">A9 ADC (Brake sens)</label>
-        <input type="text" id="readA9Brake" value="0 V" readonly data-bind="internal_info_220405.brakeSens">
+        <div class="internal-param">
+            <label data-lang-key="int_a2_adc">A2 ADC</label>
+            <input type="text" id="readA2ADC" value="0 V" readonly data-bind="internal_info_220402.adcA2">
+        </div>
 
-        <label data-lang-key="int_a3_chademo">A3 (Chademo IN0)</label>
-        <input type="text" id="readA3Chademo" value="Low" readonly data-bind="internal_info_220413.chademoIN0">
+        <div class="internal-param">
+            <label data-lang-key="int_a4_adc">A4 ADC</label>
+            <input type="text" id="readA4ADC" value="0 V" readonly data-bind="internal_info_220403.adcA4">
+        </div>
 
-        <label data-lang-key="int_d5">D5</label>
-        <input type="text" id="readD5" value="Low" readonly data-bind="internal_info_220405.d5">
+        <div class="internal-param">
+            <label data-lang-key="int_a5_pedal">A5 ADC (Pedal 1)</label>
+            <input type="text" id="readA5Pedal" value="0 V" readonly data-bind="internal_info_220403.pedal1">
+        </div>
 
-        <label data-lang-key="int_d6_brake">D6 (Brake light)</label>
-        <input type="text" id="readD6Brake" value="Low" readonly data-bind="internal_info_220405.d6">
+        <div class="internal-param">
+            <label data-lang-key="int_a7_adc">A7 ADC</label>
+            <input type="text" id="readA7ADC" value="0 V" readonly data-bind="internal_info_220404.adcA7">
+        </div>
 
-        <label data-lang-key="int_d7_chademo">D7 (Chademo IN1)</label>
-        <input type="text" id="readD7Chademo" value="Low" readonly data-bind="internal_info_220406.chademoIN1">
+        <div class="internal-param">
+            <label data-lang-key="int_a8_adc">A8 ADC</label>
+            <input type="text" id="readA8ADC" value="0 V" readonly data-bind="internal_info_220404.adcA8">
+        </div>
 
-        <label data-lang-key="int_d46_chademo">D46 (Chademo IN2)</label>
-        <input type="text" id="readD46Chademo" value="Low" readonly data-bind="internal_info_220413.chademoIN2">
+        <div class="internal-param">
+            <label data-lang-key="int_a9_brake">A9 ADC (Brake sens)</label>
+            <input type="text" id="readA9Brake" value="0 V" readonly data-bind="internal_info_220405.brakeSens">
+        </div>
 
-        <label data-lang-key="int_d48">D48</label>
-        <input type="text" id="readD48" value="Low" readonly data-bind="internal_info_220406.d48">
+        <div class="internal-param">
+            <label data-lang-key="int_a3_chademo">A3 (Chademo IN0)</label>
+            <input type="text" id="readA3Chademo" value="Low" readonly data-bind="internal_info_220413.chademoIN0">
+        </div>
 
-        <label data-lang-key="int_d50">D50</label>
-        <input type="text" id="readD50" value="Low" readonly data-bind="internal_info_220406.d50">
+        <div class="internal-param">
+            <label data-lang-key="int_d5">D5</label>
+            <input type="text" id="readD5" value="Low" readonly data-bind="internal_info_220405.d5">
+        </div>
 
-        <label data-lang-key="int_d52">D52</label>
-        <input type="text" id="readD52" value="Low" readonly data-bind="internal_info_220406.d52">
+        <div class="internal-param">
+            <label data-lang-key="int_d6_brake">D6 (Brake light)</label>
+            <input type="text" id="readD6Brake" value="Low" readonly data-bind="internal_info_220405.d6">
+        </div>
 
-        <label data-lang-key="int_can3">CAN 3</label>
-        <input type="text" id="readCan3Input" value="Err" readonly data-bind="internal_info_220413.can3">
+        <div class="internal-param">
+            <label data-lang-key="int_d7_chademo">D7 (Chademo IN1)</label>
+            <input type="text" id="readD7Chademo" value="Low" readonly data-bind="internal_info_220406.chademoIN1">
+        </div>
 
-        <label data-lang-key="int_device_id">Device ID</label>
-        <input type="text" id="readDeviceId" value="---" readonly data-bind="internal_info_220407.deviceId">
+        <div class="internal-param">
+            <label data-lang-key="int_d46_chademo">D46 (Chademo IN2)</label>
+            <input type="text" id="readD46Chademo" value="Low" readonly data-bind="internal_info_220413.chademoIN2">
+        </div>
 
-        <label data-lang-key="int_soft_ver">Soft ver</label>
-        <input type="text" id="readSoftVer" value="---" readonly data-bind="internal_info_220407.softVer">
+        <div class="internal-param">
+            <label data-lang-key="int_d48">D48</label>
+            <input type="text" id="readD48" value="Low" readonly data-bind="internal_info_220406.d48">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_d50">D50</label>
+            <input type="text" id="readD50" value="Low" readonly data-bind="internal_info_220406.d50">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_d52">D52</label>
+            <input type="text" id="readD52" value="Low" readonly data-bind="internal_info_220406.d52">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_can3">CAN 3</label>
+            <input type="text" id="readCan3Input" value="Err" readonly data-bind="internal_info_220413.can3">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_device_id">Device ID</label>
+            <input type="text" id="readDeviceId" value="---" readonly data-bind="internal_info_220407.deviceId">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_soft_ver">Soft ver</label>
+            <input type="text" id="readSoftVer" value="---" readonly data-bind="internal_info_220407.softVer">
+        </div>
     </div>
-    
+
     <div class="inverter-column">
         <h3 style="color: #4CAF50; font-size: 14px; margin-bottom: 10px;" data-lang-key="int_digital_outputs">Digital Outputs & Status</h3>
 
-        <label data-lang-key="int_contactor_plus">A10 (Contactor +)</label>
-        <input type="text" id="readContactorPlus" value="Off" readonly data-bind="internal_info_220415.contactorPlus">
-        
-        <label data-lang-key="int_contactor_minus">A11 (Contactor -)</label>
-        <input type="text" id="readContactorMinus" value="Off" readonly data-bind="internal_info_220415.contactorMinus">
-        
-        <label data-lang-key="int_precharge">D11 (Precharge)</label>
-        <input type="text" id="readPrecharge" value="Off" readonly data-bind="internal_info_220415.precharge">
-        
-        <label data-lang-key="int_water_pump">D24 (Water pump)</label>
-        <input type="text" id="readWaterPump" value="Off" readonly data-bind="internal_info_220415.waterPump">
-        
-        <label data-lang-key="int_fan_high">D9 (Fan high speed)</label>
-        <input type="text" id="readFanHigh" value="Off" readonly data-bind="internal_info_220416.fanHigh">
-        
-        <label data-lang-key="int_fan_low">D26 (Fan low speed)</label>
-        <input type="text" id="readFanLow" value="Off" readonly data-bind="internal_info_220417.fanLow">
+        <div class="internal-param">
+            <label data-lang-key="int_contactor_plus">A10 (Contactor +)</label>
+            <input type="text" id="readContactorPlus" value="Off" readonly data-bind="internal_info_220415.contactorPlus">
+        </div>
 
-        <label data-lang-key="int_dac1_brake">DAC1 (Brake light)</label>
-        <input type="text" id="readDAC1Brake" value="Off" readonly data-bind="internal_info_220416.dac1">
+        <div class="internal-param">
+            <label data-lang-key="int_contactor_minus">A11 (Contactor -)</label>
+            <input type="text" id="readContactorMinus" value="Off" readonly data-bind="internal_info_220415.contactorMinus">
+        </div>
 
-        <label data-lang-key="int_d8_chademo">D8 (Chademo out0)</label>
-        <input type="text" id="readD8Chademo" value="Off" readonly data-bind="internal_info_220416.d8">
+        <div class="internal-param">
+            <label data-lang-key="int_precharge">D11 (Precharge)</label>
+            <input type="text" id="readPrecharge" value="Off" readonly data-bind="internal_info_220415.precharge">
+        </div>
 
-        <label data-lang-key="int_d12_chademo">D12 (Chademo out1)</label>
-        <input type="text" id="readD12Chademo" value="Off" readonly data-bind="internal_info_220416.d12">
+        <div class="internal-param">
+            <label data-lang-key="int_water_pump">D24 (Water pump)</label>
+            <input type="text" id="readWaterPump" value="Off" readonly data-bind="internal_info_220415.waterPump">
+        </div>
 
-        <label data-lang-key="int_brake_booster">D25 (Brake booster)</label>
-        <input type="text" id="readBrakeBooster" value="Off" readonly data-bind="internal_info_220417.boosterStatus">
+        <div class="internal-param">
+            <label data-lang-key="int_fan_high">D9 (Fan high speed)</label>
+            <input type="text" id="readFanHigh" value="Off" readonly data-bind="internal_info_220416.fanHigh">
+        </div>
 
-        <label data-lang-key="int_can3">CAN 3 Status</label>
-        <input type="text" id="readCan3" value="OK" readonly data-bind="internal_info_220413.can3">
+        <div class="internal-param">
+            <label data-lang-key="int_fan_low">D26 (Fan low speed)</label>
+            <input type="text" id="readFanLow" value="Off" readonly data-bind="internal_info_220417.fanLow">
+        </div>
 
-        <label data-lang-key="int_test_output">Test output</label>
-        <select id="testOutputSelect">
-            <option value="0">A10 (Contactor +)</option>
-            <option value="1">A11 (Contactor -)</option>
-            <option value="2">D11 (Precharge)</option>
-            <option value="3">D24 (Water pump)</option>
-            <option value="4">D9 (Fan high speed)</option>
-            <option value="5">D26 (Fan low speed)</option>
-            <option value="6">DAC1 (Brake light)</option>
-            <option value="7">D8 (Chademo out0)</option>
-            <option value="8">D12 (Chademo out1)</option>
-            <option value="9">D25 (Brake booster)</option>
-        </select>
-        <button class="write-button" id="testOutputButton" data-lang-key="int_test_button">Test</button>
+        <div class="internal-param">
+            <label data-lang-key="int_dac1_brake">DAC1 (Brake light)</label>
+            <input type="text" id="readDAC1Brake" value="Off" readonly data-bind="internal_info_220416.dac1">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_d8_chademo">D8 (Chademo out0)</label>
+            <input type="text" id="readD8Chademo" value="Off" readonly data-bind="internal_info_220416.d8">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_d12_chademo">D12 (Chademo out1)</label>
+            <input type="text" id="readD12Chademo" value="Off" readonly data-bind="internal_info_220416.d12">
+        </div>
+
+        <div class="internal-param">
+            <label data-lang-key="int_brake_booster">D25 (Brake booster)</label>
+            <input type="text" id="readBrakeBooster" value="Off" readonly data-bind="internal_info_220417.boosterStatus">
+        </div>
+
+        <div class="internal-test-output">
+            <label data-lang-key="int_test_output">Test output</label>
+            <select id="testOutputSelect">
+                <option value="0">A10 (Contactor +)</option>
+                <option value="1">A11 (Contactor -)</option>
+                <option value="2">D11 (Precharge)</option>
+                <option value="3">D24 (Water pump)</option>
+                <option value="4">D9 (Fan high speed)</option>
+                <option value="5">D26 (Fan low speed)</option>
+                <option value="6">DAC1 (Brake light)</option>
+                <option value="7">D8 (Chademo out0)</option>
+                <option value="8">D12 (Chademo out1)</option>
+                <option value="9">D25 (Brake booster)</option>
+            </select>
+            <button class="write-button" id="testOutputButton" data-lang-key="int_test_button">Test</button>
+        </div>
     </div>
 </div>
-

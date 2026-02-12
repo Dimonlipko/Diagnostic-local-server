@@ -712,8 +712,8 @@ export const PARAMETER_REGISTRY = {
                 const a2_h = parseInt(dataHex.substring(12, 14), 16);
                 const a2_l = parseInt(dataHex.substring(14, 16), 16);
                 return {
-                    adcA1: parseUint16(a1_h, a1_l).toString(),
-                    adcA2: parseUint16(a2_h, a2_l).toString()
+                    adcA1: `${(parseUint16(a1_h, a1_l) / 1000).toFixed(2)} V`,
+                    adcA2: `${(parseUint16(a2_h, a2_l) / 1000).toFixed(2)} V`
                 };
             }
         }
@@ -733,8 +733,8 @@ export const PARAMETER_REGISTRY = {
                 const a5_h = parseInt(dataHex.substring(12, 14), 16);
                 const a5_l = parseInt(dataHex.substring(14, 16), 16);
                 return {
-                    adcA4: parseUint16(a4_h, a4_l).toString(),
-                    adcPedal1: parseUint16(a5_h, a5_l).toString()
+                    adcA4: `${(parseUint16(a4_h, a4_l) / 1000).toFixed(2)} V`,
+                    pedal1: `${(parseUint16(a5_h, a5_l) / 1000).toFixed(2)} V`
                 };
             }
         }
@@ -754,15 +754,15 @@ export const PARAMETER_REGISTRY = {
                 const a8_h = parseInt(dataHex.substring(12, 14), 16);
                 const a8_l = parseInt(dataHex.substring(14, 16), 16);
                 return {
-                    adcA7: parseUint16(a7_h, a7_l).toString(),
-                    adcA8: parseUint16(a8_h, a8_l).toString()
+                    adcA7: `${(parseUint16(a7_h, a7_l) / 1000).toFixed(2)} V`,
+                    adcA8: `${(parseUint16(a8_h, a8_l) / 1000).toFixed(2)} V`
                 };
             }
         }
     },
 
     /**
-     * Запит 220405: Гальма та Дискретні D5, D6
+     * Запит 220405: Гальма (A9) та Дискретні входи D5, D6
      */
     'internal_info_220405': {
         request: { canId: '79B', data: '220405', interval: 250 },
@@ -772,19 +772,21 @@ export const PARAMETER_REGISTRY = {
                 if (dataHex.length < 16) return null;
                 const a9_h = parseInt(dataHex.substring(8, 10), 16);
                 const a9_l = parseInt(dataHex.substring(10, 12), 16);
-                const d5 = parseInt(dataHex.substring(12, 14), 16);
-                const d6 = parseInt(dataHex.substring(14, 16), 16);
+                const d5Val = parseInt(dataHex.substring(12, 14), 16);
+                const d6Val = parseInt(dataHex.substring(14, 16), 16);
+                // A9 в мілівольтах
+                const brakeMv = parseUint16(a9_h, a9_l);
                 return {
-                    adcBrake: parseUint16(a9_h, a9_l).toString(),
-                    statusD5: d5 === 1 ? "ON" : "OFF",
-                    statusBrakeLight: d6 === 1 ? "Active" : "Inactive"
+                    brakeSens: `${(brakeMv / 1000).toFixed(2)} V`,
+                    d5: d5Val === 1 ? 'High' : 'Low',
+                    d6: d6Val === 1 ? 'High' : 'Low'
                 };
             }
         }
     },
 
     /**
-     * Запит 220406: Цифрові входи D7, D48, D50, D52
+     * Запит 220406: Цифрові входи D7 (Chademo IN1), D48, D50, D52
      */
     'internal_info_220406': {
         request: { canId: '79B', data: '220406', interval: 1000 },
@@ -793,10 +795,10 @@ export const PARAMETER_REGISTRY = {
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
                 return {
-                    statusD7: parseInt(dataHex.substring(8, 10), 16).toString(),
-                    statusD48: parseInt(dataHex.substring(10, 12), 16).toString(),
-                    statusD50: parseInt(dataHex.substring(12, 14), 16).toString(),
-                    statusD52: parseInt(dataHex.substring(14, 16), 16).toString()
+                    chademoIN1: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'High' : 'Low',
+                    d48: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'High' : 'Low',
+                    d50: parseInt(dataHex.substring(12, 14), 16) === 1 ? 'High' : 'Low',
+                    d52: parseInt(dataHex.substring(14, 16), 16) === 1 ? 'High' : 'Low'
                 };
             }
         }
@@ -811,29 +813,33 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
+                const statusMap = { "0": "Err", "1": "OK" };
+                const can3Raw = parseInt(dataHex.substring(12, 14), 16);
                 return {
-                    chademoIn0: parseInt(dataHex.substring(8, 10), 16).toString(),
-                    chademoIn2: parseInt(dataHex.substring(10, 12), 16).toString(),
-                    can3Status: parseInt(dataHex.substring(12, 14), 16).toString()
+                    chademoIN0: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'High' : 'Low',
+                    chademoIN2: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'High' : 'Low',
+                    can3: statusMap[can3Raw.toString()] || 'Unknown'
                 };
             }
         }
     },
 
     /**
-     * Запит 220407: Системна інформація
+     * Запит 220407: Системна інформація (Device ID та Software Version)
      */
     'internal_info_220407': {
         request: { canId: '79B', data: '220407', interval: 5000 },
         response: {
             canId: '7BB',
             parser: (dataHex) => {
-                if (dataHex.length < 12) return null;
-                const id = parseInt(dataHex.substring(8, 10), 16);
-                const ver = parseInt(dataHex.substring(10, 12), 16);
+                if (dataHex.length < 16) return null;
+                // Device ID: 2 байти (4 hex символи) на позиції 8-11
+                const id = parseInt(dataHex.substring(8, 12), 16);
+                // Software Version: 2 байти (4 hex символи) на позиції 12-15
+                const ver = parseInt(dataHex.substring(12, 16), 16);
                 return {
                     deviceId: id.toString(),
-                    softVersion: (ver / 10).toFixed(1)
+                    softVer: ver.toString()
                 };
             }
         }
@@ -848,12 +854,11 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const stateMap = { "0": "High", "1": "Low" };
                 return {
-                    contactorPlus: stateMap[dataHex.substring(8, 10)] || "Unknown",
-                    contactorMinus: stateMap[dataHex.substring(10, 12)] || "Unknown",
-                    precharge: dataHex.substring(12, 14) === "01" ? "Active" : "OFF",
-                    waterPump: dataHex.substring(14, 16) === "01" ? "Running" : "Stop"
+                    contactorPlus: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'On' : 'Off',
+                    contactorMinus: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'On' : 'Off',
+                    precharge: parseInt(dataHex.substring(12, 14), 16) === 1 ? 'On' : 'Off',
+                    waterPump: parseInt(dataHex.substring(14, 16), 16) === 1 ? 'On' : 'Off'
                 };
             }
         }
@@ -869,10 +874,27 @@ export const PARAMETER_REGISTRY = {
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
                 return {
-                    fanHigh: dataHex.substring(8, 10) === "01" ? "ON" : "OFF",
-                    brakeDAC: parseInt(dataHex.substring(10, 12), 16).toString(),
-                    chademoOut0: dataHex.substring(12, 14),
-                    chademoOut1: dataHex.substring(14, 16)
+                    fanHigh: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'On' : 'Off',
+                    dac1: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'On' : 'Off',
+                    d8: parseInt(dataHex.substring(12, 14), 16) === 1 ? 'On' : 'Off',
+                    d12: parseInt(dataHex.substring(14, 16), 16) === 1 ? 'On' : 'Off'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220417: Бустер та Вентилятор низької швидкості
+     */
+    'internal_info_220417': {
+        request: { canId: '79B', data: '220417', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                return {
+                    boosterStatus: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'On' : 'Off',
+                    fanLow: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'On' : 'Off'
                 };
             }
         }

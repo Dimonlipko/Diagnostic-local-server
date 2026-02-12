@@ -477,6 +477,64 @@ label { font-weight: 600; margin-top: 10px; display: block; color: #444; }
     margin: 0;
 }
 
+/* --- INTERNAL MONITOR LAYOUT --- */
+.internal-param {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.internal-param label {
+    margin: 0;
+}
+
+.internal-param input {
+    margin: 0;
+}
+
+.internal-test-output {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.internal-test-output label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.internal-test-output select {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.internal-test-output button {
+    width: 100%;
+}
+
+/* Мобільна адаптація Internal Monitor */
+@media (max-width: 768px) {
+    .inverter-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .internal-param {
+        grid-template-columns: 1fr 120px;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .internal-param {
+        grid-template-columns: 1fr 100px;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+}
+
 /* --- СІТКА КОМІРОК --- */
 .cell-map-grid {
     display: grid;
