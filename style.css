@@ -338,44 +338,41 @@ body {
 
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-/* --- СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ (ОНОВЛЕНО) --- */
+/* --- СТИЛІ ДЛЯ ПЕРЕМИКАЧА МОВ --- */
 .lang-switcher {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     height: 40px;
 }
 
 .lang-switcher button {
     background: none;
-    border: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     cursor: pointer;
-    padding: 0;
-
-    color: var(--text-muted); /* Сірий для неактивного */
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
     font-family: 'Roboto', sans-serif;
-    font-size: 1.1rem;
+    font-size: 0.85rem;
     font-weight: 500;
-
     transition: all 0.2s;
+    width: 36px;
+    height: 36px;
 }
 
-/* ЗМІНЕНО: При наведенні стає темно-сірим */
 .lang-switcher button:hover {
-    color: var(--lang-hover);
+    background-color: var(--bg-btn-hover);
+    border-color: var(--border-hover);
 }
 
-/* ЗМІНЕНО: Активна мова */
 .lang-switcher button.active {
-    color: var(--lang-active);
+    background-color: var(--bg-btn-hover);
+    border-color: var(--border-hover);
     font-weight: 700;
-}
-
-.lang-separator {
-    color: var(--lang-separator);
-    font-size: 1.2rem;
-    font-weight: 300;
-    user-select: none;
 }
 
 /* === СТИЛІ ПЕРЕМИКАЧА ТЕМИ === */
@@ -439,15 +436,14 @@ body {
     }
 
     .lang-switcher {
-        gap: 6px;
+        gap: 3px;
     }
 
     .lang-switcher button {
-        font-size: 1rem;
-    }
-
-    .lang-separator {
-        font-size: 1rem;
+        width: 32px;
+        height: 32px;
+        padding: 3px 6px;
+        font-size: 0.8rem;
     }
 
     .theme-switcher {
@@ -484,15 +480,14 @@ body {
     }
 
     .lang-switcher {
-        gap: 4px;
+        gap: 2px;
     }
 
     .lang-switcher button {
-        font-size: 0.9rem;
-    }
-
-    .lang-separator {
-        font-size: 0.9rem;
+        width: 28px;
+        height: 28px;
+        padding: 2px 4px;
+        font-size: 0.75rem;
     }
 
     .theme-switcher {
