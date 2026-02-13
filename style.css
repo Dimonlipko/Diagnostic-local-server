@@ -302,6 +302,7 @@ body {
     margin-left: auto;
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 .status-group {
     display: flex;
@@ -320,7 +321,12 @@ body {
 }
 .status-light.connected { background-color: var(--status-connected); }
 .status-light.receiving { background-color: var(--status-receiving); animation: pulse 1s infinite; }
-.status-label { margin-right: 10px; }
+.status-label {
+    margin-right: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 #connectButton {
     background: none;
@@ -344,6 +350,7 @@ body {
     align-items: center;
     gap: 4px;
     height: 40px;
+    flex-shrink: 0;
 }
 
 .lang-switcher button {
@@ -380,6 +387,7 @@ body {
     display: flex;
     align-items: center;
     margin-left: 16px;
+    flex-shrink: 0;
 }
 
 .theme-toggle-btn {
@@ -447,7 +455,8 @@ body {
     }
 
     .theme-switcher {
-        margin-left: 10px;
+        margin-left: 8px;
+        margin-right: 10px;
     }
 
     .theme-toggle-btn {
@@ -460,6 +469,10 @@ body {
         width: 18px;
         height: 18px;
     }
+
+    .status-label {
+        max-width: 80px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -469,7 +482,7 @@ body {
     }
 
     .status-group {
-        margin-right: 8px;
+        margin-right: 6px;
         font-size: 0.75em;
     }
 
@@ -491,7 +504,8 @@ body {
     }
 
     .theme-switcher {
-        margin-left: 6px;
+        margin-left: 4px;
+        margin-right: 8px;
     }
 
     .theme-toggle-btn {
@@ -503,6 +517,10 @@ body {
     .theme-toggle-btn svg {
         width: 16px;
         height: 16px;
+    }
+
+    .status-label {
+        max-width: 60px;
     }
 }
 
