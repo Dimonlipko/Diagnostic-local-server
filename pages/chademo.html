@@ -1,0 +1,63 @@
+<h2 data-lang-key="chademo_title">CHAdeMO Fast Charging</h2>
+
+<h3 data-lang-key="chd_ev_params">EV Parameters</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_target_current">Target current</label>
+    <input type="text" id="readTargetCurrent" value="0 A" readonly data-bind="chademo_info_220601.targetCurrent">
+
+    <label data-lang-key="chd_target_voltage">Target voltage</label>
+    <input type="text" id="readTargetVoltage" value="0 V" readonly data-bind="chademo_info_220601.targetVoltage">
+
+    <label data-lang-key="chd_asking_current">Asking current</label>
+    <input type="text" id="readAskingCurrent" value="0 A" readonly data-bind="chademo_info_220602.askingCurrent">
+
+    <label data-lang-key="chd_faults">Faults</label>
+    <input type="text" id="readFaults" value="0" readonly data-bind="chademo_info_220602.faults">
+
+    <label data-lang-key="chd_status">Status</label>
+    <input type="text" id="readChdStatus" value="0" readonly data-bind="chademo_info_220602.status">
+
+    <label data-lang-key="chd_state">CHAdeMO state</label>
+    <input type="text" id="readChdState" value="—" readonly data-bind="chademo_info_220602.chademoState">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="chd_station_params">Charging Station Parameters</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_avail_voltage">Available voltage</label>
+    <input type="text" id="readAvailVoltage" value="0 V" readonly data-bind="chademo_info_220603.availVoltage">
+
+    <label data-lang-key="chd_avail_current">Available current</label>
+    <input type="text" id="readAvailCurrent" value="0 A" readonly data-bind="chademo_info_220603.availCurrent">
+
+    <label data-lang-key="chd_weld_check">Support weld check</label>
+    <input type="text" id="readWeldCheck" value="0" readonly data-bind="chademo_info_220603.supportWeldCheck">
+
+    <label data-lang-key="chd_threshold_voltage">Threshold voltage</label>
+    <input type="text" id="readThresholdVoltage" value="0 V" readonly data-bind="chademo_info_220604.thresholdVoltage">
+
+    <label data-lang-key="chd_present_voltage">Present voltage</label>
+    <input type="text" id="readPresentVoltage" value="0 V" readonly data-bind="chademo_info_220604.presentVoltage">
+
+    <label data-lang-key="chd_min_amperage">Min charge amperage</label>
+    <input type="text" id="readMinAmperage" value="0 A" readonly data-bind="chademo_info_220604.minChargeAmperage">
+
+    <label data-lang-key="chd_evse_status">EVSE status</label>
+    <input type="text" id="readEvseStatus" value="0" readonly data-bind="chademo_info_220605.evseStatus">
+
+    <label data-lang-key="chd_remaining_seconds">Remaining charge time</label>
+    <input type="text" id="readRemainingSeconds" value="0 s" readonly data-bind="chademo_info_220605.remainingChargeSeconds">
+
+    <label data-lang-key="chd_present_current">Present current</label>
+    <input type="text" id="readPresentCurrent" value="0 A" readonly data-bind="chademo_info_220605.presentCurrent">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<div class="rw-grid">
+    <label data-lang-key="chd_write_target_current">Write target current</label>
+    <input type="text" id="readTargetCurrentSet" value="0 A" readonly data-bind="chademo_info_220601.targetCurrent">
+    <input type="text" id="writeTargetCurrent" placeholder="A">
+    <button class="write-button" data-param-name="write_target_current" data-target-id="writeTargetCurrent" data-lang-key="btn_write">Write</button>
+</div>

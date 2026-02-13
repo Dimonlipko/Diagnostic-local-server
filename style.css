@@ -379,8 +379,7 @@ body {
 
 .sub-menu-btn.active svg {
     opacity: 1;
-    stroke: #000000; 
-    stroke-width: 2.5px;
+    stroke: #000000;
 }
 
 /* Бірюзова смужка зліва */

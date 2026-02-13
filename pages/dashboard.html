@@ -1,0 +1,50 @@
+<h2 data-lang-key="dashboard_title">Dashboard</h2>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="dash_speed">Speed</label>
+    <input type="text" id="readDashSpeed" value="0 km/h" readonly data-bind="cruise_info_220501.speed">
+
+    <label data-lang-key="dash_odometer">Odometer</label>
+    <input type="text" id="readOdometer" value="0 km" readonly data-bind="dashboard_info_221201.odometer">
+
+    <label data-lang-key="dash_selector">Selector position</label>
+    <input type="text" id="readDashSelector" value="N" readonly data-bind="inverter_info_220302.selector">
+
+    <label data-lang-key="dash_soc">Battery SOC</label>
+    <input type="text" id="readDashSoc" value="0 %" readonly data-bind="bms_info_220105.soc">
+
+    <label data-lang-key="dash_voltage">Battery voltage</label>
+    <input type="text" id="readDashVoltage" value="0 V" readonly data-bind="inverter_info_220301.voltage">
+
+    <label data-lang-key="dash_status">Status</label>
+    <input type="text" id="readDashStatus" value="—" readonly data-bind="inverter_info_220301.status">
+
+    <label data-lang-key="dash_rpm">Motor RPM</label>
+    <input type="text" id="readDashRpm" value="0 rpm" readonly data-bind="inverter_info_220303.rpm">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="dash_lights">Lights & Signals</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="dash_right_turn">Right turn</label>
+    <input type="text" id="readRightTurn" value="0 V" readonly data-bind="dashboard_info_221202.rightTurn">
+
+    <label data-lang-key="dash_left_turn">Left turn</label>
+    <input type="text" id="readLeftTurn" value="0 V" readonly data-bind="dashboard_info_221202.leftTurn">
+
+    <label data-lang-key="dash_park_lights">Park lights</label>
+    <input type="text" id="readParkLights" value="0 V" readonly data-bind="dashboard_info_221202.parkLights">
+
+    <label data-lang-key="dash_headlight">Headlight</label>
+    <input type="text" id="readHeadlight" value="0 V" readonly data-bind="dashboard_info_221202.headlight">
+
+    <label data-lang-key="dash_beam_lights">Beam lights</label>
+    <input type="text" id="readBeamLights" value="0 V" readonly data-bind="dashboard_info_221203.beamLights">
+
+    <label data-lang-key="dash_handbrake">Handbrake</label>
+    <input type="text" id="readHandbrake" value="0 V" readonly data-bind="dashboard_info_221203.handbrake">
+
+    <label data-lang-key="dash_belt">Seat belt</label>
+    <input type="text" id="readBelt" value="0 V" readonly data-bind="dashboard_info_221203.belt">
+</div>

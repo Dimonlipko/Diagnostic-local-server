@@ -1,0 +1,56 @@
+<h2 data-lang-key="climate_title">Climate Control</h2>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="climate_heater_state">Heater state</label>
+    <input type="text" id="readHeaterState" value="OFF" readonly data-bind="climate_info_221604.heaterState">
+
+    <label data-lang-key="climate_ac_state">A/C state</label>
+    <input type="text" id="readAcState" value="OFF" readonly data-bind="climate_info_221604.acState">
+
+    <label data-lang-key="climate_heater_temp">Heater temperature</label>
+    <input type="text" id="readHeaterTemp" value="0 °C" readonly data-bind="climate_info_221605.heaterTemp">
+
+    <label data-lang-key="climate_evap_temp">Evaporator temperature</label>
+    <input type="text" id="readEvapTemp" value="0 °C" readonly data-bind="climate_info_221605.evapTemp">
+
+    <label data-lang-key="climate_pressure">Pressure</label>
+    <input type="text" id="readPressure" value="0 Bar" readonly data-bind="climate_info_221605.pressure">
+
+    <label data-lang-key="climate_heater_power">Heater power</label>
+    <input type="text" id="readHeaterPower" value="0 kW" readonly data-bind="climate_info_221606.heaterPower">
+
+    <label data-lang-key="climate_ac_power">A/C power</label>
+    <input type="text" id="readAcPower" value="0 kW" readonly data-bind="climate_info_221606.acPower">
+
+    <label data-lang-key="climate_button_on">Button ON (IN1)</label>
+    <input type="text" id="readButtonOn" value="0 V" readonly data-bind="climate_info_221602.buttonOn">
+
+    <label data-lang-key="climate_ac_pressure">A/C pressure sensor (IN6)</label>
+    <input type="text" id="readAcPressure" value="0 V" readonly data-bind="climate_info_221603.acPressure">
+
+    <label data-lang-key="climate_heater_temp_v">Heater temp voltage (IN7)</label>
+    <input type="text" id="readHeaterTempV" value="0 V" readonly data-bind="climate_info_221603.heaterTempV">
+
+    <label data-lang-key="climate_evap_temp_v">Evaporator temp voltage (IN8)</label>
+    <input type="text" id="readEvapTempV" value="0 V" readonly data-bind="climate_info_221603.evapTempV">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<!-- Секція налаштувань -->
+<div class="rw-grid">
+    <label data-lang-key="climate_pump_temp">Pump start temperature</label>
+    <input type="text" id="readPumpTemp" value="0 °C" readonly data-bind="settings_info_220408.pumpTemp">
+    <input type="text" id="writePumpTemp" placeholder="°C">
+    <button class="write-button" data-param-name="write_pump_temp" data-target-id="writePumpTemp" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="climate_fan_high_temp">Fan ON temperature (high)</label>
+    <input type="text" id="readFanHighTemp" value="0 °C" readonly data-bind="settings_info_220414.fanHighTemp">
+    <input type="text" id="writeFanHighTemp" placeholder="°C">
+    <button class="write-button" data-param-name="write_fan_high_temp" data-target-id="writeFanHighTemp" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="climate_fan_low_temp">Fan ON temperature (low)</label>
+    <input type="text" id="readFanLowTemp" value="0 °C" readonly data-bind="settings_info_220414.fanLowTemp">
+    <input type="text" id="writeFanLowTemp" placeholder="°C">
+    <button class="write-button" data-param-name="write_fan_low_temp" data-target-id="writeFanLowTemp" data-lang-key="btn_write">Write</button>
+</div>

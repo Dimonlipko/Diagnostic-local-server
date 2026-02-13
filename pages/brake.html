@@ -1,0 +1,29 @@
+<h2 data-lang-key="brake_title">Brake System</h2>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="brake_pressure_sens">Brake pressure sensor</label>
+    <input type="text" id="readBrakePressureSens" value="0 V" readonly data-bind="internal_info_220405.brakeSens">
+
+    <label data-lang-key="brake_light">Brake light (D6)</label>
+    <input type="text" id="readBrakeLight" value="Low" readonly data-bind="internal_info_220405.d6">
+
+    <label data-lang-key="brake_booster_status">Brake booster (D25)</label>
+    <input type="text" id="readBoosterStatus" value="OFF" readonly data-bind="internal_info_220417.boosterStatus">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<!-- Нижня частина: Read/Write параметри бустера -->
+<div class="rw-grid">
+    <!-- Voltage pressure sensor booster on -->
+    <label data-lang-key="brake_voltage_on">Booster ON voltage</label>
+    <input type="text" id="readBoosterVoltageOn" value="0 V" readonly data-bind="brake_info_220701.voltageOn">
+    <input type="text" id="writeBoosterVoltageOn" data-lang-key="placeholder_millivolts" placeholder="Value in mV">
+    <button class="write-button" data-param-name="write_booster_on" data-target-id="writeBoosterVoltageOn" data-lang-key="btn_write">Write</button>
+
+    <!-- Voltage pressure sensor booster off -->
+    <label data-lang-key="brake_voltage_off">Booster OFF voltage</label>
+    <input type="text" id="readBoosterVoltageOff" value="0 V" readonly data-bind="brake_info_220701.voltageOff">
+    <input type="text" id="writeBoosterVoltageOff" data-lang-key="placeholder_millivolts" placeholder="Value in mV">
+    <button class="write-button" data-param-name="write_booster_off" data-target-id="writeBoosterVoltageOff" data-lang-key="btn_write">Write</button>
+</div>

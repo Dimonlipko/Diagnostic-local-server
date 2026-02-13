@@ -900,6 +900,425 @@ export const PARAMETER_REGISTRY = {
         }
     },
 
+    /**
+     * Запит 220701: Напруга бустера ON/OFF
+     */
+    'brake_info_220701': {
+        request: { canId: '79B', data: '220701', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const on_h = parseInt(dataHex.substring(8, 10), 16);
+                const on_l = parseInt(dataHex.substring(10, 12), 16);
+                const off_h = parseInt(dataHex.substring(12, 14), 16);
+                const off_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    voltageOn: `${(parseUint16(on_h, on_l) / 1000).toFixed(3)} V`,
+                    voltageOff: `${(parseUint16(off_h, off_l) / 1000).toFixed(3)} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220501: Круїз контроль
+     */
+    'cruise_info_220501': {
+        request: { canId: '79B', data: '220501', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+
+                const buttonMap = {
+                    "0": "OFF",
+                    "1": "ON",
+                    "3": "CANCEL",
+                    "5": "-",
+                    "9": "+"
+                };
+
+                const statusMap = {
+                    "0": "OFF",
+                    "1": "ON"
+                };
+
+                const speed = parseInt(dataHex.substring(8, 10), 16);
+                const setSpeed = parseInt(dataHex.substring(10, 12), 16);
+                const button = parseInt(dataHex.substring(12, 14), 16);
+                const status = parseInt(dataHex.substring(14, 16), 16);
+
+                return {
+                    speed: `${speed} km/h`,
+                    cruiseSetSpeed: `${setSpeed} km/h`,
+                    cruiseButton: buttonMap[button.toString()] || 'Unknown',
+                    cruiseStatus: statusMap[status.toString()] || 'Unknown'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220502: PID коефіцієнти kP та kI
+     */
+    'cruise_info_220502': {
+        request: { canId: '79B', data: '220502', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const kp_h = parseInt(dataHex.substring(8, 10), 16);
+                const kp_l = parseInt(dataHex.substring(10, 12), 16);
+                const ki_h = parseInt(dataHex.substring(12, 14), 16);
+                const ki_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    kP: (parseUint16(kp_h, kp_l) * 0.1).toFixed(1),
+                    kI: (parseUint16(ki_h, ki_l) * 0.1).toFixed(1)
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220503: PID коефіцієнт kD
+     */
+    'cruise_info_220503': {
+        request: { canId: '79B', data: '220503', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const kd_h = parseInt(dataHex.substring(8, 10), 16);
+                const kd_l = parseInt(dataHex.substring(10, 12), 16);
+                return {
+                    kD: (parseUint16(kd_h, kd_l) * 0.1).toFixed(1)
+                };
+            }
+        }
+    },
+
+    // ========================================
+    // CLIMATE CONTROL
+    // ========================================
+
+    /**
+     * Запит 221602: Analog Inputs 1-4 (Button, Temp set, IN3, IN4)
+     */
+    'climate_info_221602': {
+        request: { canId: '79B', data: '221602', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const buttonOn = (parseInt(dataHex.substring(8, 10), 16) * 0.1).toFixed(1);
+                const tempSet = (parseInt(dataHex.substring(10, 12), 16) * 0.01).toFixed(2);
+                return {
+                    buttonOn: `${buttonOn} V`,
+                    tempSetResistor: `${tempSet} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221603: Analog Inputs 5-8 (A/C pressure, Heater temp, Evaporator temp)
+     */
+    'climate_info_221603': {
+        request: { canId: '79B', data: '221603', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const acPressure = (parseInt(dataHex.substring(10, 12), 16) * 0.1).toFixed(1);
+                const heaterTemp = (parseInt(dataHex.substring(12, 14), 16) * 0.1).toFixed(1);
+                const evapTemp = (parseInt(dataHex.substring(14, 16), 16) * 0.1).toFixed(1);
+                return {
+                    acPressure: `${acPressure} V`,
+                    heaterTempV: `${heaterTemp} V`,
+                    evapTempV: `${evapTemp} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221604: Heater/AC button states
+     */
+    'climate_info_221604': {
+        request: { canId: '79B', data: '221604', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const stateMap = { "0": "OFF", "1": "ON" };
+                const heaterState = parseInt(dataHex.substring(8, 10), 16);
+                const acState = parseInt(dataHex.substring(12, 14), 16);
+                return {
+                    heaterState: stateMap[heaterState.toString()] || 'Unknown',
+                    acState: stateMap[acState.toString()] || 'Unknown'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221605: Pressure, Heater temp, Evaporator temp
+     */
+    'climate_info_221605': {
+        request: { canId: '79B', data: '221605', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const press_h = parseInt(dataHex.substring(8, 10), 16);
+                const press_l = parseInt(dataHex.substring(10, 12), 16);
+                const heaterTemp = parseInt(dataHex.substring(12, 14), 16) - 40;
+                const evapTemp = parseInt(dataHex.substring(14, 16), 16) - 40;
+                return {
+                    pressure: `${parseUint16(press_h, press_l)} Bar`,
+                    heaterTemp: `${heaterTemp} °C`,
+                    evapTemp: `${evapTemp} °C`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221606: Heater power, A/C power
+     */
+    'climate_info_221606': {
+        request: { canId: '79B', data: '221606', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const heaterPower = (parseInt(dataHex.substring(8, 10), 16) * 0.1).toFixed(1);
+                const acPower = (parseInt(dataHex.substring(12, 14), 16) * 0.1).toFixed(1);
+                return {
+                    heaterPower: `${heaterPower} kW`,
+                    acPower: `${acPower} kW`
+                };
+            }
+        }
+    },
+
+    // ========================================
+    // CHADEMO
+    // ========================================
+
+    /**
+     * Запит 220601: Target Current (2b), Target Voltage (2b)
+     */
+    'chademo_info_220601': {
+        request: { canId: '79B', data: '220601', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const cur_h = parseInt(dataHex.substring(8, 10), 16);
+                const cur_l = parseInt(dataHex.substring(10, 12), 16);
+                const vol_h = parseInt(dataHex.substring(12, 14), 16);
+                const vol_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    targetCurrent: `${parseUint16(cur_h, cur_l)} A`,
+                    targetVoltage: `${parseUint16(vol_h, vol_l)} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220602: Asking Current, faults, status, chademoState
+     */
+    'chademo_info_220602': {
+        request: { canId: '79B', data: '220602', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const stateMap = {
+                    "0": "STARTUP", "1": "SEND INITIAL PARAMS",
+                    "2": "WAIT FOR EVSE PARAMS", "3": "SET CHARGE BEGIN",
+                    "4": "WAIT FOR BEGIN CONFIRMATION", "5": "CLOSE CONTACTORS",
+                    "6": "RUNNING", "7": "CEASE_CURRENT",
+                    "8": "WAIT FOR ZERO CURRENT", "9": "OPEN CONTACTOR",
+                    "10": "FAULTED", "11": "STOPPED",
+                    "12": "LIMBO", "13": "NOT SUPPORT"
+                };
+                const askingCurrent = parseInt(dataHex.substring(8, 10), 16);
+                const faults = parseInt(dataHex.substring(10, 12), 16);
+                const status = parseInt(dataHex.substring(12, 14), 16);
+                const state = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    askingCurrent: `${askingCurrent} A`,
+                    faults: faults.toString(),
+                    status: status.toString(),
+                    chademoState: stateMap[state.toString()] || 'Unknown'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220603: availVoltage (2b), availCurrent, supportWeldCheck
+     */
+    'chademo_info_220603': {
+        request: { canId: '79B', data: '220603', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const vol_h = parseInt(dataHex.substring(8, 10), 16);
+                const vol_l = parseInt(dataHex.substring(10, 12), 16);
+                const availCurrent = parseInt(dataHex.substring(12, 14), 16);
+                const weldCheck = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    availVoltage: `${parseUint16(vol_h, vol_l)} V`,
+                    availCurrent: `${availCurrent} A`,
+                    supportWeldCheck: weldCheck.toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220604: thresholdVoltage, presentVoltage (2b), minChargeAmperage
+     */
+    'chademo_info_220604': {
+        request: { canId: '79B', data: '220604', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const thresholdVoltage = parseInt(dataHex.substring(8, 10), 16);
+                const pv_h = parseInt(dataHex.substring(10, 12), 16);
+                const pv_l = parseInt(dataHex.substring(12, 14), 16);
+                const minAmperage = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    thresholdVoltage: `${thresholdVoltage} V`,
+                    presentVoltage: `${parseUint16(pv_h, pv_l)} V`,
+                    minChargeAmperage: `${minAmperage} A`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220605: evse_status, remainingChargeSeconds (2b), presentCurrent
+     */
+    'chademo_info_220605': {
+        request: { canId: '79B', data: '220605', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const evseStatus = parseInt(dataHex.substring(8, 10), 16);
+                const sec_h = parseInt(dataHex.substring(10, 12), 16);
+                const sec_l = parseInt(dataHex.substring(12, 14), 16);
+                const presentCurrent = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    evseStatus: evseStatus.toString(),
+                    remainingChargeSeconds: `${parseUint16(sec_h, sec_l)} s`,
+                    presentCurrent: `${presentCurrent} A`
+                };
+            }
+        }
+    },
+
+    // ========================================
+    // PDM / AC CHARGING
+    // ========================================
+
+    /**
+     * Запит 220411: PWM plug, Charge plug status, PDM temperature, AC charge current
+     */
+    'pdm_info_220411': {
+        request: { canId: '79B', data: '220411', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const pwmPlug = parseInt(dataHex.substring(8, 10), 16);
+                const chargePlugStatus = parseInt(dataHex.substring(10, 12), 16);
+                const pdmTemp = parseInt(dataHex.substring(12, 14), 16) - 40;
+                const acChargeCurrent = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    pwmPlug: `${pwmPlug} A`,
+                    chargePlugStatus: `${chargePlugStatus} A`,
+                    pdmTemp: `${pdmTemp} °C`,
+                    acChargeCurrent: `${acChargeCurrent} A`
+                };
+            }
+        }
+    },
+
+    // ========================================
+    // DASHBOARD / INSTRUMENT CLUSTER
+    // ========================================
+
+    /**
+     * Запит 221201: Одометр (3 bytes, step 0.1, Km)
+     */
+    'dashboard_info_221201': {
+        request: { canId: '79B', data: '221201', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const b1 = parseInt(dataHex.substring(8, 10), 16);
+                const b2 = parseInt(dataHex.substring(10, 12), 16);
+                const b3 = parseInt(dataHex.substring(12, 14), 16);
+                const odometer = ((b1 << 16) | (b2 << 8) | b3) * 0.1;
+                return { odometer: `${odometer.toFixed(1)} km` };
+            }
+        }
+    },
+
+    /**
+     * Запит 221202: Повороти та фари (voltage inputs)
+     */
+    'dashboard_info_221202': {
+        request: { canId: '79B', data: '221202', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const rightTurn = (parseInt(dataHex.substring(8, 10), 16) * 0.1).toFixed(1);
+                const leftTurn = (parseInt(dataHex.substring(10, 12), 16) * 0.1).toFixed(1);
+                const parkLights = (parseInt(dataHex.substring(12, 14), 16) * 0.1).toFixed(1);
+                const headlight = (parseInt(dataHex.substring(14, 16), 16) * 0.1).toFixed(1);
+                return {
+                    rightTurn: `${rightTurn} V`,
+                    leftTurn: `${leftTurn} V`,
+                    parkLights: `${parkLights} V`,
+                    headlight: `${headlight} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221203: Далекє світло, ручник, ремінь
+     */
+    'dashboard_info_221203': {
+        request: { canId: '79B', data: '221203', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const beamLights = (parseInt(dataHex.substring(8, 10), 16) * 0.1).toFixed(1);
+                const handbrake = (parseInt(dataHex.substring(10, 12), 16) * 0.1).toFixed(1);
+                const belt = (parseInt(dataHex.substring(12, 14), 16) * 0.1).toFixed(1);
+                return {
+                    beamLights: `${beamLights} V`,
+                    handbrake: `${handbrake} V`,
+                    belt: `${belt} V`
+                };
+            }
+        }
+    },
+
     'settings_info_220901': {
         request: { canId: '79B', data: '220901', interval: 2000 },
         response: {
@@ -1020,6 +1439,27 @@ export const PARAMETER_REGISTRY = {
     },
     'write_type_bms': {
         writeConfig: { canId: '79B', dataPrefix: '2e041402', bytes: 1 }
+    },
+    'write_booster_on': {
+        writeConfig: { canId: '79B', dataPrefix: '2e070101', bytes: 2 }
+    },
+    'write_booster_off': {
+        writeConfig: { canId: '79B', dataPrefix: '2e070102', bytes: 2 }
+    },
+    'write_cc_kp': {
+        writeConfig: { canId: '79B', dataPrefix: '2e050201', bytes: 2 }
+    },
+    'write_cc_ki': {
+        writeConfig: { canId: '79B', dataPrefix: '2e050202', bytes: 2 }
+    },
+    'write_cc_kd': {
+        writeConfig: { canId: '79B', dataPrefix: '2e050203', bytes: 2 }
+    },
+    'write_ac_charge_current': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0205', bytes: 1 }
+    },
+    'write_target_current': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0601', bytes: 2 }
     },
 
     // ========================================

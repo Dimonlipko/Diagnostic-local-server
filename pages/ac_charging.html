@@ -1,0 +1,24 @@
+<h2 data-lang-key="ac_charging_title">AC Charging</h2>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="ac_pwm_plug">PWM plug</label>
+    <input type="text" id="readPwmPlug" value="0 A" readonly data-bind="pdm_info_220411.pwmPlug">
+
+    <label data-lang-key="ac_charge_plug_status">Charge plug status</label>
+    <input type="text" id="readChargePlugStatus" value="0 A" readonly data-bind="pdm_info_220411.chargePlugStatus">
+
+    <label data-lang-key="ac_pdm_temp">PDM temperature</label>
+    <input type="text" id="readPdmTemp" value="0 °C" readonly data-bind="pdm_info_220411.pdmTemp">
+
+    <label data-lang-key="ac_charge_current">AC charge current</label>
+    <input type="text" id="readAcChargeCurrent" value="0 A" readonly data-bind="pdm_info_220411.acChargeCurrent">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<div class="rw-grid">
+    <label data-lang-key="ac_charge_current_write">Max AC charge current</label>
+    <input type="text" id="readAcChargeCurrentSet" value="0 A" readonly data-bind="pdm_info_220411.acChargeCurrent">
+    <input type="text" id="writeAcChargeCurrent" placeholder="A">
+    <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
+</div>

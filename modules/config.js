@@ -16,8 +16,18 @@ export const translations = {
         'menu_bms_soc_map': 'SOC-Мапа',
 
         'menu_internal': 'Внутрішні',
+        'menu_brake': 'Гальма',
+        'menu_cruise': 'Круїз контроль',
         'menu_settings': 'Налаштування',
         'menu_update': 'Оновлення',
+
+        'menu_charging': 'Зарядка',
+        'menu_ac_charging': 'AC зарядка',
+        'menu_chademo': 'Chademo',
+        'menu_ccs': 'CCS',
+
+        'menu_climate': 'Клімат',
+        'menu_dashboard': 'Приборна панель',
 
         'menu_terminal': 'Термінал',
 
@@ -30,6 +40,7 @@ export const translations = {
         'col_read': 'Поточне значення',
         'col_write': 'Нове значення',
         'placeholder_new_value': 'Значення...',
+        'placeholder_millivolts': 'мВ',
 
         // Terminal
         'terminal_title': 'Термінал (Debug)',
@@ -146,6 +157,89 @@ export const translations = {
         'int_test_output': 'Тестування виходу',
         'int_test_button': 'Тест',
 
+        // Brake
+        'brake_title': 'Гальмівна система',
+        'brake_pressure_sens': 'Датчик тиску гальм',
+        'brake_light': 'Стоп-сигнал',
+        'brake_booster': 'Вакуумна помпа гальм',
+        'brake_booster_status': 'Статус вакуумної помпи',
+        'brake_voltage_on': 'Напруга увімкнення помпи',
+        'brake_voltage_off': 'Напруга вимкнення помпи',
+
+        // Charging
+        'ac_charging_title': 'AC зарядка',
+        'ac_pwm_plug': 'PWM роз\'єм',
+        'ac_charge_plug_status': 'Статус роз\'єму зарядки',
+        'ac_pdm_temp': 'Температура PDM',
+        'ac_charge_current': 'Струм AC зарядки',
+        'ac_charge_current_write': 'Макс. струм AC зарядки',
+        'chademo_title': 'CHAdeMO швидка зарядка',
+        'chd_ev_params': 'Параметри EV',
+        'chd_target_current': 'Цільовий струм',
+        'chd_target_voltage': 'Цільова напруга',
+        'chd_asking_current': 'Запитуваний струм',
+        'chd_faults': 'Помилки',
+        'chd_status': 'Статус',
+        'chd_state': 'Стан CHAdeMO',
+        'chd_station_params': 'Параметри зарядної станції',
+        'chd_avail_voltage': 'Доступна напруга',
+        'chd_avail_current': 'Доступний струм',
+        'chd_weld_check': 'Підтримка перевірки зварювання',
+        'chd_threshold_voltage': 'Порогова напруга',
+        'chd_present_voltage': 'Поточна напруга',
+        'chd_min_amperage': 'Мінімальний струм зарядки',
+        'chd_evse_status': 'Статус EVSE',
+        'chd_remaining_seconds': 'Час до завершення зарядки',
+        'chd_present_current': 'Поточний струм',
+        'chd_write_target_current': 'Запис цільового струму',
+        'ccs_title': 'CCS Combo зарядка',
+
+        // Climate
+        'climate_title': 'Клімат-контроль',
+        'climate_button_on': 'Кнопка ввімкнення (IN1)',
+        'climate_temp_set': 'Резистор уставки температури (IN2)',
+        'climate_ac_pressure': 'Датчик тиску A/C (IN6)',
+        'climate_heater_temp_v': 'Температура нагрівача, напруга (IN7)',
+        'climate_evap_temp_v': 'Температура випарника, напруга (IN8)',
+        'climate_heater_state': 'Стан нагрівача',
+        'climate_ac_state': 'Стан кондиціонера',
+        'climate_pressure': 'Тиск',
+        'climate_heater_temp': 'Температура нагрівача',
+        'climate_evap_temp': 'Температура випарника',
+        'climate_heater_power': 'Потужність нагрівача',
+        'climate_ac_power': 'Потужність кондиціонера',
+        'climate_pump_temp': 'Температура вмикання помпи',
+        'climate_fan_high_temp': 'Температура вентилятора (швидкий)',
+        'climate_fan_low_temp': 'Температура вентилятора (повільний)',
+
+        // Dashboard
+        'dashboard_title': 'Приборна панель',
+        'dash_speed': 'Швидкість',
+        'dash_odometer': 'Одометр',
+        'dash_selector': 'Позиція селектора',
+        'dash_soc': 'Заряд батареї (SOC)',
+        'dash_voltage': 'Напруга батареї',
+        'dash_status': 'Статус',
+        'dash_rpm': 'Оберти мотора',
+        'dash_lights': 'Освітлення та сигнали',
+        'dash_right_turn': 'Правий поворот',
+        'dash_left_turn': 'Лівий поворот',
+        'dash_park_lights': 'Габарити',
+        'dash_headlight': 'Ближнє світло',
+        'dash_beam_lights': 'Далекє світло',
+        'dash_handbrake': 'Ручне гальмо',
+        'dash_belt': 'Ремінь безпеки',
+
+        // Cruise Control
+        'cruise_title': 'Круїз контроль',
+        'cruise_speed': 'Швидкість автомобіля',
+        'cruise_set_speed': 'Встановлена швидкість круїзу',
+        'cruise_button': 'Кнопка круїз контролю',
+        'cruise_status': 'Статус круїз контролю',
+        'cruise_kp': 'Пропорційний коефіцієнт (kP)',
+        'cruise_ki': 'Інтегральний коефіцієнт (kI)',
+        'cruise_kd': 'Диференціальний коефіцієнт (kD)',
+
         // Update
         'update_title': 'Оновлення прошивки пристрою',
         'update_overlay_title': 'Йде оновлення прошивки...',
@@ -231,8 +325,18 @@ export const translations = {
         'menu_bms_soc_map': 'SOC Map',
 
         'menu_internal': 'Internal',
+        'menu_brake': 'Brake',
+        'menu_cruise': 'Cruise Control',
         'menu_settings': 'Settings',
         'menu_update': 'Update',
+
+        'menu_charging': 'Charging',
+        'menu_ac_charging': 'AC Charging',
+        'menu_chademo': 'Chademo',
+        'menu_ccs': 'CCS',
+
+        'menu_climate': 'Climate',
+        'menu_dashboard': 'Dashboard',
 
         'menu_terminal': 'Terminal',
 
@@ -245,6 +349,7 @@ export const translations = {
         'col_read': 'Current Value',
         'col_write': 'New Value',
         'placeholder_new_value': 'Value...',
+        'placeholder_millivolts': 'mV',
 
         // Terminal
         'terminal_title': 'Terminal (Debug)',
@@ -361,6 +466,89 @@ export const translations = {
         'int_test_output': 'Test output',
         'int_test_button': 'Test',
 
+        // Brake
+        'brake_title': 'Brake System',
+        'brake_pressure_sens': 'Brake pressure sensor',
+        'brake_light': 'Brake light',
+        'brake_booster': 'Brake booster',
+        'brake_booster_status': 'Booster status',
+        'brake_voltage_on': 'Booster ON voltage',
+        'brake_voltage_off': 'Booster OFF voltage',
+
+        // Charging
+        'ac_charging_title': 'AC Charging',
+        'ac_pwm_plug': 'PWM plug',
+        'ac_charge_plug_status': 'Charge plug status',
+        'ac_pdm_temp': 'PDM temperature',
+        'ac_charge_current': 'AC charge current',
+        'ac_charge_current_write': 'Max AC charge current',
+        'chademo_title': 'CHAdeMO Fast Charging',
+        'chd_ev_params': 'EV Parameters',
+        'chd_target_current': 'Target current',
+        'chd_target_voltage': 'Target voltage',
+        'chd_asking_current': 'Asking current',
+        'chd_faults': 'Faults',
+        'chd_status': 'Status',
+        'chd_state': 'CHAdeMO state',
+        'chd_station_params': 'Charging Station Parameters',
+        'chd_avail_voltage': 'Available voltage',
+        'chd_avail_current': 'Available current',
+        'chd_weld_check': 'Support weld check',
+        'chd_threshold_voltage': 'Threshold voltage',
+        'chd_present_voltage': 'Present voltage',
+        'chd_min_amperage': 'Min charge amperage',
+        'chd_evse_status': 'EVSE status',
+        'chd_remaining_seconds': 'Remaining charge time',
+        'chd_present_current': 'Present current',
+        'chd_write_target_current': 'Write target current',
+        'ccs_title': 'CCS Combo Charging',
+
+        // Climate
+        'climate_title': 'Climate Control',
+        'climate_button_on': 'Button ON (IN1)',
+        'climate_temp_set': 'Temp set resistor (IN2)',
+        'climate_ac_pressure': 'A/C pressure sensor (IN6)',
+        'climate_heater_temp_v': 'Heater temp voltage (IN7)',
+        'climate_evap_temp_v': 'Evaporator temp voltage (IN8)',
+        'climate_heater_state': 'Heater state',
+        'climate_ac_state': 'A/C state',
+        'climate_pressure': 'Pressure',
+        'climate_heater_temp': 'Heater temperature',
+        'climate_evap_temp': 'Evaporator temperature',
+        'climate_heater_power': 'Heater power',
+        'climate_ac_power': 'A/C power',
+        'climate_pump_temp': 'Pump start temperature',
+        'climate_fan_high_temp': 'Fan ON temperature (high)',
+        'climate_fan_low_temp': 'Fan ON temperature (low)',
+
+        // Dashboard
+        'dashboard_title': 'Dashboard',
+        'dash_speed': 'Speed',
+        'dash_odometer': 'Odometer',
+        'dash_selector': 'Selector position',
+        'dash_soc': 'Battery SOC',
+        'dash_voltage': 'Battery voltage',
+        'dash_status': 'Status',
+        'dash_rpm': 'Motor RPM',
+        'dash_lights': 'Lights & Signals',
+        'dash_right_turn': 'Right turn',
+        'dash_left_turn': 'Left turn',
+        'dash_park_lights': 'Park lights',
+        'dash_headlight': 'Headlight',
+        'dash_beam_lights': 'Beam lights',
+        'dash_handbrake': 'Handbrake',
+        'dash_belt': 'Seat belt',
+
+        // Cruise Control
+        'cruise_title': 'Cruise Control',
+        'cruise_speed': 'Vehicle speed',
+        'cruise_set_speed': 'Cruise set speed',
+        'cruise_button': 'Cruise control button',
+        'cruise_status': 'Cruise control status',
+        'cruise_kp': 'Proportional gain (kP)',
+        'cruise_ki': 'Integral gain (kI)',
+        'cruise_kd': 'Derivative gain (kD)',
+
         // Update
         'update_title': 'Device Firmware Update',
         'update_overlay_title': 'Firmware update in progress...',
@@ -448,10 +636,24 @@ const icons = {
     chart: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>`,
     
     settings: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
-    
+
     chip: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>`,
+
+    brake: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`,
+
+    cruise: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 19.5A9 9 0 1 0 5.5 19.5" stroke-width="2"/><line x1="3.5" y1="13" x2="5.5" y2="13" stroke-width="2"/><line x1="6" y1="7" x2="7.5" y2="8.5" stroke-width="2"/><line x1="12" y1="4.5" x2="12" y2="6.5" stroke-width="2"/><line x1="18" y1="7" x2="16.5" y2="8.5" stroke-width="2"/><line x1="20.5" y1="13" x2="18.5" y2="13" stroke-width="2"/><circle cx="12" cy="13" r="2.5" stroke-width="2"/><line x1="14" y1="11" x2="18" y2="7" stroke-width="2"/><path d="M22.5 1.5l-4 4m0-4v4h4" stroke-width="2"/></svg>`,
     
     upload: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
+
+    charging: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="6"/><line x1="9" y1="10" x2="9" y2="14"/><line x1="15" y1="10" x2="15" y2="14"/></svg>`,
+
+    chademo: `<svg viewBox="45 180 610 650" width="24" height="24" stroke="currentColor" fill="none"><path d="m198.6 253.8s52.6-29.4 81.1-38.6c28-9 57.4-15.4 86.8-15.7 33.6-.4 67.6 5.7 99.6 15.7 28.1 8.8 79.6 38.6 79.6 38.6l38.6-8.6 54.3 54.3-11.4 40s31.2 55.8 39.3 86.4c7.4 28 9 57.5 7.9 86.4-1.4 33.3-6 67.1-17.1 98.6-9.5 26.7-24.4 51.6-41.4 74.3-16.8 22.3-37.2 42.1-59.1 59.4-18.2 14.4-38.3 26.8-59.4 36.3-21.6 9.7-44.7 16.1-67.9 20.7-18.2 3.6-36.8 5.4-55.3 5.6-18.3.2-36.7-1.3-54.6-4.5-18.5-3.3-36.9-8.4-54.4-15.4-19.7-7.8-38.8-17.6-56.4-29.3-22.6-14.5-45.5-32.1-64.6-53.1-19.4-21.3-36.3-45.4-48.6-71.4-11.3-24-17.8-50.3-22.1-76.4-4.3-26.1-5.9-52.9-3.6-79.3 2.4-26.8 9.3-53.1 17.9-78.6 7.2-21.3 27.9-61.4 27.9-61.4l-9.4-41.7 49.4-49.7z" stroke-width="18"/><ellipse cx="233.6" cy="506.6" rx="69.1" ry="72.7" stroke-width="65"/><ellipse cx="512.1" cy="506.6" rx="69.1" ry="72.7" stroke-width="65"/><circle cx="371.4" cy="330.9" r="70" stroke-width="10"/><ellipse cx="319.9" cy="330.9" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="421.6" cy="330.9" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="372.1" cy="380.4" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="372.1" cy="280.6" rx="16.4" ry="17.1" stroke-width="7.3"/><circle cx="371.4" cy="680.9" r="70" stroke-width="10"/><ellipse cx="319.9" cy="680.9" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="421.6" cy="680.9" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="372.1" cy="730.4" rx="16.4" ry="17.1" stroke-width="7.3"/><ellipse cx="372.1" cy="630.6" rx="16.4" ry="17.1" stroke-width="7.3"/></svg>`,
+
+    ccs: `<svg viewBox="155 185 432 610" width="24" height="24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m266.4 212.1h214.4s22.5 15.2 32 25.6c9.5 10.5 18.5 24.5 24.8 35.9 6.3 11.3 11.4 21.5 15.8 34.7 4.3 13.2 8.3 26.9 9.5 44.1 1.1 17.2-.5 40.8-4.7 58.3-4.2 17.5-12.1 33.4-18.9 45.7-6.9 12.3-11.9 18.5-20.5 28.4-8.6 9.9-19.9 21-31.5 30-11.6 9-23.8 17.2-37.8 23.6-14 6.4-45.7 14.2-45.7 14.2s-42.9 5.8-77.2-6.3c-13.6-4.8-22.6-6.4-37.8-14.2-19.1-9.7-37.5-22-52-37.8-19.9-21.7-35.9-47.9-45.7-75.7-7.8-22-10.3-46-9.5-69.4.7-17.7 4.8-35.4 11-52 5.3-14.1 14.3-27.6 22.1-39.4 7.6-11.5 21-24.1 30-31.5 9-7.4 22.1-14.2 22.1-14.2z" stroke-width="40"/><ellipse cx="322.4" cy="286.2" rx="24.4" ry="25.2" stroke-width="23"/><ellipse cx="424.9" cy="286.2" rx="24.4" ry="25.2" stroke-width="23"/><ellipse cx="268" cy="357.9" rx="33.5" ry="32.7" stroke-width="23"/><ellipse cx="372" cy="357.9" rx="33.5" ry="32.7" stroke-width="23"/><ellipse cx="474.5" cy="357.9" rx="33.5" ry="32.7" stroke-width="23"/><ellipse cx="318.4" cy="446.2" rx="33.5" ry="32.7" stroke-width="23"/><ellipse cx="425.6" cy="446.2" rx="33.5" ry="32.7" stroke-width="23"/><line x1="291.6" y1="560.5" x2="452.4" y2="562.1" stroke-width="23"/><rect x="176.8" y="581.2" width="389" height="191.9" ry="95.9" stroke-width="30.5"/><ellipse cx="285.3" cy="676.4" rx="52.6" ry="53.4" stroke-width="23"/><ellipse cx="457.2" cy="674.8" rx="52.6" ry="53.4" stroke-width="23"/></svg>`,
+
+    climate: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path><circle cx="12" cy="12" r="4"></circle><path d="M12 8a4 4 0 0 0 0 8"></path></svg>`,
+
+    dashboard: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
 
     // --- ГОЛОВНЕ МЕНЮ (ДЛЯ ВИКОРИСТАННЯ В HTML) ---
     inverter: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
@@ -477,18 +679,33 @@ export const menuConfig = {
         ]
     },
 
-    // Розділ ECU (колишні Налаштування)
+    // Розділ ECU
     ecu: {
         type: 'submenu',
         defaultPage: 'pages/settings.html',
         items: [
             { label: 'Налаштування', link: 'pages/settings.html', langKey: 'menu_settings', icon: icons.settings },
             { label: 'Внутрішні', link: 'pages/internal.html', langKey: 'menu_internal', icon: icons.chip },
+            { label: 'Гальма', link: 'pages/brake.html', langKey: 'menu_brake', icon: icons.brake },
+            { label: 'Круїз контроль', link: 'pages/cruise_control.html', langKey: 'menu_cruise', icon: icons.cruise },
             { label: 'Оновлення', link: 'pages/update.html', langKey: 'menu_update', icon: icons.upload }
+        ]
+    },
+
+    // Розділ Зарядка
+    charging: {
+        type: 'submenu',
+        defaultPage: 'pages/ac_charging.html',
+        items: [
+            { label: 'AC зарядка', link: 'pages/ac_charging.html', langKey: 'menu_ac_charging', icon: icons.charging },
+            { label: 'Chademo', link: 'pages/chademo.html', langKey: 'menu_chademo', icon: icons.chademo },
+            { label: 'CCS', link: 'pages/ccs.html', langKey: 'menu_ccs', icon: icons.ccs }
         ]
     },
 
     // Прості розділи
     inverter: { type: 'direct', link: 'pages/inverter.html' },
+    climate: { type: 'direct', link: 'pages/climate.html' },
+    dashboard: { type: 'direct', link: 'pages/dashboard.html' },
     terminal: { type: 'direct', link: 'pages/terminal.html' }
 };

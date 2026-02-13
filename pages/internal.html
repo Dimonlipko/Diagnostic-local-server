@@ -104,8 +104,8 @@
         <h3 style="color: #F44336; font-size: 14px; margin: 20px 0 10px 0; font-weight: 500;">
             <span data-lang-key="int_test_section">Test Output</span>
         </h3>
-        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
-            <select id="testOutputSelect">
+        <div class="bms-readonly-grid">
+            <select id="testOutputSelect" style="grid-column: 3 / 4;">
                 <option value="0">A10 (Contactor +)</option>
                 <option value="1">A11 (Contactor -)</option>
                 <option value="2">D11 (Precharge)</option>
@@ -117,7 +117,7 @@
                 <option value="8">D12 (Chademo out1)</option>
                 <option value="9">D25 (Brake booster)</option>
             </select>
-            <button class="write-button" id="testOutputButton" data-lang-key="int_test_button">Test</button>
+            <button class="write-button" id="testOutputButton" data-lang-key="int_test_button" style="grid-column: 4 / 5;">Test</button>
         </div>
     </div>
 </div>
