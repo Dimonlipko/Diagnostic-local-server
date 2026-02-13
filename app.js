@@ -35,6 +35,31 @@ function setupSidebarEvents() {
     });
 }
 
+function initMobileSidebar() {
+    const hamburger = document.getElementById('hamburger-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (!hamburger || !sidebar || !overlay) return;
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    }
+
+    hamburger.addEventListener('click', () => {
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active', isOpen);
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    // Закрити sidebar при кліку на пункт меню (мобільна версія)
+    sidebarButtons.forEach(btn => {
+        btn.addEventListener('click', closeSidebar);
+    });
+}
+
 function handleMenuClick(sectionKey) {
     // Перевірка на існування конфігурації
     if (!menuConfig) {
@@ -199,6 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initLanguageSwitcher();
     setupSidebarEvents();
+    initMobileSidebar();
 
     initPageEventListeners({
         onWrite: handleWrite,

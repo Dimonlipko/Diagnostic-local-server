@@ -177,16 +177,69 @@ body {
 .sidebar {
     background-color: var(--bg-sidebar);
     color: white;
-    flex-shrink: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 220px;
+    display: block;
+    padding-top: 20px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+/* --- OVERLAY --- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* --- КНОПКА ГАМБУРГЕР --- */
+.hamburger-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    padding: 5px 0;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.hamburger-btn:hover {
+    background-color: var(--bg-btn-hover);
+    border-color: var(--border-hover);
+}
+
+.hamburger-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
 }
 
 /* --- СТИЛІ ДЛЯ ЛОГОТИПУ (ОНОВЛЕНО ДЛЯ SVG) --- */
 .sidebar-title {
-    display: none;
+    display: block;
     padding: 10px 0;
     width: 100%;
 }
@@ -216,20 +269,20 @@ body {
 
 /* --- СТИЛІ ДЛЯ МЕНЮ --- */
 .nav-item {
-    width: auto;
+    width: 100%;
 }
 
 .sidebar button.nav-button {
-    padding: 10px 12px;
+    width: 100%;
+    padding: 15px 25px;
     background: none;
     border: none;
     color: var(--text-sidebar);
     font-size: 1.05em;
     cursor: pointer;
 
-    /* ЗМІНЕНО: Додано прозорі рамки зверху і знизу, щоб текст не скакав */
-    border-top: 2px solid transparent;
-    border-bottom: 2px solid transparent;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid var(--border-sidebar-bottom);
 
     text-align: left;
     display: flex;
@@ -285,7 +338,7 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 50px);
+    height: 100vh;
 }
 .top-bar {
     background-color: var(--bg-topbar);
@@ -443,6 +496,18 @@ body {
         margin-right: 4px;
     }
 
+    .hamburger-btn {
+        width: 32px;
+        height: 32px;
+        padding: 3px 6px;
+        margin-right: 6px;
+    }
+
+    .hamburger-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
     .lang-switcher {
         gap: 3px;
     }
@@ -479,6 +544,18 @@ body {
     .top-bar {
         padding: 6px 8px;
         font-size: 0.8em;
+    }
+
+    .hamburger-btn {
+        width: 28px;
+        height: 28px;
+        padding: 2px 4px;
+        margin-right: 4px;
+    }
+
+    .hamburger-btn svg {
+        width: 16px;
+        height: 16px;
     }
 
     .status-group {
@@ -1087,34 +1164,23 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 /* --- МАКЕТ: ДЕСКТОП ВЕРСІЯ (min-width: 768px) --- */
 @media (min-width: 768px) {
     body { flex-direction: row; }
+
+    /* Sidebar завжди видимий на десктопі */
     .sidebar {
-        width: 220px;
+        position: static;
+        transform: none;
         flex-shrink: 0;
-        display: block;
-        padding-top: 20px;
+        height: auto;
     }
+
     .sidebar-title {
-        display: block;
         text-align: center;
         margin-bottom: 25px;
     }
 
-    .nav-item { width: 100%; }
-    .sidebar button.nav-button {
-        display: flex;
-        width: 100%;
-        padding: 15px 25px;
-        font-size: 1em;
-        /* ЗМІНЕНО: Прозора рамка для десктопу також */
-        border-top: 1px solid transparent;
-        border-bottom: 1px solid var(--border-sidebar-bottom);
-        align-items: center;
-    }
-    /* ЗМІНЕНО: Додано border-top для активного стану на десктопі */
-    .sidebar button.nav-button.active {
-        border-top: 2px solid var(--accent);
-        border-bottom: 2px solid var(--accent);
-    }
+    /* Гамбургер та overlay не потрібні */
+    .hamburger-btn { display: none; }
+    .sidebar-overlay { display: none !important; }
 
     .has-submenu > .nav-button {
         justify-content: space-between;
@@ -1134,7 +1200,6 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
         border-bottom-color: var(--border-sidebar-sub);
     }
 
-    .main-wrapper { height: 100vh; }
     .top-bar { font-size: 1em; }
     .status-light { width: 15px; height: 15px; }
     #connectButton { font-size: 1.5em; }
@@ -1499,13 +1564,28 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 }
 
 /* --- Мобільна адаптація кнопок підключення --- */
-@media (max-width: 480px) {
-    .nav-conn-btn {
-        padding: 6px 12px;
-        font-size: 0.85rem;
-    }
+@media (max-width: 768px) {
     .connection-header {
-        gap: 5px;
+        gap: 4px;
+        padding: 0;
+    }
+    .nav-conn-btn {
+        padding: 3px 6px;
+        font-size: 0.8rem;
+        min-width: 40px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .connection-header {
+        gap: 3px;
+    }
+    .nav-conn-btn {
+        padding: 2px 4px;
+        font-size: 0.75rem;
+        min-width: 36px;
+        height: 28px;
     }
 }
 
