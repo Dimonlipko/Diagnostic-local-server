@@ -304,8 +304,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const savedLang = localStorage.getItem('appLanguage') || 'uk';
-    setLanguage(savedLang);
+    const savedLang = localStorage.getItem('appLanguage');
+    if (savedLang) {
+        setLanguage(savedLang);
+    } else {
+        const browserLang = navigator.language || navigator.userLanguage || '';
+        const defaultLang = browserLang.startsWith('uk') ? 'uk' : 'en';
+        setLanguage(defaultLang);
+    }
+
+    // --- Ініціалізація теми ---
+    const savedTheme = localStorage.getItem('appTheme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('appTheme', next);
+        });
+    }
 
     // Вантажимо сторінку за замовчуванням (Термінал)
     const defaultBtn = document.querySelector(`[data-section="terminal"]`);

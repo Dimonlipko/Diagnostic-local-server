@@ -27,7 +27,7 @@ export const translations = {
         'menu_ccs': 'CCS',
 
         'menu_climate': 'Клімат',
-        'menu_dashboard': 'Приборна панель',
+        'menu_dashboard': 'Панель приладів',
 
         'menu_terminal': 'Термінал',
 

@@ -10,7 +10,7 @@ export let state = {
     connectionType: null,
     carStatusTimeout: null,
     logElement: null, // Посилання на <pre id="log">
-    currentLanguage: 'uk',
+    currentLanguage: 'en',
     terminalLog: 'Очікування підключення...',
     activePollers: [],
     lastRequestId: null, // Додано для парсингу відповідей ELM без заголовків
