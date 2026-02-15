@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { logMessage, updateConnectionTabs } from './ui.js';
-import { parseCanResponse } from './canProtocol.js';
+import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
 
 // Глобальний буфер для зклеювання розірваних BLE пакетів
 let bleBuffer = "";
@@ -89,7 +89,10 @@ export async function connectBleAdapter() {
                     }
                 }
                 // Очищуємо буфер після обробки повної відповіді
-                bleBuffer = ""; 
+                bleBuffer = "";
+
+                // ISO-TP fallback: відправляємо ручний FC якщо потрібен
+                sendPendingFlowControl();
             }
 
             if (window.uiUpdater && window.uiUpdater.flashCanLed) {
@@ -108,9 +111,13 @@ export async function connectBleAdapter() {
             { cmd: "ATE0", desc: "Вимкнення ехо", wait: 500 },
             { cmd: "ATL0", desc: "Вимкнення переносів (Linefeeds)", wait: 300 },
             { cmd: "ATH1", desc: "Заголовки (ID) ON", wait: 300 },
+            { cmd: "ATS0", desc: "Пробіли OFF", wait: 100 },
             { cmd: "ATSP6", desc: "Встановлення протоколу CAN", wait: 400 },
-            { cmd: "ATST10", desc: "Adaptive Timeout (Fast)", wait: 100 },
-            { cmd: "ATSH79B", desc: "Встановлення ID запиту", wait: 300 }
+            { cmd: "ATCAF0", desc: "CAN Auto Formatting OFF", wait: 300 },
+            { cmd: "ATAL", desc: "Allow Long messages", wait: 300 },
+            { cmd: "ATCRA7BB", desc: "CAN Receive Address = 7BB", wait: 300 },
+            { cmd: "ATSH79B", desc: "Встановлення ID запиту", wait: 300 },
+            { cmd: "ATST32", desc: "Timeout 200ms (для ISO-TP CF)", wait: 100 }
         ];
 
         for (const item of initCommands) {

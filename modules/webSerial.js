@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { BAUD_RATE } from './config.js';
 // 💡 ВИПРАВЛЕНО: Додано logMessage до імпорту (він використовувався, але не імпортувався)
 import { logMessage, updateUI } from './ui.js'; 
-import { parseCanResponse } from './canProtocol.js';
+import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
 import { handleCanResponse, stopAllPolling } from './pollingManager.js';
 import { updateConnectionTabs } from './ui.js';
 
@@ -189,19 +189,31 @@ async function initializeAdapter() {
         logMessage('Вимикаємо пробіли (ATS0)...');
         await state.writer.write("ATS0\r");
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         logMessage('Встановлюємо 500 кбіт/с (ATSP6)...');
         await state.writer.write("ATSP6\r");
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         logMessage('Вмикаємо заголовки (ATH1)...');
         await state.writer.write("ATH1\r");
         await new Promise(resolve => setTimeout(resolve, 100));
-        
-        logMessage('Вимикаємо адаптивний таймінг (ATAT0)...');
-        await state.writer.write("ATAT0\r");
+
+        logMessage('CAN Auto Formatting OFF (ATCAF0)...');
+        await state.writer.write("ATCAF0\r");
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
+        logMessage('Allow Long messages (ATAL)...');
+        await state.writer.write("ATAL\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        logMessage('CAN Receive Address = 7BB (ATCRA7BB)...');
+        await state.writer.write("ATCRA7BB\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        logMessage('Timeout 200ms (ATST32)...');
+        await state.writer.write("ATST32\r");
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         logMessage('ELM327 налаштовано для опитування.');
     }
 }
@@ -209,39 +221,47 @@ async function initializeAdapter() {
 async function readLoop() {
     try {
         logMessage("=== ЦИКЛ ЧИТАННЯ ЗАПУЩЕНО ===");
-        
+
         while (state.isConnected) {
             if (!state.reader) break;
-            
+
             const { value, done } = await state.reader.read();
-            
+
             if (done) {
                 logMessage("Читання завершено");
                 break;
             }
-            
+
             if (!value) continue;
-            
+
             // Декодуємо отримані байти у текст
             const textChunk = new TextDecoder().decode(value, {stream: true});
             lineBuffer += textChunk;
-            
+
             // Розбиваємо буфер на рядки за символами переносу
             let lines = lineBuffer.split(/\r\n|\r|\n/);
             lineBuffer = lines.pop() || ""; // Залишаємо незавершений рядок у буфері
-            
+
+            let promptReady = false;
+
             for (const line of lines) {
                 if (!line) continue;
-                
-                const trimmedLine = line.trim();
-                
+
+                // Перевіряємо чи є ">" (ELM327 завершив прийом, готовий до команди)
+                if (line.includes('>')) {
+                    promptReady = true;
+                }
+
+                const trimmedLine = line.replace(/>/g, '').trim();
+                if (!trimmedLine) continue;
+
                 // Передаємо рядок у парсер canProtocol.js
-                const parsed = parseCanResponse(trimmedLine); 
-                
+                const parsed = parseCanResponse(trimmedLine);
+
                 if (parsed) {
                     // Якщо парсер повернув об'єкт {id, data}, передаємо в pollingManager
                     handleCanResponse(parsed.id, parsed.data);
-                    
+
                     // Візуальна індикація активності
                     const statusCar = document.getElementById('statusCar');
                     if (statusCar) {
@@ -252,6 +272,25 @@ async function readLoop() {
                         }, 500);
                     }
                 }
+            }
+
+            // Перевіряємо залишок буфера на ">"
+            if (lineBuffer.includes('>')) {
+                promptReady = true;
+                const remaining = lineBuffer.replace(/>/g, '').trim();
+                if (remaining) {
+                    const parsed = parseCanResponse(remaining);
+                    if (parsed) {
+                        handleCanResponse(parsed.id, parsed.data);
+                    }
+                }
+                lineBuffer = "";
+            }
+
+            // ISO-TP: відправляємо FC ТІЛЬКИ коли ELM327 готовий (">" отримано)
+            // Без ">" ELM327 ще в режимі прийому CAN — команда буде втрачена
+            if (promptReady) {
+                await sendPendingFlowControl();
             }
         }
     } catch (error) {
