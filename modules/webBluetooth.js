@@ -69,29 +69,24 @@ export async function connectBleAdapter() {
             bleBuffer += chunk;
 
             // ELM327 сигналізує про кінець відповіді символом ">"
+            // Обробляємо тільки до першого ">", залишок зберігаємо для наступного циклу
             if (bleBuffer.includes('>')) {
-                const parts = bleBuffer.split('\r');
-                
-                for (let part of parts) {
-                    // Очищаємо від службових символів
-                    const cleanLine = part.replace(/>/g, '').trim().toUpperCase();
+                const promptIdx = bleBuffer.indexOf('>');
+                const toProcess = bleBuffer.substring(0, promptIdx);
+                bleBuffer = bleBuffer.substring(promptIdx + 1);
 
+                const parts = toProcess.split('\r');
+                for (let part of parts) {
+                    const cleanLine = part.trim().toUpperCase();
                     if (cleanLine && cleanLine !== 'OK' && !cleanLine.startsWith('AT')) {
                         const parsed = parseCanResponse(cleanLine);
-                        console.log(`[BLE Debug] parsed=${JSON.stringify(parsed)}, pollingManager=${!!window.pollingManager}`);
-
                         if (parsed && parsed.id && parsed.data && window.pollingManager) {
-                            console.log(`[BLE Debug] Викликаємо handleCanResponse(${parsed.id}, ${parsed.data})`);
                             window.pollingManager.handleCanResponse(parsed.id, parsed.data);
-                        } else {
-                            console.log(`[BLE Debug] НЕ викликаємо handleCanResponse: parsed=${!!parsed}, id=${!!parsed?.id}, data=${!!parsed?.data}, pollingManager=${!!window.pollingManager}`);
                         }
                     }
                 }
-                // Очищуємо буфер після обробки повної відповіді
-                bleBuffer = "";
 
-                // ISO-TP fallback: відправляємо ручний FC якщо потрібен
+                // ISO-TP: відправляємо FC якщо збірка потребує ще CF
                 sendPendingFlowControl();
             }
 

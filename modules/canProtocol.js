@@ -12,7 +12,8 @@ const isotpState = {
     buffer: '',
     timeout: null,
     needsFC: false,
-    nextSeq: 0
+    nextSeq: 0,
+    fcFallback: null
 };
 
 export async function sendCanRequest(canId, data) {
@@ -25,7 +26,7 @@ export async function sendCanRequest(canId, data) {
     // Для Classic ми не блокуємо запити, щоб не переривати паралельні інтервали
     if (isBle && isWriting) {
         await new Promise(r => setTimeout(r, 20));
-        if (isWriting) return false; 
+        if (isWriting) return false;
     }
 
     isWriting = true;
@@ -36,10 +37,10 @@ export async function sendCanRequest(canId, data) {
             // Оптимізація заголовка ТІЛЬКИ для BLE
             if (!isBle || canId !== state.lastSetHeader) {
                 await writer.write(`ATSH${canId}\r`);
-                
+
                 // Classic: 20мс (як було), BLE: 60мс (для стабільності)
                 await new Promise(r => setTimeout(r, isBle ? 60 : 20));
-                
+
                 if (isBle) state.lastSetHeader = canId;
             }
         }
@@ -48,24 +49,24 @@ export async function sendCanRequest(canId, data) {
         const pciHex = (data.length / 2).toString(16).padStart(2, '0');
         await writer.write(`${pciHex}${data}\r`);
         console.log(`[Protocol] >>> SEND: ${pciHex}${data}`);
-        
+
         // 3. ПАУЗА ПІСЛЯ ЗАПИТУ
         // Classic: твої робочі 50мс
         // BLE: ТІЛЬКИ 20мс (решту часу ми чекаємо в реактивній черзі)
-        const postWait = isBle ? 20 : 50; 
+        const postWait = isBle ? 20 : 50;
         await new Promise(r => setTimeout(r, postWait));
-        
+
         return true;
     } catch (e) {
         console.error(`[Protocol] Помилка запису:`, e);
         return false;
     } finally {
-        isWriting = false; 
+        isWriting = false;
     }
 }
 
 /**
- * Головна функція парсингу, яка об’єднує термінал та логіку даних
+ * Головна функція парсингу, яка об'єднує термінал та логіку даних
  */
 export function parseCanResponse(line) {
     let cleanLine = line.trim();
@@ -75,7 +76,7 @@ export function parseCanResponse(line) {
     if (!cleanLine) return null;
 
     // Перевірка активної сторінки для фільтрації RAW логів
-    const isTerminalPage = !!document.querySelector('.terminal-container') || 
+    const isTerminalPage = !!document.querySelector('.terminal-container') ||
                           !!document.getElementById('terminal-output');
 
     // Викликаємо твій оригінальний парсер
@@ -149,7 +150,6 @@ function parseCanResponse_ELM327(line) {
 
         console.log(`[ISO-TP] First Frame: id=${id}, totalLength=${totalLength}, ffPayload=${payloadHex.length / 2} bytes`);
 
-        // ATFCSM1 повинен відправити FC автоматично, але як fallback
         // ми відправимо FC вручну коли ELM закінчить прийом (readLoop/BLE handler)
         isotpState.needsFC = true;
 
@@ -158,6 +158,7 @@ function parseCanResponse_ELM327(line) {
         isotpState.timeout = setTimeout(() => {
             if (isotpState.active) {
                 console.warn('[ISO-TP] Таймаут очікування CF - скидання');
+                if (isotpState.fcFallback) { clearTimeout(isotpState.fcFallback); isotpState.fcFallback = null; }
                 isotpState.active = false;
                 isotpState.needsFC = false;
                 isotpState.buffer = '';
@@ -172,14 +173,28 @@ function parseCanResponse_ELM327(line) {
         // Перевірка послідовності (другий ніббл = sequence 0-F)
         const seqNum = parseInt(data.charAt(1), 16);
         if (seqNum !== isotpState.nextSeq) {
-            console.error(`[ISO-TP] SEQ MISMATCH! Очікується ${isotpState.nextSeq.toString(16)}, отримано ${seqNum.toString(16)} — скидання збірки`);
-            if (isotpState.timeout) clearTimeout(isotpState.timeout);
-            isotpState.active = false;
-            isotpState.needsFC = false;
-            isotpState.buffer = '';
-            return null;
+            const gap = (seqNum - isotpState.nextSeq + 16) % 16;
+            if (gap > 4) {
+                // Занадто великий розрив — скидаємо збірку
+                console.error(`[ISO-TP] SEQ gap=${gap} занадто великий — скидання збірки`);
+                if (isotpState.timeout) clearTimeout(isotpState.timeout);
+                if (isotpState.fcFallback) { clearTimeout(isotpState.fcFallback); isotpState.fcFallback = null; }
+                isotpState.active = false;
+                isotpState.needsFC = false;
+                isotpState.buffer = '';
+                return null;
+            }
+            // Невеликий розрив (1-4 CF) — заповнюємо нулями і продовжуємо
+            console.warn(`[ISO-TP] Пропущено ${gap} CF (очікувався ${isotpState.nextSeq.toString(16)}, прийшов ${seqNum.toString(16)}) — заповнюємо нулями`);
+            isotpState.buffer += '00'.repeat(7 * gap);
         }
         isotpState.nextSeq = (seqNum + 1) & 0x0F; // 0→1→...→F→0 (wrap)
+
+        // CF прийшов — fallback не потрібен
+        if (isotpState.fcFallback) {
+            clearTimeout(isotpState.fcFallback);
+            isotpState.fcFallback = null;
+        }
 
         // Payload CF = все після 2 hex символів (1 байт заголовку CF)
         const payloadHex = data.substring(2);
@@ -190,6 +205,7 @@ function parseCanResponse_ELM327(line) {
         isotpState.timeout = setTimeout(() => {
             if (isotpState.active) {
                 console.warn('[ISO-TP] Таймаут очікування CF - скидання');
+                if (isotpState.fcFallback) { clearTimeout(isotpState.fcFallback); isotpState.fcFallback = null; }
                 isotpState.active = false;
                 isotpState.needsFC = false;
                 isotpState.buffer = '';
@@ -214,6 +230,7 @@ function parseCanResponse_ELM327(line) {
 
             // Скидаємо стан
             if (isotpState.timeout) clearTimeout(isotpState.timeout);
+            if (isotpState.fcFallback) { clearTimeout(isotpState.fcFallback); isotpState.fcFallback = null; }
             isotpState.active = false;
             isotpState.needsFC = false;
             isotpState.buffer = '';
@@ -237,9 +254,9 @@ export function isIsotpActive() {
 }
 
 /**
- * Відправка ручного Flow Control (fallback якщо ATFCSM1 не спрацював)
+ * Відправка ручного Flow Control
  * Викликається з readLoop/BLE handler коли ELM закінчив прийом даних
- * FC = 30 00 00 00 00 00 00 00 (CTS, BS=0, STmin=0)
+ * FC = 30 01 00 00 00 00 00 00 (CTS, BS=1, STmin=0) + fallback BS=0
  */
 export async function sendPendingFlowControl() {
     if (!isotpState.needsFC || !isotpState.active) return false;
@@ -248,11 +265,31 @@ export async function sendPendingFlowControl() {
     const writer = state.writer;
     if (!writer) return false;
 
+    // Скидаємо попередній fallback
+    if (isotpState.fcFallback) {
+        clearTimeout(isotpState.fcFallback);
+        isotpState.fcFallback = null;
+    }
+
     try {
         // FC: CTS (30), BS=1 (01) — ECU відправляє 1 CF і чекає наступний FC
-        // Ping-pong: FC→CF→FC→CF→... поки збірка не завершена
         await writer.write('3001000000000000\r');
         console.log(`[ISO-TP] FC відправлено (BS=1), буфер: ${isotpState.buffer.length/2}/${isotpState.expectedLength} bytes`);
+
+        // Fallback: якщо ECU не відповів на BS=1 протягом 400мс — шлемо BS=0
+        isotpState.fcFallback = setTimeout(async () => {
+            isotpState.fcFallback = null;
+            if (isotpState.active && !isotpState.needsFC) {
+                console.log('[ISO-TP] ECU не відповів на BS=1 → fallback BS=0');
+                try {
+                    await writer.write('3000000000000000\r');
+                    isotpState.needsFC = true;
+                } catch (e) {
+                    console.error('[ISO-TP] Помилка fallback FC:', e);
+                }
+            }
+        }, 400);
+
         return true;
     } catch (e) {
         console.error('[ISO-TP] Помилка відправки FC:', e);
