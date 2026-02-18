@@ -117,6 +117,7 @@ export const translations = {
         'opt_volt_gen1': 'Volt Gen 1',
         'opt_orion2': 'Orion 2',
         'opt_vw_id': 'VW ID',
+        'opt_jk_bms': 'JK-BMS',
 
         // Internal Monitor
         'internal_title': 'Внутрішній монітор',
@@ -426,6 +427,7 @@ export const translations = {
         'opt_volt_gen1': 'Volt Gen 1',
         'opt_orion2': 'Orion 2',
         'opt_vw_id': 'VW ID',
+        'opt_jk_bms': 'JK-BMS',
 
         // Internal Monitor
         'internal_title': 'Internal Monitor',

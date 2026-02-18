@@ -1398,7 +1398,7 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const bmsMap = { "0": "OFF", "1": "Volt Gen 1", "2": "Leaf", "3": "Orion 2", "4": "VW ID"};
+                const bmsMap = { "0": "OFF", "1": "Volt Gen 1", "2": "Leaf", "3": "Orion 2", "4": "VW ID", "9": "JK-BMS"};
 
                 const highTemp = parseInt(dataHex.substring(8, 10), 16); // Байт 4
                 const bmsRaw = parseInt(dataHex.substring(10, 12), 16);  // Байт 5
