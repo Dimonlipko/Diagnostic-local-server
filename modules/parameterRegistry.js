@@ -536,7 +536,7 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const typeMap = { "0": "Volt 1", "1": "OFF", "2": "Leaf" };
+                const typeMap = { "0": "OFF", "1": "Volt 1", "2": "Leaf" };
                 const typeRaw = parseInt(dataHex.substring(8, 10), 16); // Байт 4
                 const curr_h = parseInt(dataHex.substring(12, 14), 16); // Байт 6
                 const curr_l = parseInt(dataHex.substring(14, 16), 16); // Байт 7
