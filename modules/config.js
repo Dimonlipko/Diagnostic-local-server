@@ -227,7 +227,7 @@ export const translations = {
         'dash_left_turn': 'Лівий поворот',
         'dash_park_lights': 'Габарити',
         'dash_headlight': 'Ближнє світло',
-        'dash_beam_lights': 'Далекє світло',
+        'dash_beam_lights': 'Дальне світло',
         'dash_handbrake': 'Ручне гальмо',
         'dash_belt': 'Ремінь безпеки',
 
