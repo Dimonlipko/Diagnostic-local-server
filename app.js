@@ -8,6 +8,7 @@ import { connectAdapter, disconnectAdapter } from './modules/webSerial.js';
 import { sendCanRequest } from './modules/canProtocol.js'; 
 // Додаємо імпорт функції відключення BLE
 import { connectBleAdapter, disconnectBleAdapter } from './modules/webBluetooth.js';
+import { APP_VERSION } from './version.js';
 
 // ===============================================
 // БЛОК НАВІГАЦІЇ
@@ -225,6 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initLanguageSwitcher();
     setupSidebarEvents();
     initMobileSidebar();
+
+    const versionEl = document.getElementById('app-version');
+    if (versionEl) versionEl.textContent = APP_VERSION;
 
     initPageEventListeners({
         onWrite: handleWrite,

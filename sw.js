@@ -1,27 +1,45 @@
-const CACHE_NAME = 'diag-app-v2';
+const CACHE_NAME = 'diag-app-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './logo.png',
-  
+  './version.js',
+  './manifest.json',
+  './E-Engines_logo_flash.svg',
+  './E-Engines_logo_white.svg',
+
+  // Fonts
+  './fonts/roboto-cyrillic.woff2',
+  './fonts/roboto-latin.woff2',
+  './fonts/orbitron-latin.woff2',
+
   // Modules
   './modules/canProtocol.js',
   './modules/config.js',
+  './modules/firmwareUpdate.js',
   './modules/parameterRegistry.js',
   './modules/pollingManager.js',
+  './modules/socMapPage.js',
   './modules/state.js',
   './modules/translator.js',
   './modules/ui.js',
+  './modules/updatePage.js',
   './modules/webSerial.js',
   './modules/webBluetooth.js',
 
   // Pages
+  './pages/ac_charging.html',
   './pages/bms_cells.html',
   './pages/bms_params.html',
   './pages/bms_soc_map.html',
   './pages/bms_temp_map.html',
+  './pages/brake.html',
+  './pages/ccs.html',
+  './pages/chademo.html',
+  './pages/climate.html',
+  './pages/cruise_control.html',
+  './pages/dashboard.html',
   './pages/internal.html',
   './pages/inverter.html',
   './pages/settings.html',
@@ -31,6 +49,7 @@ const ASSETS_TO_CACHE = [
 
 // Встановлення: кешуємо всі файли
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching all files');
@@ -51,6 +70,7 @@ self.addEventListener('activate', (event) => {
       }));
     })
   );
+  self.clients.claim();
 });
 
 // Перехоплення запитів: спочатку шукаємо в кеші

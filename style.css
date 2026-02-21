@@ -1,7 +1,30 @@
 /* --- ПОЧАТОК CSS --- */
 
-/* Імпорт чистого шрифту для інтерфейсу (як у Tesla) */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+/* Локальні шрифти (для офлайн роботи) */
+@font-face {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('./fonts/roboto-cyrillic.woff2') format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('./fonts/roboto-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./fonts/orbitron-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 /* === ТЕМА: CSS ЗМІННІ === */
 :root {
@@ -182,7 +205,8 @@ body {
     top: 0;
     height: 100vh;
     width: 220px;
-    display: block;
+    display: flex;
+    flex-direction: column;
     padding-top: 20px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
@@ -265,6 +289,16 @@ body {
     text-align: center;
     margin-top: 10px;
     letter-spacing: 1.5px;
+}
+
+.sidebar-version {
+    margin-top: auto;
+    padding: 12px 25px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.65em;
+    color: var(--text-sidebar-title);
+    opacity: 0.4;
+    letter-spacing: 1px;
 }
 
 /* --- СТИЛІ ДЛЯ МЕНЮ --- */

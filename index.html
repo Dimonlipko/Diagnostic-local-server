@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diag tool Electric Engines</title>
     <link rel="icon" href="E-Engines_logo_flash.svg">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
-    <!-- ?v=4 для скидання кешу -->
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -77,6 +74,7 @@
                 <span data-lang-key="menu_terminal">Термінал</span>
             </button>
         </div>
+        <div id="app-version" class="sidebar-version"></div>
     </nav>
     <div class="sidebar-overlay"></div>
 
@@ -127,7 +125,11 @@
 
     </div>
 
-    <!-- ?v=4 для скидання кешу -->
-    <script src="app.js?v=4" type="module" defer></script>
+    <script src="app.js" type="module" defer></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+    </script>
 </body>
 </html>
