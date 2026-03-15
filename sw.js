@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diag-app-v3';
+const CACHE_NAME = 'diag-app-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './E-Engines_logo_flash.svg',
   './E-Engines_logo_white.svg',
+  './E-Engines_logo_flash_white.svg',
 
   // Fonts
   './fonts/roboto-cyrillic.woff2',
@@ -27,6 +28,8 @@ const ASSETS_TO_CACHE = [
   './modules/updatePage.js',
   './modules/webSerial.js',
   './modules/webBluetooth.js',
+  './modules/cruiseChartPage.js',
+  './modules/chart.min.js',
 
   // Pages
   './pages/ac_charging.html',

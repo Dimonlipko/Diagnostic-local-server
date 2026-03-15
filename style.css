@@ -1847,4 +1847,36 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
     }
 }
 
+/* --- ГРАФІК КРУЇЗ-КОНТРОЛЮ --- */
+.chart-panel {
+    display: none;
+    margin-top: 15px;
+}
+
+.chart-panel.open {
+    display: block;
+}
+
+.chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    position: relative;
+    height: 300px;
+}
+
+.chart-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.chart-controls .log-status {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
 /* --- КІНЕЦЬ CSS --- */

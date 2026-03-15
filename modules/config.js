@@ -240,6 +240,10 @@ export const translations = {
         'cruise_kp': 'Пропорційний коефіцієнт (kP)',
         'cruise_ki': 'Інтегральний коефіцієнт (kI)',
         'cruise_kd': 'Диференціальний коефіцієнт (kD)',
+        'cruise_chart_btn': 'Графік',
+        'cruise_chart_title': 'Швидкість та момент',
+        'cruise_log_save': 'Зберегти лог',
+        'cruise_log_clear': 'Очистити',
 
         // Update
         'update_title': 'Оновлення прошивки пристрою',
@@ -550,6 +554,10 @@ export const translations = {
         'cruise_kp': 'Proportional gain (kP)',
         'cruise_ki': 'Integral gain (kI)',
         'cruise_kd': 'Derivative gain (kD)',
+        'cruise_chart_btn': 'Chart',
+        'cruise_chart_title': 'Speed & Torque',
+        'cruise_log_save': 'Save Log',
+        'cruise_log_clear': 'Clear',
 
         // Update
         'update_title': 'Device Firmware Update',

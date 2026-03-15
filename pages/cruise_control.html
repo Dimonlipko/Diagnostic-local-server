@@ -33,3 +33,21 @@
     <input type="text" id="writeKd" placeholder="0.0">
     <button class="write-button" data-param-name="write_cc_kd" data-target-id="writeKd" data-lang-key="btn_write">Write</button>
 </div>
+
+<!-- Hidden element to trigger torque polling -->
+<input type="hidden" data-bind="inverter_info_220304.torqueReq">
+
+<hr style="margin: 20px 0;">
+<button id="btnToggleChart" class="write-button" data-lang-key="cruise_chart_btn">Chart</button>
+
+<div id="chartPanel" class="chart-panel">
+    <h3 data-lang-key="cruise_chart_title">Speed & Torque</h3>
+    <div class="chart-container">
+        <canvas id="cruiseChart"></canvas>
+    </div>
+    <div class="chart-controls">
+        <button id="btnSaveLog" class="write-button" data-lang-key="cruise_log_save">Save Log</button>
+        <button id="btnClearLog" class="write-button" data-lang-key="cruise_log_clear">Clear</button>
+        <span id="logStatus" class="log-status"></span>
+    </div>
+</div>

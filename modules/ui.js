@@ -4,8 +4,31 @@ import { stopAllPolling } from './pollingManager.js';
 import { PARAMETER_REGISTRY } from './parameterRegistry.js';
 import { initUpdatePage, cleanupUpdatePage } from './updatePage.js';
 import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
+import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
 
 let logElement = null;
+
+// --- Data Listener System ---
+const dataListeners = new Map();
+
+export function addDataListener(rootKey, callback) {
+    if (!dataListeners.has(rootKey)) {
+        dataListeners.set(rootKey, new Set());
+    }
+    dataListeners.get(rootKey).add(callback);
+}
+
+export function removeDataListener(rootKey, callback) {
+    const listeners = dataListeners.get(rootKey);
+    if (listeners) {
+        listeners.delete(callback);
+        if (listeners.size === 0) dataListeners.delete(rootKey);
+    }
+}
+
+export function removeAllDataListeners() {
+    dataListeners.clear();
+}
 
 export function updateLogElement() {
     logElement = document.getElementById('log');
@@ -30,8 +53,12 @@ export async function loadPage(pageFile) {
     
     // Завжди зупиняємо старе опитування перед зміною сторінки
     if (window.pollingManager) {
-        window.pollingManager.stopAllPolling(); 
+        window.pollingManager.stopAllPolling();
     }
+
+    // Cleanup data listeners та сторінки з lifecycle
+    removeAllDataListeners();
+    cleanupCruiseChartPage();
     
     try {
         const response = await fetch(pageFile);
@@ -95,6 +122,10 @@ export async function loadPage(pageFile) {
         if (pageFile.includes('bms_soc_map.html')) {
             console.log('[PageLoader] Ініціалізація сторінки SOC Map...');
             initSocMapPage();
+        }
+
+        if (pageFile.includes('cruise_control.html')) {
+            initCruiseChartPage();
         }
 
     } catch (error) {
@@ -324,6 +355,14 @@ function updateUiValue(rootKey, data) {
             }
         }
     });
+
+    // Notify data listeners
+    const listeners = dataListeners.get(rootKey);
+    if (listeners) {
+        listeners.forEach(cb => {
+            try { cb(rootKey, data); } catch (e) { console.error('[DataListener]', e); }
+        });
+    }
 }
 
 export function updateConnectionTabs() {
