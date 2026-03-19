@@ -93,6 +93,7 @@ export const translations = {
         'bms_sens_leaf': 'Leaf',
         'bms_sens_off': 'ВИМК',
         'bms_sens_volt1': 'Volt 1',
+        'bms_sens_cab500': 'CAB-500',
 
         // Settings
         'settings_title': 'Налаштування ECU',
@@ -407,6 +408,7 @@ export const translations = {
         'bms_sens_leaf': 'Leaf',
         'bms_sens_off': 'OFF',
         'bms_sens_volt1': 'Volt 1',
+        'bms_sens_cab500': 'CAB-500',
 
         // Settings
         'settings_title': 'ECU settings',

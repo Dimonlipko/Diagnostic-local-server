@@ -29,6 +29,7 @@ const ASSETS_TO_CACHE = [
   './modules/webSerial.js',
   './modules/webBluetooth.js',
   './modules/cruiseChartPage.js',
+  './modules/pedalChartPage.js',
   './modules/chart.min.js',
 
   // Pages

@@ -1879,4 +1879,20 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
     color: var(--text-muted);
 }
 
+/* --- ГРАФІК ПЕДАЛІ (ІНВЕРТОР) --- */
+.pedal-chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    height: 280px;
+    position: relative;
+}
+
+.pedal-chart-container canvas {
+    width: 100%;
+    height: 100%;
+}
+
 /* --- КІНЕЦЬ CSS --- */

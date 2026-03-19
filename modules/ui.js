@@ -5,6 +5,7 @@ import { PARAMETER_REGISTRY } from './parameterRegistry.js';
 import { initUpdatePage, cleanupUpdatePage } from './updatePage.js';
 import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
+import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
 
 let logElement = null;
 
@@ -59,6 +60,7 @@ export async function loadPage(pageFile) {
     // Cleanup data listeners та сторінки з lifecycle
     removeAllDataListeners();
     cleanupCruiseChartPage();
+    cleanupPedalChartPage();
     
     try {
         const response = await fetch(pageFile);
@@ -126,6 +128,10 @@ export async function loadPage(pageFile) {
 
         if (pageFile.includes('cruise_control.html')) {
             initCruiseChartPage();
+        }
+
+        if (pageFile.includes('inverter.html')) {
+            initPedalChartPage();
         }
 
     } catch (error) {
