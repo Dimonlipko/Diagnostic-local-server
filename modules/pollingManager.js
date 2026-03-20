@@ -158,4 +158,33 @@ export function stopAllPolling() {
     activeRequests.clear();
 }
 
-window.pollingManager = { startPolling, stopAllPolling, handleCanResponse };
+/**
+ * Одноразове зчитування параметра по DID.
+ * Повертає Promise з raw dataHex або null при таймауті.
+ */
+export function readSingleParam(readDid) {
+    return new Promise(async (resolve) => {
+        const expectedDid = readDid.substring(2).toUpperCase();
+        const responseKey = `7BB:${expectedDid}`;
+
+        const timeout = setTimeout(() => {
+            activeRequests.delete(responseKey);
+            resolve(null);
+        }, 2000);
+
+        activeRequests.set(responseKey, {
+            id: 'preset_read',
+            updateCallback: (_id, rawHex) => resolve(rawHex),
+            parser: (dataHex) => {
+                clearTimeout(timeout);
+                return dataHex;
+            },
+            expectedDid: expectedDid,
+            onComplete: () => {}
+        });
+
+        await sendCanRequest('79B', readDid);
+    });
+}
+
+window.pollingManager = { startPolling, stopAllPolling, handleCanResponse, readSingleParam };

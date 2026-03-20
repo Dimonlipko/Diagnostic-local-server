@@ -15,6 +15,12 @@ let cal = {
 let livePedal = 0;
 let liveTorque = 0;
 
+// Selected point index (null = none)
+let selectedPoint = null;
+
+// Cached pixel positions of calibration points (filled during draw)
+let pointPixels = [];
+
 // Listeners
 let listeners = [];
 
@@ -145,6 +151,7 @@ function draw() {
     ctx.restore();
 
     // --- Calibration curve: 3 segments ---
+    const pointLabels = ['Not pressed', 'Pedal MIN', 'Calibration', 'Pedal MAX'];
     const points = [
         { x: cal.notPressed, y: cal.torqueNotPressed },
         { x: cal.pedalMin, y: 0 },
@@ -163,17 +170,64 @@ function draw() {
         ctx.stroke();
     }
 
-    // Calibration points (dots)
-    ctx.fillStyle = '#3b82f6';
-    for (const p of points) {
+    // Calibration points (dots) + cache pixel positions
+    pointPixels = [];
+    for (let i = 0; i < points.length; i++) {
+        const px = toX(points[i].x);
+        const py = toY(points[i].y);
+        pointPixels.push({ px, py });
+
+        const isSelected = selectedPoint === i;
+        ctx.fillStyle = isSelected ? '#f59e0b' : '#3b82f6';
         ctx.beginPath();
-        ctx.arc(toX(p.x), toY(p.y), 4, 0, Math.PI * 2);
+        ctx.arc(px, py, isSelected ? 6 : 4, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    // --- Live pedal dot ---
+    // --- Tooltip for selected point ---
+    if (selectedPoint !== null && selectedPoint < points.length) {
+        const sp = points[selectedPoint];
+        const spx = pointPixels[selectedPoint].px;
+        const spy = pointPixels[selectedPoint].py;
+
+        const pct = cal.maxTorque > 0 ? Math.round((sp.y / cal.maxTorque) * 100) : 0;
+        const line1 = pointLabels[selectedPoint];
+        const line2 = `Pedal: ${sp.x}`;
+        const line3 = `${sp.y} Nm (${pct}%)`;
+
+        ctx.font = '11px Roboto, sans-serif';
+        const tw = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width, ctx.measureText(line3).width) + 14;
+        const th = 48;
+
+        // Position tooltip above the point, flip if near top
+        let tx = spx - tw / 2;
+        let ty = spy - th - 10;
+        if (ty < pad.top) ty = spy + 14;
+        if (tx < pad.left) tx = pad.left + 2;
+        if (tx + tw > W - pad.right) tx = W - pad.right - tw - 2;
+
+        // Background
+        ctx.fillStyle = isDark ? 'rgba(30,30,30,0.92)' : 'rgba(255,255,255,0.95)';
+        ctx.strokeStyle = isDark ? '#555' : '#ccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(tx, ty, tw, th, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        // Text
+        ctx.fillStyle = isDark ? '#fff' : '#333';
+        ctx.font = 'bold 11px Roboto, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(line1, tx + 7, ty + 14);
+        ctx.font = '11px Roboto, sans-serif';
+        ctx.fillText(line2, tx + 7, ty + 28);
+        ctx.fillText(line3, tx + 7, ty + 42);
+    }
+
+    // --- Live pedal dot (follows the calibration curve) ---
     const liveX = toX(livePedal);
-    const liveY = toY(liveTorque);
+    const liveY = toY(torqueAtPedal(livePedal));
 
     // Clamp to chart area
     const cx = Math.max(pad.left, Math.min(W - pad.right, liveX));
@@ -229,6 +283,30 @@ export function initPedalChartPage() {
         draw();
     });
 
+    // Click handler for calibration points
+    window._pedalChartClick = (e) => {
+        const canvas = document.getElementById('pedalChart');
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        const hitRadius = 20;
+        let found = null;
+        for (let i = 0; i < pointPixels.length; i++) {
+            const dx = mx - pointPixels[i].px;
+            const dy = my - pointPixels[i].py;
+            if (dx * dx + dy * dy < hitRadius * hitRadius) {
+                found = i;
+                break;
+            }
+        }
+
+        selectedPoint = (found === selectedPoint) ? null : found;
+        draw();
+    };
+    canvas.addEventListener('click', window._pedalChartClick);
+
     // Initial draw
     draw();
 
@@ -249,6 +327,15 @@ export function cleanupPedalChartPage() {
         pedalMin: 0, pedalMax: 1000,
         pedalCal: 500, torqueCal: 0, maxTorque: 0
     };
+
+    selectedPoint = null;
+    pointPixels = [];
+
+    if (window._pedalChartClick) {
+        const canvas = document.getElementById('pedalChart');
+        if (canvas) canvas.removeEventListener('click', window._pedalChartClick);
+        delete window._pedalChartClick;
+    }
 
     if (window._pedalChartResize) {
         window.removeEventListener('resize', window._pedalChartResize);

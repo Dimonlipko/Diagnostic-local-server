@@ -1,4 +1,5 @@
 <h2 data-lang-key="bms_title">BMS Parameters:</h2>
+<span style="display:none" data-bind="settings_info_220414.typeBms"></span>
 
 <div class="bms-readonly-grid">
     <label data-lang-key="bms_battery_voltage">Battery voltage</label>
@@ -19,6 +20,9 @@
     <label data-lang-key="bms_current">Current</label>
     <input type="text" id="readCurrent" value="0 A" readonly data-bind="bms_info_220108.current">
 
+    <label data-lang-key="bms_power">Power</label>
+    <input type="text" id="readPower" value="0 kW" readonly data-bind="bms_info_220114.power">
+
     <label data-lang-key="bms_current_sens1">Current sens 1</label>
     <input type="text" id="readCurrentSens1" value="0 A" readonly data-bind="bms_info_220109.currentSens1">
 
@@ -32,6 +36,16 @@
 <hr style="margin: 20px 0;">
 
 <div class="rw-grid">
+    <label data-lang-key="bms_max_charge_a">Max charge current</label>
+    <input type="text" id="readMaxChargeA" value="0 A" readonly data-bind="bms_info_220114.maxChargeA">
+    <input type="text" id="writeMaxChargeA" class="dea-hide" data-lang-key="placeholder_new_value" placeholder="A">
+    <button class="write-button dea-hide" data-param-name="write_bms_limits_charge" data-target-id="writeMaxChargeA" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="bms_max_discharge_a">Max discharge current</label>
+    <input type="text" id="readMaxDischargeA" value="0 A" readonly data-bind="bms_info_220114.maxDischargeA">
+    <input type="text" id="writeMaxDischargeA" class="dea-hide" data-lang-key="placeholder_new_value" placeholder="A">
+    <button class="write-button dea-hide" data-param-name="write_bms_limits_discharge" data-target-id="writeMaxDischargeA" data-lang-key="btn_write">Write</button>
+
     <label data-lang-key="bms_balancing">Balancing</label>
     <input type="text" id="readBalancing" value="OFF" readonly data-bind="bms_info_220408.balancing">
     <button class="write-button toggle-on" data-param-name="balancing" data-value="1" data-lang-key="btn_on">ON</button>
@@ -69,13 +83,13 @@
 
     <label data-lang-key="bms_soc_ah">SOC in Ah</label>
     <input type="text" id="readSOCAh" value="0 Ah" readonly data-bind="bms_info_220101.socAh">
-    <input type="text" id="writeSOCAh" data-lang-key="placeholder_new_value" placeholder="New Value">
-    <button class="write-button" data-param-name="socAh" data-target-id="writeSOCAh" data-lang-key="btn_write">Write</button>
+    <input type="text" id="writeSOCAh" class="dea-hide" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button dea-hide" data-param-name="socAh" data-target-id="writeSOCAh" data-lang-key="btn_write">Write</button>
 
     <label data-lang-key="bms_soh_ah">SOH in Ah</label>
     <input type="text" id="readSOHAh" value="0 Ah" readonly data-bind="bms_info_220102.sohAh">
-    <input type="text" id="writeSOHAh" data-lang-key="placeholder_new_value" placeholder="New Value">
-    <button class="write-button" data-param-name="sohAh" data-target-id="writeSOHAh" data-lang-key="btn_write">Write</button>
+    <input type="text" id="writeSOHAh" class="dea-hide" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button dea-hide" data-param-name="sohAh" data-target-id="writeSOHAh" data-lang-key="btn_write">Write</button>
 
     <label data-lang-key="bms_current_sens_type">Current sens type</label>
     <input type="text" id="readCurrentSensType" value="Volt 1" readonly data-bind="bms_info_220108.currentSensType">
@@ -86,4 +100,8 @@
         <option value="3" data-lang-key="bms_sens_cab500">CAB-500</option>
     </select>
     <button class="write-button" data-param-name="currentSensType" data-target-id="writeCurrentSensType" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="cab500_train_label" class="cab500-only" style="opacity:0.4">CAB-500 Training</label>
+    <input type="text" id="readCab500TrainStatus" value="IDLE" readonly data-bind="cab500_train_220A01.trainStatus" class="cab500-only" style="opacity:0.4">
+    <button class="write-button cab500-only" style="opacity:0.4" id="btnCab500Train" data-param-name="cab500Train" data-value="1" data-confirm-key="cab500_train_confirm" data-lang-key="cab500_train_btn" disabled>Train</button>
 </div>

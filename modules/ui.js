@@ -1,11 +1,13 @@
 import { state } from './state.js';
 import { translatePage } from './translator.js';
+import { translations } from './config.js';
 import { stopAllPolling } from './pollingManager.js';
 import { PARAMETER_REGISTRY } from './parameterRegistry.js';
 import { initUpdatePage, cleanupUpdatePage } from './updatePage.js';
 import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
 import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
+import { initPresetPage, cleanupPresetPage } from './parameterPreset.js';
 
 let logElement = null;
 
@@ -119,6 +121,7 @@ export async function loadPage(pageFile) {
         if (pageFile.includes('update.html')) {
             console.log('[PageLoader] Ініціалізація сторінки оновлення прошивки...');
             initUpdatePage();
+            initPresetPage();
         }
 
         if (pageFile.includes('bms_soc_map.html')) {
@@ -222,6 +225,14 @@ export function initPageEventListeners(handlers) {
             const paramName = target.dataset.paramName;
             const targetId = target.dataset.targetId;
             const directValue = target.dataset.value; // Пряме значення з кнопки
+
+            // Confirm dialog if needed
+            const confirmKey = target.dataset.confirmKey;
+            if (confirmKey) {
+                const t = translations[state.currentLanguage] || {};
+                const confirmText = t[confirmKey] || confirmKey;
+                if (!confirm(confirmText)) return;
+            }
 
             let valueToWrite = null;
 

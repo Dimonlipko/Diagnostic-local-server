@@ -84,6 +84,9 @@ export const translations = {
         'bms_soc_ah': 'SOC в Ампер-годинах',
         'bms_soh_ah': 'SOH в Ампер-годинах',
         'bms_current': 'Струм',
+        'bms_power': 'Потужність',
+        'bms_max_charge_a': 'Макс. струм заряду',
+        'bms_max_discharge_a': 'Макс. струм розряду',
         'bms_current_sens_type': 'Тип датчика струму',
         'bms_current_sens1': 'Датчик струму 1',
         'bms_current_sens2': 'Датчик струму 2',
@@ -94,6 +97,10 @@ export const translations = {
         'bms_sens_off': 'ВИМК',
         'bms_sens_volt1': 'Volt 1',
         'bms_sens_cab500': 'CAB-500',
+        'cab500_train_label': 'Навчання CAB-500',
+        'cab500_train_btn': 'Навчити',
+        'cab500_train_confirm': 'Відключіть BMS від CAN1 шини! Залиште тільки датчик CAB-500. Продовжити?',
+        'cab500_train_started': 'Навчання запущено...',
 
         // Settings
         'settings_title': 'Налаштування ECU',
@@ -119,6 +126,9 @@ export const translations = {
         'opt_orion2': 'Orion 2',
         'opt_vw_id': 'VW ID',
         'opt_jk_bms': 'JK-BMS',
+        'opt_dea': 'Deye HV',
+        'dea_soc_map_disabled': 'SOC карта недоступна для Deye HV BMS — SOC надається самим BMS.',
+        'dea_cells_disabled': 'Карта комірок недоступна для Deye HV BMS — доступні лише min/max напруги.',
 
         // Internal Monitor
         'internal_title': 'Внутрішній монітор',
@@ -318,6 +328,25 @@ export const translations = {
         'temp_sensor_14': 'Датчик 14',
         'temp_sensor_15': 'Датчик 15',
         'temp_sensor_16': 'Датчик 16',
+
+        // Parameter Presets
+        'preset_title': 'Пресети параметрів',
+        'preset_export': 'Зберегти параметри',
+        'preset_import': 'Завантажити параметри',
+        'preset_reading': 'Зчитування...',
+        'preset_writing': 'Запис...',
+        'preset_verifying': 'Перевірка...',
+        'preset_export_done': 'Експорт завершено!',
+        'preset_import_done': 'Імпорт завершено!',
+        'preset_verify_ok': 'Всі параметри записані вірно',
+        'preset_verify_fail': 'Помилки запису',
+        'preset_params_count': 'параметрів',
+        'preset_no_data': 'Не вдалося зчитати жодного параметра',
+        'preset_expected': 'очікувалось',
+        'preset_got': 'отримано',
+        'preset_invalid_file': 'Невірний файл — це не файл конфігурації ECU',
+        'preset_connect_adapter': 'Підключіть адаптер',
+        'preset_import_success': 'Параметри успішно записано!',
     },
     'en': {
         'menu_title': 'CAN Monitor',
@@ -399,6 +428,9 @@ export const translations = {
         'bms_soc_ah': 'SOC in Ah',
         'bms_soh_ah': 'SOH in Ah',
         'bms_current': 'Current',
+        'bms_power': 'Power',
+        'bms_max_charge_a': 'Max charge current',
+        'bms_max_discharge_a': 'Max discharge current',
         'bms_current_sens_type': 'Current sens type',
         'bms_current_sens1': 'Current sens 1',
         'bms_current_sens2': 'Current sens 2',
@@ -409,6 +441,10 @@ export const translations = {
         'bms_sens_off': 'OFF',
         'bms_sens_volt1': 'Volt 1',
         'bms_sens_cab500': 'CAB-500',
+        'cab500_train_label': 'CAB-500 Training',
+        'cab500_train_btn': 'Train',
+        'cab500_train_confirm': 'Disconnect BMS from CAN1 bus! Leave only the CAB-500 sensor. Continue?',
+        'cab500_train_started': 'Training started...',
 
         // Settings
         'settings_title': 'ECU settings',
@@ -434,6 +470,9 @@ export const translations = {
         'opt_orion2': 'Orion 2',
         'opt_vw_id': 'VW ID',
         'opt_jk_bms': 'JK-BMS',
+        'opt_dea': 'Deye HV',
+        'dea_soc_map_disabled': 'SOC map is not available for Deye HV BMS — SOC is provided by BMS directly.',
+        'dea_cells_disabled': 'Cell map is not available for Deye HV BMS — only min/max cell voltage is provided.',
 
         // Internal Monitor
         'internal_title': 'Internal Monitor',
@@ -633,6 +672,25 @@ export const translations = {
         'temp_sensor_14': 'Sensor 14',
         'temp_sensor_15': 'Sensor 15',
         'temp_sensor_16': 'Sensor 16',
+
+        // Parameter Presets
+        'preset_title': 'Parameter Presets',
+        'preset_export': 'Export Parameters',
+        'preset_import': 'Import Parameters',
+        'preset_reading': 'Reading...',
+        'preset_writing': 'Writing...',
+        'preset_verifying': 'Verifying...',
+        'preset_export_done': 'Export complete!',
+        'preset_import_done': 'Import complete!',
+        'preset_verify_ok': 'All parameters written correctly',
+        'preset_verify_fail': 'Write errors',
+        'preset_params_count': 'parameters',
+        'preset_no_data': 'No parameters could be read',
+        'preset_expected': 'expected',
+        'preset_got': 'got',
+        'preset_invalid_file': 'Invalid file — not an ECU configuration file',
+        'preset_connect_adapter': 'Connect adapter first',
+        'preset_import_success': 'Parameters written successfully!',
     }
 };
 

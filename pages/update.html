@@ -35,3 +35,13 @@
         <div id="status-text" data-lang-key="update_status_waiting">Очікування...</div>
     </div>
 </div>
+
+<!-- Пресети параметрів -->
+<div class="update-card" id="preset-card">
+    <div style="display: flex; gap: 12px;">
+        <button id="btn-preset-export" class="write-button" style="flex: 1; padding: 12px;"><span data-lang-key="preset_export">Export Parameters</span></button>
+        <button id="btn-preset-import" class="write-button" style="flex: 1; padding: 12px;"><span data-lang-key="preset_import">Import Parameters</span></button>
+        <input type="file" id="preset-file-input" accept=".json" style="display:none">
+    </div>
+    <div id="preset-toast" class="preset-toast"></div>
+</div>

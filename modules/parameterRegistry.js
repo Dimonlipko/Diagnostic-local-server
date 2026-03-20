@@ -488,6 +488,31 @@ export const PARAMETER_REGISTRY = {
             }
         }
     },
+
+    /**
+     * Запит 220114: Deye BMS power & limits
+     * Byte4-5: power 0.1 kW (signed), Byte6: max charge A, Byte7: max discharge A
+     */
+    'bms_info_220114': {
+        request: { canId: '79B', data: '220114', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const powerRaw = parseInt16(
+                    parseInt(dataHex.substring(8, 10), 16),
+                    parseInt(dataHex.substring(10, 12), 16)
+                );
+                const maxChargeA = parseInt(dataHex.substring(12, 14), 16);
+                const maxDischargeA = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    power: `${(powerRaw / 10).toFixed(1)} kW`,
+                    maxChargeA: `${maxChargeA} A`,
+                    maxDischargeA: `${maxDischargeA} A`
+                };
+            }
+        }
+    },
     
     /**
      * Запит 220101: SOC in Ah
@@ -530,6 +555,28 @@ export const PARAMETER_REGISTRY = {
     /**
      * Запит 220108: Current, Current sens type
      */
+    /**
+     * Запит 220A01: CAB-500 training status
+     */
+    'cab500_train_220A01': {
+        request: { canId: '79B', data: '220A01', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const status = parseInt(dataHex.substring(8, 10), 16);
+                const statusMap = {
+                    0x00: 'IDLE',
+                    0x01: 'SCAN_500K', 0x02: 'SCAN_250K', 0x03: 'SCAN_125K',
+                    0x04: 'WRITE_BAUD', 0x05: 'RESET', 0x06: 'VERIFY', 0x07: 'RESTORE',
+                    0xF0: 'OK', 0xFE: 'ALREADY_OK',
+                    0xF1: 'ERR_NOT_FOUND', 0xF2: 'ERR_UDS_FAIL', 0xF3: 'ERR_VERIFY'
+                };
+                return { trainStatus: statusMap[status] || `UNKNOWN(0x${status.toString(16)})` };
+            }
+        }
+    },
+
     'bms_info_220108': {
         request: { canId: '79B', data: '220108', interval: 500 },
         response: {
@@ -540,6 +587,12 @@ export const PARAMETER_REGISTRY = {
                 const typeRaw = parseInt(dataHex.substring(8, 10), 16); // Байт 4
                 const curr_h = parseInt(dataHex.substring(12, 14), 16); // Байт 6
                 const curr_l = parseInt(dataHex.substring(14, 16), 16); // Байт 7
+                // Enable/disable CAB-500 training UI
+                const isCab500 = (typeRaw === 3);
+                document.querySelectorAll('.cab500-only').forEach(el => {
+                    el.style.opacity = isCab500 ? '1' : '0.4';
+                    if (el.tagName === 'BUTTON') el.disabled = !isCab500;
+                });
                 return {
                     currentSensType: typeMap[typeRaw.toString()] || 'Unknown',
                     current: `${parseInt16(curr_h, curr_l)} A`
@@ -672,6 +725,13 @@ export const PARAMETER_REGISTRY = {
         writeConfig: {
             canId: '79B',
             dataPrefix: '2e0108',
+            bytes: 1
+        }
+    },
+    'cab500Train': {
+        writeConfig: {
+            canId: '79B',
+            dataPrefix: '2e0A01',
             bytes: 1
         }
     },
@@ -1398,11 +1458,24 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const bmsMap = { "0": "OFF", "1": "Volt Gen 1", "2": "Leaf", "3": "Orion 2", "4": "VW ID", "9": "JK-BMS"};
+                const bmsMap = { "0": "OFF", "1": "Volt Gen 1", "2": "Leaf", "3": "Orion 2", "4": "VW ID", "9": "JK-BMS", "10": "Deye HV"};
 
                 const highTemp = parseInt(dataHex.substring(8, 10), 16); // Байт 4
                 const bmsRaw = parseInt(dataHex.substring(10, 12), 16);  // Байт 5
                 const lowTemp = parseInt(dataHex.substring(14, 16), 16);  // Байт 7
+
+                // Deye HV BMS: disable SOC map, cell map, SOC/SOH write (BMS provides these)
+                const isDea = (bmsRaw === 10);
+                document.querySelectorAll('.dea-hide').forEach(el => {
+                    el.style.opacity = isDea ? '0.4' : '1';
+                    el.style.pointerEvents = isDea ? 'none' : '';
+                    if (el.tagName === 'BUTTON') el.disabled = isDea;
+                    if (el.tagName === 'INPUT' && !el.readOnly) el.disabled = isDea;
+                    if (el.tagName === 'SELECT') el.disabled = isDea;
+                });
+                document.querySelectorAll('.dea-hide-notice').forEach(el => {
+                    el.style.display = isDea ? 'block' : 'none';
+                });
 
                 return {
                     fanHighTemp: `${highTemp} °C`,
@@ -1439,6 +1512,12 @@ export const PARAMETER_REGISTRY = {
     },
     'write_type_bms': {
         writeConfig: { canId: '79B', dataPrefix: '2e041402', bytes: 1 }
+    },
+    'write_bms_limits_charge': {
+        writeConfig: { canId: '79B', dataPrefix: '2e011401', bytes: 2 }
+    },
+    'write_bms_limits_discharge': {
+        writeConfig: { canId: '79B', dataPrefix: '2e011402', bytes: 2 }
     },
     'write_booster_on': {
         writeConfig: { canId: '79B', dataPrefix: '2e070101', bytes: 2 }

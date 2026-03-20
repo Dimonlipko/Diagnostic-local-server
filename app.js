@@ -230,6 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionEl = document.getElementById('app-version');
     if (versionEl) versionEl.textContent = APP_VERSION;
 
+    window.handleWrite = handleWrite;
+
     initPageEventListeners({
         onWrite: handleWrite,
         onToggle: (param, val) => logMessage(`Заглушка: onToggle ${param}=${val}`),

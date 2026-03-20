@@ -776,6 +776,71 @@ h2 { margin-bottom: 15px; font-weight: 500; }
     box-shadow: var(--shadow-inset);
 }
 
+.write-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Прогрес-бар всередині кнопки пресету */
+.write-button.preset-busy {
+    position: relative;
+    overflow: hidden;
+    opacity: 1;
+    border-color: var(--accent);
+    color: var(--lang-active);
+    font-weight: 700;
+    --preset-btn-progress: 0%;
+}
+
+.write-button.preset-busy::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--preset-btn-progress);
+    background: linear-gradient(90deg,
+        var(--bg-conn-connecting) 0%,
+        var(--loading-gradient) 100%);
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.write-button.preset-busy span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Тост-повідомлення під кнопками пресету */
+.preset-toast {
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: 600;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.preset-toast.visible {
+    max-height: 50px;
+    opacity: 1;
+    padding: 8px 0 0 0;
+}
+
+.preset-toast.toast-error {
+    color: #dc3545;
+}
+
+.preset-toast.toast-success {
+    color: var(--status-connected);
+}
+
+.preset-toast.toast-info {
+    color: var(--accent);
+}
+
 /* --- Стилі для полів вводу (ПРИБРАНО ЧОРНУ РАМКУ) --- */
 input[type="text"], input[type="number"], select {
     padding: 8px;
