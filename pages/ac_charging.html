@@ -1,5 +1,6 @@
 <h2 data-lang-key="ac_charging_title">AC Charging</h2>
 
+<h3 data-lang-key="ac_pdm_section">Leaf PDM</h3>
 <div class="bms-readonly-grid">
     <label data-lang-key="ac_pwm_plug">PWM plug</label>
     <input type="text" id="readPwmPlug" value="0 A" readonly data-bind="pdm_info_220411.pwmPlug">
@@ -16,9 +17,51 @@
 
 <hr style="margin: 20px 0;">
 
+<h3 data-lang-key="ac_pcs_section">Tesla M3 PCS</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="pcs_state">PCS state</label>
+    <input type="text" id="readPcsState" value="—" readonly data-bind="pcs_state_220418.pcsState">
+
+    <label data-lang-key="pcs_chg_stat">Charger state</label>
+    <input type="text" id="readPcsChgStat" value="—" readonly data-bind="pcs_state_220418.chgStat">
+
+    <label data-lang-key="pcs_hw_lim">PCS HW limit</label>
+    <input type="text" id="readPcsHwLim" value="0 A" readonly data-bind="pcs_power_22041C.hwAcLim">
+
+    <label data-lang-key="pcs_ac_voltage">AC voltage</label>
+    <input type="text" id="readPcsAcVoltage" value="0 V" readonly data-bind="pcs_state_220418.acVoltage">
+
+    <label data-lang-key="pcs_ac_current">AC current</label>
+    <input type="text" id="readPcsAcCurrent" value="0 A" readonly data-bind="pcs_ac_220419.acCurrent">
+
+    <label data-lang-key="pcs_ac_power">AC power</label>
+    <input type="text" id="readPcsAcPower" value="0 W" readonly data-bind="pcs_ac_220419.acPower">
+
+    <label data-lang-key="pcs_charge_setpoint">Charge power setpoint</label>
+    <input type="text" id="readPcsChargeSetpoint" value="0 W" readonly data-bind="pcs_power_22041C.chargePowerSetpoint">
+
+    <label data-lang-key="pcs_hv_voltage">HV voltage</label>
+    <input type="text" id="readPcsHvVoltage" value="0 V" readonly data-bind="pcs_hv_temps_22041B.hvVoltage">
+
+    <label data-lang-key="pcs_dcdc_lv">DCDC LV voltage</label>
+    <input type="text" id="readPcsDcdcLv" value="0 V" readonly data-bind="pcs_dcdc_22041A.dcdcLv">
+
+    <label data-lang-key="pcs_dcdc_current">DCDC current</label>
+    <input type="text" id="readPcsDcdcCurrent" value="0 A" readonly data-bind="pcs_dcdc_22041A.dcdcCurrent">
+
+    <label data-lang-key="pcs_temp_dcdc">DCDC temperature</label>
+    <input type="text" id="readPcsTempDcdc" value="0 °C" readonly data-bind="pcs_hv_temps_22041B.tempDcdc">
+
+    <label data-lang-key="pcs_temp_ambient">Ambient temperature</label>
+    <input type="text" id="readPcsTempAmbient" value="0 °C" readonly data-bind="pcs_hv_temps_22041B.tempAmbient">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="ac_settings_section">Settings</h3>
 <div class="rw-grid">
-    <label data-lang-key="ac_charge_current_write">Max AC charge current</label>
-    <input type="text" id="readAcChargeCurrentSet" value="0 A" readonly data-bind="pdm_info_220411.acChargeCurrent">
+    <label data-lang-key="ac_charge_current_write">Max AC charge current (shared PDM/PCS)</label>
+    <input type="text" id="readAcChargeCurrentSet" value="0 A" readonly data-bind="pcs_power_22041C.currentLimit">
     <input type="text" id="writeAcChargeCurrent" placeholder="A">
     <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
 </div>

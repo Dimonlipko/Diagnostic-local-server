@@ -1314,6 +1314,126 @@ export const PARAMETER_REGISTRY = {
     },
 
     // ========================================
+    // TESLA M3 PCS TELEMETRY (config_charger == 2)
+    // 5 read DIDs 0x0418..0x041C, 4 data bytes each.
+    // Service-side: src/Pcs_*.cpp, src/Can1_tx.cpp PCS telemetry block.
+    // ========================================
+
+    /**
+     * Запит 220418: PCS state + chg_stat + AC voltage (V).
+     * data bytes: [pcsState, chg_stat, ac_voltage_hi, ac_voltage_lo]
+     */
+    'pcs_state_220418': {
+        request: { canId: '79B', data: '220418', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const stateNames = ['OFF', 'WAITSTART', 'ENABLE', 'ACTIVATE', 'EVSEACTIVATE', 'STOP', 'FAULTED'];
+                const chgStatNames = {
+                    0: 'init', 1: 'idle', 2: 'startup', 3: 'wait line V',
+                    4: 'qualify cfg', 5: 'enable', 6: 'charging',
+                    7: 'shutdown', 8: 'FAULTED', 9: 'clear faults'
+                };
+                const pcsState = parseInt(dataHex.substring(8, 10), 16);
+                const chgStat = parseInt(dataHex.substring(10, 12), 16);
+                const acV = (parseInt(dataHex.substring(12, 14), 16) << 8) | parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    pcsState: stateNames[pcsState] || `?${pcsState}`,
+                    chgStat: chgStatNames[chgStat] || `?${chgStat}`,
+                    acVoltage: `${acV} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220419: AC current (A×10) + AC power (W).
+     * data bytes: [ac_current_hi, ac_current_lo, ac_power_hi, ac_power_lo]
+     */
+    'pcs_ac_220419': {
+        request: { canId: '79B', data: '220419', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const acIRaw = (parseInt(dataHex.substring(8, 10), 16) << 8) | parseInt(dataHex.substring(10, 12), 16);
+                const acP = (parseInt(dataHex.substring(12, 14), 16) << 8) | parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    acCurrent: `${(acIRaw / 10).toFixed(1)} A`,
+                    acPower: `${acP} W`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22041A: DCDC LV voltage (V×10) + DCDC current (A×10).
+     * data bytes: [lv_v_hi, lv_v_lo, dcdc_i_hi, dcdc_i_lo]
+     */
+    'pcs_dcdc_22041A': {
+        request: { canId: '79B', data: '22041A', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const lvRaw = (parseInt(dataHex.substring(8, 10), 16) << 8) | parseInt(dataHex.substring(10, 12), 16);
+                const diRaw = (parseInt(dataHex.substring(12, 14), 16) << 8) | parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    dcdcLv: `${(lvRaw / 10).toFixed(1)} V`,
+                    dcdcCurrent: `${(diRaw / 10).toFixed(1)} A`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22041B: HV voltage (V) + temp_dcdc + temp_ambient (signed °C).
+     * data bytes: [hv_v_hi, hv_v_lo, temp_dcdc, temp_ambient]
+     */
+    'pcs_hv_temps_22041B': {
+        request: { canId: '79B', data: '22041B', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const hv = (parseInt(dataHex.substring(8, 10), 16) << 8) | parseInt(dataHex.substring(10, 12), 16);
+                let tDc = parseInt(dataHex.substring(12, 14), 16);
+                let tAm = parseInt(dataHex.substring(14, 16), 16);
+                if (tDc > 127) tDc -= 256;  // signed int8
+                if (tAm > 127) tAm -= 256;
+                return {
+                    hvVoltage: `${hv} V`,
+                    tempDcdc: `${tDc} °C`,
+                    tempAmbient: `${tAm} °C`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22041C: Charge power setpoint (W) + ac_charger_current_limit (A) + hw_aclim (A).
+     * data bytes: [setpoint_hi, setpoint_lo, current_limit, hw_aclim]
+     */
+    'pcs_power_22041C': {
+        request: { canId: '79B', data: '22041C', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const spnt = (parseInt(dataHex.substring(8, 10), 16) << 8) | parseInt(dataHex.substring(10, 12), 16);
+                const lim = parseInt(dataHex.substring(12, 14), 16);
+                const hwLim = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    chargePowerSetpoint: `${spnt} W`,
+                    currentLimit: `${lim} A`,
+                    hwAcLim: `${hwLim} A`
+                };
+            }
+        }
+    },
+
+    // ========================================
     // DASHBOARD / INSTRUMENT CLUSTER
     // ========================================
 
@@ -1534,8 +1654,13 @@ export const PARAMETER_REGISTRY = {
     'write_cc_kd': {
         writeConfig: { canId: '79B', dataPrefix: '2e050203', bytes: 2 }
     },
+    /**
+     * Shared AC charger current limit (used by both Leaf PDM and Tesla M3 PCS).
+     * Sub-ID 0x1A inside the existing 0xC02F config DID switch.
+     * Value: 1 byte = amperes (default 48, clamped to 32 A on Leaf PDM hardware).
+     */
     'write_ac_charge_current': {
-        writeConfig: { canId: '79B', dataPrefix: '2e0205', bytes: 1 }
+        writeConfig: { canId: '79B', dataPrefix: '2ec02f191a', bytes: 1 }
     },
     'write_target_current': {
         writeConfig: { canId: '79B', dataPrefix: '2e0601', bytes: 2 }
