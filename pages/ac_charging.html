@@ -65,3 +65,45 @@
     <input type="text" id="writeAcChargeCurrent" placeholder="A">
     <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
 </div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="pcs_identity_section">PCS Identity</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="pcs_part_number">Part number</label>
+    <input type="text" id="readPcsPartNumber" value="—" readonly data-bind="pcs_part5_220421.partNumber">
+
+    <label data-lang-key="pcs_serial_number">Serial number</label>
+    <input type="text" id="readPcsSerialNumber" value="—" readonly data-bind="pcs_serial4_220425.serialNumber">
+
+    <label data-lang-key="pcs_hardware_id">Hardware ID</label>
+    <input type="text" id="readPcsHardwareId" value="—" readonly data-bind="pcs_ids_220426.hardwareId">
+
+    <label data-lang-key="pcs_component_id">Component ID</label>
+    <input type="text" id="readPcsComponentId" value="—" readonly data-bind="pcs_ids_220426.componentId">
+
+    <label data-lang-key="pcs_app_crc">Application CRC32</label>
+    <input type="text" id="readPcsAppCrc" value="—" readonly data-bind="pcs_appcrc_220427.appCrc">
+
+    <label data-lang-key="pcs_boot_crc">Bootloader CRC32</label>
+    <input type="text" id="readPcsBootCrc" value="—" readonly data-bind="pcs_bootcrc_220428.bootCrc">
+
+    <label data-lang-key="pcs_dcdc_bus_hv">DCDC bus HV</label>
+    <input type="text" id="readPcsDcdcBusHv" value="0 V" readonly data-bind="pcs_dcdcbus_220429.dcdcBusHv">
+
+    <label data-lang-key="pcs_dcdc_bus_lv">DCDC bus LV</label>
+    <input type="text" id="readPcsDcdcBusLv" value="0 V" readonly data-bind="pcs_dcdcbus_220429.dcdcBusLv">
+</div>
+<!-- Hidden bindings to drive the part-number / serial-number polling.
+     ui.js getRequiredKeysFromDOM scans data-bind, so these invisible inputs
+     keep the 4 part-number slices and 3 extra serial-number slices polled
+     even though only the final one is shown above. -->
+<div style="display:none">
+    <input type="text" data-bind="pcs_part1_22041D.partNumber">
+    <input type="text" data-bind="pcs_part2_22041E.partNumber">
+    <input type="text" data-bind="pcs_part3_22041F.partNumber">
+    <input type="text" data-bind="pcs_part4_220420.partNumber">
+    <input type="text" data-bind="pcs_serial1_220422.serialNumber">
+    <input type="text" data-bind="pcs_serial2_220423.serialNumber">
+    <input type="text" data-bind="pcs_serial3_220424.serialNumber">
+</div>

@@ -22,6 +22,35 @@ function parseUint32(b1, b2, b3, b4) {
 }
 
 /**
+ * Tesla M3 PCS_info ASCII accumulator.
+ * The PCS broadcasts its part number (20 chars) and serial number (14 chars)
+ * on 0x3C4. The ECU re-exposes them via single-frame UDS DIDs 0x041D..0x0425
+ * (4 chars each). We accumulate them client-side into one canonical string
+ * per field so any UI binding sees the latest, even if some DIDs haven't been
+ * read yet.
+ */
+const _pcsInfoAccum = {
+    part: new Array(20).fill(' '),
+    serial: new Array(14).fill(' '),
+};
+
+function _pcsAsciiSlice(dataHex, kind, offset, count = 4) {
+    if (dataHex.length < 8 + count * 2) return null;
+    const buf = _pcsInfoAccum[kind];
+    if (!buf) return null;
+    for (let i = 0; i < count && (offset + i) < buf.length; i++) {
+        const code = parseInt(dataHex.substring(8 + i * 2, 10 + i * 2), 16);
+        // Treat printable ASCII as-is, replace non-printable / null with space
+        buf[offset + i] = (code >= 32 && code < 127) ? String.fromCharCode(code) : ' ';
+    }
+    if (kind === 'part') {
+        return { partNumber: _pcsInfoAccum.part.join('').trim() };
+    } else {
+        return { serialNumber: _pcsInfoAccum.serial.join('').trim() };
+    }
+}
+
+/**
  * Реєстр параметрів - центральне сховище всіх CAN-запитів.
  * Ключі - це логічні імена груп параметрів.
  * HTML-елементи посилаються на ці ключі через [data-bind].
@@ -1429,6 +1458,125 @@ export const PARAMETER_REGISTRY = {
                     currentLimit: `${lim} A`,
                     hwAcLim: `${hwLim} A`
                 };
+            }
+        }
+    },
+
+    // ========================================
+    // TESLA M3 PCS IDENTITY (PCS_info 0x3C4 -> exposed as DIDs 0x041D..0x0429)
+    // PCS_info is broadcast cyclically by the PCS itself; the firmware
+    // accumulates the multi-mux block into pcs_status.{part_number, serial_number,
+    // hardware_id, component_id, app_crc, boot_crc, dcdc_bus_*}.
+    // The web app polls these slowly (10 s) since identity doesn't change.
+    // ========================================
+
+    // Helper used by all part-number/serial DIDs: 4 ASCII chars in bytes 4..7.
+    // We expose them via a single accumulator so the UI can bind one field.
+    // Each parser writes its slice into a window-level accumulator and returns
+    // the freshest joined string for both partNumber and serialNumber so any
+    // page binding immediately reflects the latest state.
+    'pcs_part1_22041D': {
+        request: { canId: '79B', data: '22041D', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'part', 0) }
+    },
+    'pcs_part2_22041E': {
+        request: { canId: '79B', data: '22041E', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'part', 4) }
+    },
+    'pcs_part3_22041F': {
+        request: { canId: '79B', data: '22041F', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'part', 8) }
+    },
+    'pcs_part4_220420': {
+        request: { canId: '79B', data: '220420', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'part', 12) }
+    },
+    'pcs_part5_220421': {
+        request: { canId: '79B', data: '220421', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'part', 16) }
+    },
+    'pcs_serial1_220422': {
+        request: { canId: '79B', data: '220422', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'serial', 0) }
+    },
+    'pcs_serial2_220423': {
+        request: { canId: '79B', data: '220423', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'serial', 4) }
+    },
+    'pcs_serial3_220424': {
+        request: { canId: '79B', data: '220424', interval: 10000 },
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'serial', 8) }
+    },
+    'pcs_serial4_220425': {
+        request: { canId: '79B', data: '220425', interval: 10000 },
+        // last DID has only 2 useful chars (positions 12,13)
+        response: { canId: '7BB', parser: (h) => _pcsAsciiSlice(h, 'serial', 12, 2) }
+    },
+
+    /**
+     * 0x0426: hardware_id (u16 BE) + component_id (u16 BE)
+     */
+    'pcs_ids_220426': {
+        request: { canId: '79B', data: '220426', interval: 10000 },
+        response: {
+            canId: '7BB',
+            parser: (h) => {
+                if (h.length < 16) return null;
+                const hw = (parseInt(h.substring(8, 10), 16) << 8) | parseInt(h.substring(10, 12), 16);
+                const comp = (parseInt(h.substring(12, 14), 16) << 8) | parseInt(h.substring(14, 16), 16);
+                return { hardwareId: '0x' + hw.toString(16).toUpperCase().padStart(4, '0'),
+                         componentId: '0x' + comp.toString(16).toUpperCase().padStart(4, '0') };
+            }
+        }
+    },
+
+    /**
+     * 0x0427: app_crc32 (BE)
+     */
+    'pcs_appcrc_220427': {
+        request: { canId: '79B', data: '220427', interval: 10000 },
+        response: {
+            canId: '7BB',
+            parser: (h) => {
+                if (h.length < 16) return null;
+                const b = [parseInt(h.substring(8, 10), 16), parseInt(h.substring(10, 12), 16),
+                           parseInt(h.substring(12, 14), 16), parseInt(h.substring(14, 16), 16)];
+                const crc = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+                return { appCrc: '0x' + crc.toString(16).toUpperCase().padStart(8, '0') };
+            }
+        }
+    },
+
+    /**
+     * 0x0428: boot_crc32 (BE)
+     */
+    'pcs_bootcrc_220428': {
+        request: { canId: '79B', data: '220428', interval: 10000 },
+        response: {
+            canId: '7BB',
+            parser: (h) => {
+                if (h.length < 16) return null;
+                const b = [parseInt(h.substring(8, 10), 16), parseInt(h.substring(10, 12), 16),
+                           parseInt(h.substring(12, 14), 16), parseInt(h.substring(14, 16), 16)];
+                const crc = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+                return { bootCrc: '0x' + crc.toString(16).toUpperCase().padStart(8, '0') };
+            }
+        }
+    },
+
+    /**
+     * 0x0429: dcdc bus from PCS_dcdcBusStatus 0x2B4
+     * data: [hv_v_hi, hv_v_lo, lv_v10_hi, lv_v10_lo]
+     */
+    'pcs_dcdcbus_220429': {
+        request: { canId: '79B', data: '220429', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (h) => {
+                if (h.length < 16) return null;
+                const hv = (parseInt(h.substring(8, 10), 16) << 8) | parseInt(h.substring(10, 12), 16);
+                const lv10 = (parseInt(h.substring(12, 14), 16) << 8) | parseInt(h.substring(14, 16), 16);
+                return { dcdcBusHv: `${hv} V`, dcdcBusLv: `${(lv10 / 10).toFixed(1)} V` };
             }
         }
     },
