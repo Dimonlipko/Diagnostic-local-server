@@ -62,8 +62,20 @@
     <input type="text" id="readPcsDcdcBusLv" value="0 V" readonly data-bind="pcs_dcdcbus_220429.dcdcBusLv">
 </div>
 
-<div style="margin-top: 12px; text-align: right;">
-    <button type="button" class="write-button" onclick="pcsDetailsOpen()" data-lang-key="pcs_details_btn">PCS details</button>
+<!-- Open-modal button row.
+     Mobile (default): button stays in the LEFT column of the 1fr 1fr grid,
+     same width as labels above.
+     Desktop (>=768px): button spans BOTH columns and stretches to the full
+     width of the parameters grid above. -->
+<style>
+    @media (min-width: 768px) {
+        #pcsDetailsButtonRow #pcsDetailsButton { grid-column: 1 / -1; }
+        #pcsDetailsButtonRow .pcs-details-spacer { display: none; }
+    }
+</style>
+<div id="pcsDetailsButtonRow" class="bms-readonly-grid" style="margin-top: 12px; margin-bottom: 0;">
+    <button type="button" id="pcsDetailsButton" class="write-button" data-lang-key="pcs_details_btn">PCS details</button>
+    <span class="pcs-details-spacer"></span>
 </div>
 
 <hr style="margin: 20px 0;">
@@ -76,10 +88,20 @@
     <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
 </div>
 
-<!-- ====== PCS Identity modal (overlay pattern reused from update.html) ====== -->
-<div id="pcsDetailsOverlay" class="overlay" style="display:none">
-    <div class="overlay-content">
-        <h3 data-lang-key="pcs_details_title">PCS Identity</h3>
+<!-- ====== PCS Identity modal ======
+     Inline styles instead of relying on global .overlay class so we don't
+     inherit quirks from update.html that don't suit a content dialog. -->
+<style>
+    /* Inline <style> tags ARE executed when injected via innerHTML (only
+       <script> tags are skipped), so this scoped rule loads with the page.
+       It prevents inputs from establishing a min-content width that would
+       overflow the modal grid and produce a horizontal scrollbar. */
+    #pcsDetailsOverlay input { min-width: 0; }
+</style>
+<div id="pcsDetailsOverlay"
+     style="display:none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center;">
+    <div style="background: var(--bg-card); color: var(--text-primary); text-align: left; box-sizing: border-box; width: min(95vw, 760px); max-height: 90vh; overflow: hidden; padding: 40px; border-radius: 10px;">
+        <h3 data-lang-key="pcs_details_title" style="color: var(--text-primary); margin-top: 0;">PCS Identity</h3>
         <div class="bms-readonly-grid">
             <label data-lang-key="pcs_part_number">Part number</label>
             <input type="text" id="readPcsPartNumber" value="—" readonly data-bind="pcs_part5_220421.partNumber">
@@ -99,8 +121,9 @@
             <label data-lang-key="pcs_boot_crc">Bootloader CRC32</label>
             <input type="text" id="readPcsBootCrc" value="—" readonly data-bind="pcs_bootcrc_220428.bootCrc">
         </div>
-        <div style="margin-top: 16px; text-align: right;">
-            <button type="button" class="write-button" onclick="pcsDetailsClose()" data-lang-key="btn_close">Close</button>
+        <div style="margin-top: 20px; display: flex; justify-content: center;">
+            <!-- width: auto overrides .write-button { width: 100% } default -->
+            <button type="button" id="pcsDetailsCloseButton" class="write-button" style="width: auto; min-width: 220px;" data-lang-key="btn_close">Close</button>
         </div>
     </div>
 
@@ -121,21 +144,8 @@
     </div>
 </div>
 
-<script>
-    function pcsDetailsOpen() {
-        const o = document.getElementById('pcsDetailsOverlay');
-        if (o) o.style.display = 'flex';
-    }
-    function pcsDetailsClose() {
-        const o = document.getElementById('pcsDetailsOverlay');
-        if (o) o.style.display = 'none';
-    }
-    // ESC closes the modal
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') pcsDetailsClose();
-    });
-    // Click on overlay backdrop (outside content) closes the modal
-    document.getElementById('pcsDetailsOverlay').addEventListener('click', function(e) {
-        if (e.target === this) pcsDetailsClose();
-    });
-</script>
+<!-- NB: open/close handlers are wired by modules/acChargingPage.js, NOT by an
+     inline <script> tag. Inline scripts inside HTML loaded via innerHTML are
+     never executed by the browser. ui.js loadPage() calls initAcChargingPage()
+     after the page is injected. -->
+

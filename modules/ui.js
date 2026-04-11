@@ -8,6 +8,7 @@ import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
 import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
 import { initPresetPage, cleanupPresetPage } from './parameterPreset.js';
+import { initAcChargingPage, cleanupAcChargingPage } from './acChargingPage.js';
 
 let logElement = null;
 
@@ -63,6 +64,7 @@ export async function loadPage(pageFile) {
     removeAllDataListeners();
     cleanupCruiseChartPage();
     cleanupPedalChartPage();
+    cleanupAcChargingPage();
     
     try {
         const response = await fetch(pageFile);
@@ -135,6 +137,10 @@ export async function loadPage(pageFile) {
 
         if (pageFile.includes('inverter.html')) {
             initPedalChartPage();
+        }
+
+        if (pageFile.includes('ac_charging.html')) {
+            initAcChargingPage();
         }
 
     } catch (error) {
