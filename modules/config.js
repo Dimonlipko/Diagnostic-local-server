@@ -213,6 +213,8 @@ export const translations = {
         'pcs_boot_crc': 'CRC32 завантажувача',
         'pcs_dcdc_bus_hv': 'DCDC шина HV',
         'pcs_dcdc_bus_lv': 'DCDC шина LV',
+        // PCS active alerts line (decoded from PCS_alertMatrix 0x3A4)
+        'pcs_active_alerts_label': 'Активні алерти PCS:',
         'chademo_title': 'CHAdeMO швидка зарядка',
         'chd_ev_params': 'Параметри EV',
         'chd_target_current': 'Цільовий струм',
@@ -585,6 +587,8 @@ export const translations = {
         'pcs_boot_crc': 'Bootloader CRC32',
         'pcs_dcdc_bus_hv': 'DCDC bus HV',
         'pcs_dcdc_bus_lv': 'DCDC bus LV',
+        // PCS active alerts line (decoded from PCS_alertMatrix 0x3A4)
+        'pcs_active_alerts_label': 'Active PCS alerts:',
         'chademo_title': 'CHAdeMO Fast Charging',
         'chd_ev_params': 'EV Parameters',
         'chd_target_current': 'Target current',

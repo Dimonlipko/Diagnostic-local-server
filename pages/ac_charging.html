@@ -86,6 +86,11 @@
     <input type="text" id="readAcChargeCurrentSet" value="0 A" readonly data-bind="pcs_power_22041C.currentLimit">
     <input type="text" id="writeAcChargeCurrent" placeholder="A">
     <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
+
+    <label>DCDC output voltage (10.0–20.0 V)</label>
+    <input type="text" id="readPcsDcdcSetpoint" value="0.0 V" readonly data-bind="pcs_dcdc_setpoint_22042C.dcdcVoltageSetpoint">
+    <input type="text" id="writePcsDcdcVoltage" placeholder="V (e.g. 14.2)">
+    <button class="write-button" data-param-name="write_pcs_dcdc_voltage" data-target-id="writePcsDcdcVoltage" data-lang-key="btn_write">Write</button>
 </div>
 
 <!-- ====== PCS Identity modal ======
@@ -121,6 +126,12 @@
             <label data-lang-key="pcs_boot_crc">Bootloader CRC32</label>
             <input type="text" id="readPcsBootCrc" value="—" readonly data-bind="pcs_bootcrc_220428.bootCrc">
         </div>
+
+        <h4 data-lang-key="pcs_active_alerts_label" style="margin-top: 20px; margin-bottom: 8px; color: var(--text-primary);">Active PCS alerts:</h4>
+        <div style="padding: 8px 12px; background: var(--bg-input, rgba(255,255,255,0.05)); border-radius: 6px; color: var(--text-primary); font-size: 0.95em; word-break: break-word; min-height: 1.4em;">
+            <span data-bind="pcs_alert_p0a_22042D.activeAlerts">—</span>
+        </div>
+
         <div style="margin-top: 20px; display: flex; justify-content: center;">
             <!-- width: auto overrides .write-button { width: 100% } default -->
             <button type="button" id="pcsDetailsCloseButton" class="write-button" style="width: auto; min-width: 220px;" data-lang-key="btn_close">Close</button>
@@ -142,6 +153,23 @@
         <input type="text" data-bind="pcs_serial2_220423.serialNumber">
         <input type="text" data-bind="pcs_serial3_220424.serialNumber">
     </div>
+</div>
+
+<!-- ====== PCS active alerts (decoded from PCS_alertMatrix 0x3A4) ======
+     A single live line listing every alert flag currently set on either page.
+     Bound to .activeAlerts on the FIRST sub-DID; the other three are kept in
+     hidden inputs so polling continues for all four matrix slices. The parser
+     in parameterRegistry.js recomputes the joined string after every slice,
+     so updates appear at most one poll interval (1 s) after a bit changes. -->
+<div id="pcsActiveAlertsRow"
+     style="margin-top: 20px; padding: 10px 14px; background: var(--bg-card); border-radius: 6px; color: var(--text-primary); font-size: 0.95em; word-break: break-word;">
+    <strong data-lang-key="pcs_active_alerts_label">Active PCS alerts:</strong>
+    <span id="readPcsActiveAlerts" data-bind="pcs_alert_p0a_22042D.activeAlerts">—</span>
+</div>
+<div style="display:none">
+    <input type="text" data-bind="pcs_alert_p0b_22042E.activeAlerts">
+    <input type="text" data-bind="pcs_alert_p1a_22042F.activeAlerts">
+    <input type="text" data-bind="pcs_alert_p1b_220430.activeAlerts">
 </div>
 
 <!-- NB: open/close handlers are wired by modules/acChargingPage.js, NOT by an

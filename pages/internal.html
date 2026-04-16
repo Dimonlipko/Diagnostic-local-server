@@ -86,7 +86,7 @@
 
             <label data-lang-key="int_fan_high">D9 (Fan high speed)</label>
             <input type="text" id="readFanHigh" value="Off" readonly data-bind="internal_info_220416.fanHigh">
-            <label data-lang-key="int_fan_low">D26 (Fan low speed)</label>
+            <label data-lang-key="int_fan_low">D8 (Fan low speed)</label>
             <input type="text" id="readFanLow" value="Off" readonly data-bind="internal_info_220417.fanLow">
 
             <label data-lang-key="int_dac1_brake">DAC1 (Brake light)</label>
@@ -98,6 +98,11 @@
             <input type="text" id="readD12Chademo" value="Off" readonly data-bind="internal_info_220416.d12">
             <label data-lang-key="int_brake_booster">D25 (Brake booster)</label>
             <input type="text" id="readBrakeBooster" value="Off" readonly data-bind="internal_info_220417.boosterStatus">
+
+            <label>D26 (PCS DCDC enable)</label>
+            <input type="text" id="readPcsDcdcEn" value="Off" readonly data-bind="internal_info_220417.pcsDcdcEn">
+            <label>D27 (PCS CHG enable)</label>
+            <input type="text" id="readPcsChgEn" value="Off" readonly data-bind="internal_info_220417.pcsChgEn">
         </div>
 
         <!-- Test Output Section -->

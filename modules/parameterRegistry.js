@@ -22,6 +22,50 @@ function parseUint32(b1, b2, b3, b4) {
 }
 
 /**
+ * Tesla M3 PCS alert ID → name lookup, sourced from the Tesla DBC
+ * PCS_alertMatrix (BO_ 932). The byte 0 of 0x424 PCS_alertLog matches
+ * these a### prefixes 1:1 (e.g. id 0x1E = 30 = canRationality).
+ * 88 entries — note: a044 is missing from the DBC.
+ */
+const PCS_ALERT_NAMES = {
+    0: 'none',
+    1: 'chgHwInputOc',          2: 'chgHwOutputOc',         3: 'chgHwInputOv',
+    4: 'chgHwIntBusOv',         5: 'chgOutputOv',           6: 'chgPrechargeFailedScr',
+    7: 'chgPhaseTempHot',       8: 'chgPhaseOverTemp',      9: 'chgPfcCurrentRegulation',
+    10: 'chgIntBusVRegulation', 11: 'chgLlcCurrentRegulation', 12: 'chgPfcIBandTracerFault',
+    13: 'chgPrechargeFailedBoost', 14: 'chgTempRationality', 15: 'chg12vUv',
+    16: 'chgAllPhasesFaulted', 17: 'chgWallPowerRemoval',   18: 'chgUnknownGridConfig',
+    19: 'acChargePowerLimited', 20: 'chgEnableLineMismatch', 21: 'hvpMia',
+    22: 'bmsMia',               23: 'cpMia',                 24: 'vcfrontMia',
+    25: 'cpu2Malfunction',      26: 'watchdogAlarmed',       27: 'chgInsufficientCooling',
+    28: 'chgOutputUv',          29: 'chgPowerRationality',   30: 'canRationality',
+    31: 'uiMia',                32: 'gtwMia',                33: 'hvBusUv',
+    34: 'hvBusOv',              35: 'lvBusUv',               36: 'lvBusOv',
+    37: 'resonantTankOc',       38: 'claFaulted',            39: 'sdModuleClkFault',
+    40: 'dcdcMaxPowerReached',  41: 'dcdcOverTemp',          42: 'dcdcEnableLineMismatch',
+    43: 'hvBusPrechargeFailure', 44: '12vSupportRegulation', 45: 'hvBusLowImpedance',
+    46: 'hvBusHighImpedence',   47: 'lvBusLowImpedance',     48: 'lvBusHighImpedance',
+    49: 'dcdcTempRationality',  50: 'dcdc12VsupportFaulted', 51: 'chgIntBusUv',
+    52: 'acVoltageNotPresent',  53: 'chgInputVDropHigh',     54: 'chgInputVDropTooHigh',
+    55: 'chgLineImedanceHigh',  56: 'chgLineImedanceTooHigh', 57: 'chgInputOverFreq',
+    58: 'chgInputUnderFreq',    59: 'chgInputOvRms',         60: 'chgInputOvPeak',
+    61: 'chgVLineRationality',  62: 'chgILineRationality',   63: 'chgVOutRationality',
+    64: 'chgIOutRationality',   65: 'chgPllNotLocked',       66: 'dcdcHvRationality',
+    67: 'dcdcLvRationality',    68: 'dcdcTankvRationality',  69: 'chgPfcLineDidt',
+    70: 'chgPfcLineDvdt',       71: 'chgPfcILoopRationality', 72: 'cpu2ClaStopped',
+    73: 'unexpectedAcInputVoltage', 74: 'hvBusDischargeFailure', 75: 'hvBusDischargeTimeout',
+    76: 'dcdcEnDeassertedErr',  77: 'microGridEnergyLow',    78: 'chgStopDcdcTooHot',
+    79: 'eepromOperationError', 80: 'damagedPhaseDetected',  81: 'dcdcPchgTimeout',
+    82: 'dcdcPchgUnsafeDiVoltage', 83: 'triggerOdin',        84: 'dcdcPchgStartVoltages',
+    85: 'dcdcFetsNotSwitching', 86: 'dcdcInsufficientCooling', 87: 'nvramRecordStatusError',
+    88: 'pchgParameters',       89: 'hvBusDischargeIrrational',
+};
+
+const PCS_ALERT_RX_ERROR_NAMES = {
+    0: 'none', 1: 'too long', 2: 'too short',
+};
+
+/**
  * Tesla M3 PCS_info ASCII accumulator.
  * The PCS broadcasts its part number (20 chars) and serial number (14 chars)
  * on 0x3C4. The ECU re-exposes them via single-frame UDS DIDs 0x041D..0x0425
@@ -33,6 +77,67 @@ const _pcsInfoAccum = {
     part: new Array(20).fill(' '),
     serial: new Array(14).fill(' '),
 };
+
+/**
+ * Tesla M3 PCS_alertMatrix accumulator.
+ * Holds the two raw 8-byte alert pages (m0: alerts 1..60, m1: alerts 61..89)
+ * as the four sub-DIDs (0x042D..0x0430) trickle in. After every slice we
+ * rebuild a "<id> name, <id> name, …" string of currently-set bits — that is
+ * the value bound to data-bind="…activeAlerts" on the AC charging page.
+ *
+ * Bit layout (matches Tesla DBC PCS_alertMatrix BO_932):
+ *   page 0 bit 4 = a001, bit 5 = a002, …, bit 63 = a060
+ *   page 1 bit 4 = a061, bit 5 = a062, …, bit 32 = a089
+ * → alert_id N is bit (N+3) of page 0 (1≤N≤60) or bit (N-57) of page 1 (61≤N≤89).
+ *
+ * `seenMask` mirrors firmware's pcs_status.alert_matrix_seen so we can show
+ * "—" until at least one page has arrived (vs "none" when both pages received
+ * but every bit is zero).
+ */
+const _pcsAlertAccum = {
+    pages: [new Array(8).fill(0), new Array(8).fill(0)],
+    seenMask: 0,
+};
+
+function _pcsAlertSlice(dataHex, page, byteOffset, withSeen = false) {
+    if (dataHex.length < 16) return null;
+    for (let i = 0; i < 4; i++) {
+        const b = parseInt(dataHex.substring(8 + i * 2, 10 + i * 2), 16);
+        if (withSeen && i === 3) {
+            _pcsAlertAccum.seenMask = b;
+        } else {
+            _pcsAlertAccum.pages[page][byteOffset + i] = b;
+        }
+    }
+
+    const ids = [];
+    // page 0: bits 4..63 → alert IDs 1..60
+    if (_pcsAlertAccum.seenMask & 0x01) {
+        const p0 = _pcsAlertAccum.pages[0];
+        for (let bit = 4; bit < 64; bit++) {
+            if ((p0[bit >> 3] >> (bit & 7)) & 1) ids.push(bit - 3);
+        }
+    }
+    // page 1: bits 4..32 → alert IDs 61..89
+    if (_pcsAlertAccum.seenMask & 0x02) {
+        const p1 = _pcsAlertAccum.pages[1];
+        for (let bit = 4; bit <= 32; bit++) {
+            if ((p1[bit >> 3] >> (bit & 7)) & 1) ids.push(bit + 57);
+        }
+    }
+
+    let activeAlerts;
+    if (_pcsAlertAccum.seenMask === 0) {
+        activeAlerts = '—';
+    } else if (ids.length === 0) {
+        activeAlerts = 'none';
+    } else {
+        activeAlerts = ids
+            .map(id => `${id} ${PCS_ALERT_NAMES[id] !== undefined ? PCS_ALERT_NAMES[id] : '?'}`)
+            .join(', ');
+    }
+    return { activeAlerts };
+}
 
 function _pcsAsciiSlice(dataHex, kind, offset, count = 4) {
     if (dataHex.length < 8 + count * 2) return null;
@@ -981,10 +1086,15 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 12) return null;
-                return {
+                const result = {
                     boosterStatus: parseInt(dataHex.substring(8, 10), 16) === 1 ? 'On' : 'Off',
                     fanLow: parseInt(dataHex.substring(10, 12), 16) === 1 ? 'On' : 'Off'
                 };
+                if (dataHex.length >= 16) {
+                    result.pcsDcdcEn = parseInt(dataHex.substring(12, 14), 16) === 1 ? 'On' : 'Off';
+                    result.pcsChgEn  = parseInt(dataHex.substring(14, 16), 16) === 1 ? 'On' : 'Off';
+                }
+                return result;
             }
         }
     },
@@ -1358,7 +1468,7 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const stateNames = ['OFF', 'WAITSTART', 'ENABLE', 'ACTIVATE', 'EVSEACTIVATE', 'STOP', 'FAULTED'];
+                const stateNames = ['OFF', 'DCDC_ONLY', 'CHARGING', 'FAULTED'];
                 const chgStatNames = {
                     0: 'init', 1: 'idle', 2: 'startup', 3: 'wait line V',
                     4: 'qualify cfg', 5: 'enable', 6: 'charging',
@@ -1458,6 +1568,21 @@ export const PARAMETER_REGISTRY = {
                     currentLimit: `${lim} A`,
                     hwAcLim: `${hwLim} A`
                 };
+            }
+        }
+    },
+
+    /**
+     * Запит 22042C: PCS DCDC output voltage setpoint (decivolts, byte 4).
+     */
+    'pcs_dcdc_setpoint_22042C': {
+        request: { canId: '79B', data: '22042C', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const dv = parseInt(dataHex.substring(8, 10), 16);
+                return { dcdcVoltageSetpoint: (dv / 10).toFixed(1) };
             }
         }
     },
@@ -1579,6 +1704,37 @@ export const PARAMETER_REGISTRY = {
                 return { dcdcBusHv: `${hv} V`, dcdcBusLv: `${(lv10 / 10).toFixed(1)} V` };
             }
         }
+    },
+
+    /**
+     * 0x042D..0x0430: PCS_alertMatrix (0x3A4) raw bytes — currently active alerts
+     * bitmap, split into 4×4-byte sub-DIDs:
+     *   0x042D = page 0 bytes 0..3   (alerts a001..a028 in bits 4..31)
+     *   0x042E = page 0 bytes 4..7   (alerts a029..a060)
+     *   0x042F = page 1 bytes 0..3   (alerts a061..a088 in bits 4..31)
+     *   0x0430 = page 1 bytes 4..6 + alert_matrix_seen flag
+     *           (alerts a089 in bit 0 of byte 4; b7 = seen mask: bit0=p0, bit1=p1)
+     *
+     * Each parser stores its slice in a shared accumulator and recomputes the
+     * full "<id1> name1, <id2> name2, …" line, returned as { activeAlerts }.
+     * Any binding to .activeAlerts on any of the 4 keys gets the latest joined
+     * view on every poll (1 s).
+     */
+    'pcs_alert_p0a_22042D': {
+        request: { canId: '79B', data: '22042D', interval: 1000 },
+        response: { canId: '7BB', parser: (h) => _pcsAlertSlice(h, 0, 0) }
+    },
+    'pcs_alert_p0b_22042E': {
+        request: { canId: '79B', data: '22042E', interval: 1000 },
+        response: { canId: '7BB', parser: (h) => _pcsAlertSlice(h, 0, 4) }
+    },
+    'pcs_alert_p1a_22042F': {
+        request: { canId: '79B', data: '22042F', interval: 1000 },
+        response: { canId: '7BB', parser: (h) => _pcsAlertSlice(h, 1, 0) }
+    },
+    'pcs_alert_p1b_220430': {
+        request: { canId: '79B', data: '220430', interval: 1000 },
+        response: { canId: '7BB', parser: (h) => _pcsAlertSlice(h, 1, 4, true) }
     },
 
     // ========================================
@@ -1809,6 +1965,13 @@ export const PARAMETER_REGISTRY = {
      */
     'write_ac_charge_current': {
         writeConfig: { canId: '79B', dataPrefix: '2ec02f191a', bytes: 1 }
+    },
+    /**
+     * PCS DCDC output voltage setpoint. Sub-ID 0x1B under 0xC02F.
+     * Value: 1 byte = decivolts (0.1 V units). 142 → 14.2 V. Range 100..200.
+     */
+    'write_pcs_dcdc_voltage': {
+        writeConfig: { canId: '79B', dataPrefix: '2ec02f191b', bytes: 1, multiplier: 10 }
     },
     'write_target_current': {
         writeConfig: { canId: '79B', dataPrefix: '2e0601', bytes: 2 }
