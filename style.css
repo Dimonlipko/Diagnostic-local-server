@@ -907,6 +907,20 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 .rw-grid .toggle-on { grid-column: 1 / 2; }
 .rw-grid .toggle-off { grid-column: 2 / 3; }
 
+.write-button.toggle-on.active,
+.write-button.toggle-off.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: var(--shadow-inset);
+}
+.write-button.toggle-on.active:hover,
+.write-button.toggle-off.active:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #fff;
+}
+
 .bms-readonly-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1353,7 +1367,7 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 
     /* Tablet layout for rw-grid */
     .rw-grid {
-        grid-template-columns: 180px 80px 80px 100px;
+        grid-template-columns: 180px 80px 80px 80px;
         gap: 12px;
     }
     .rw-grid label { grid-column: 1 / 2; text-align: right; }
@@ -1384,7 +1398,7 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 /* --- ДЕСКТОП СІТКА (min-width: 1024px) --- */
 @media (min-width: 1024px) {
     .rw-grid {
-        grid-template-columns: 200px 100px 100px 120px;
+        grid-template-columns: 200px 100px 100px 100px;
         gap: 15px;
         align-items: center;
     }

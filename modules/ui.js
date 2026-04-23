@@ -8,8 +8,10 @@ import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
 import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
 import { initPresetPage, cleanupPresetPage } from './parameterPreset.js';
+import { sendCanRequest } from './canProtocol.js';
 
 let logElement = null;
+let clockTickInterval = null;
 
 // --- Data Listener System ---
 const dataListeners = new Map();
@@ -61,6 +63,7 @@ export async function loadPage(pageFile) {
 
     // Cleanup data listeners та сторінки з lifecycle
     removeAllDataListeners();
+    if (clockTickInterval) { clearInterval(clockTickInterval); clockTickInterval = null; }
     cleanupCruiseChartPage();
     cleanupPedalChartPage();
     
@@ -137,6 +140,11 @@ export async function loadPage(pageFile) {
             initPedalChartPage();
         }
 
+        if (pageFile.includes('dashboard.html')) {
+            initDisplayModeToggleHighlight(pageContainer);
+            initDashboardClockSync(pageContainer);
+        }
+
     } catch (error) {
         console.error(`Помилка завантаження ${pageFile}:`, error);
         pageContainer.innerHTML = `
@@ -147,6 +155,75 @@ export async function loadPage(pageFile) {
             </div>
         `;
     }
+}
+
+function initDisplayModeToggleHighlight(container) {
+    addDataListener('dash_info_220F32', (_key, data) => {
+        const raw = data?.displayModeRaw;
+        if (raw === undefined) return;
+        container.querySelectorAll('button[data-param-name="write_display_mode"]').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.value, 10) === raw);
+        });
+    });
+}
+
+function initDashboardClockSync(container) {
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const pad2hex = (n) => (n & 0xff).toString(16).padStart(2, '0');
+
+    const clockEl = container.querySelector('#readBrowserClock');
+    const tick = () => {
+        if (!clockEl) return;
+        const d = new Date();
+        clockEl.value = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    };
+    tick();
+    if (clockTickInterval) clearInterval(clockTickInterval);
+    clockTickInterval = setInterval(tick, 1000);
+
+    const btn = container.querySelector('#syncClockBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+        if (!state.isConnected) {
+            logMessage('Адаптер не підключено.');
+            return;
+        }
+        btn.disabled = true;
+        try {
+            if (window.pollingManager) window.pollingManager.stopAllPolling();
+            await new Promise(r => setTimeout(r, 200));
+
+            const now = new Date();
+            const day    = now.getDate();
+            const month  = now.getMonth() + 1;
+            const year   = Math.min(now.getFullYear() - 2000, 99);
+            const hour   = now.getHours();
+            const minute = now.getMinutes();
+
+            const dateHex = `2e4101${pad2hex(day)}${pad2hex(month)}${pad2hex(year)}`;
+            await sendCanRequest('79B', dateHex);
+            await new Promise(r => setTimeout(r, 100));
+
+            const timeHex = `2e4102${pad2hex(hour)}${pad2hex(minute)}00`;
+            await sendCanRequest('79B', timeHex);
+            await new Promise(r => setTimeout(r, 500));
+
+            const synced = translations[state.currentLanguage]?.dash_clock_synced || 'Clock synced';
+            logMessage(`[CLOCK ✓] ${synced}: ${pad2(day)}/${pad2(month)}/${2000 + year} ${pad2(hour)}:${pad2(minute)}`);
+        } catch (e) {
+            logMessage(`[CLOCK ✗] ${e.message}`);
+        } finally {
+            const keys = getRequiredKeysFromDOM(container);
+            if (keys.size > 0 && window.pollingManager && window.PARAMETER_REGISTRY) {
+                window.pollingManager.startPolling(
+                    Array.from(keys),
+                    window.PARAMETER_REGISTRY,
+                    updateUiValue
+                );
+            }
+            btn.disabled = false;
+        }
+    });
 }
 
 export function initNavigation() {

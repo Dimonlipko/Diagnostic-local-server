@@ -91,6 +91,11 @@
     <input type="text" id="writeSOHAh" class="dea-hide" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button dea-hide" data-param-name="sohAh" data-target-id="writeSOHAh" data-lang-key="btn_write">Write</button>
 
+    <label data-lang-key="bms_cells_in_pack">Cells in pack</label>
+    <input type="text" id="readCellsInPack" value="0" readonly data-bind="deya_cells_22061E.cellsInPack">
+    <input type="text" id="writeCellsInPack" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_cells_in_pack" data-target-id="writeCellsInPack" data-lang-key="btn_write">Write</button>
+
     <label data-lang-key="bms_current_sens_type">Current sens type</label>
     <input type="text" id="readCurrentSensType" value="Volt 1" readonly data-bind="bms_info_220108.currentSensType">
     <select id="writeCurrentSensType" data-param-name="currentSensType">
@@ -98,6 +103,7 @@
         <option value="0" data-lang-key="bms_sens_off">OFF</option>
         <option value="1" data-lang-key="bms_sens_volt1">Volt 1</option>
         <option value="3" data-lang-key="bms_sens_cab500">CAB-500</option>
+        <option value="10" data-lang-key="bms_sens_deya">Deye HV</option>
     </select>
     <button class="write-button" data-param-name="currentSensType" data-target-id="writeCurrentSensType" data-lang-key="btn_write">Write</button>
 

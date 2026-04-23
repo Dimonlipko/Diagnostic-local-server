@@ -1,6 +1,14 @@
 /**
  * parameterRegistry.js
- * 
+ */
+import { state } from './state.js';
+import { translations } from './config.js';
+
+function t(key) {
+    return translations[state.currentLanguage || 'uk']?.[key] || key;
+}
+
+/**
  * Допоміжна функція для парсингу 2-байтного знакового цілого (signed int16)
  */
 function parseInt16(h, l) {
@@ -515,6 +523,30 @@ export const PARAMETER_REGISTRY = {
     },
     
     /**
+     * Запит 22061E: cells_in_pack (series cell count used for per-cell cutoff derivation)
+     */
+    'deya_cells_22061E': {
+        request: { canId: '79B', data: '22061E', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const hi = parseInt(dataHex.substring(8, 10), 16);
+                const lo = parseInt(dataHex.substring(10, 12), 16);
+                return { cellsInPack: `${(hi << 8) | lo}` };
+            }
+        }
+    },
+
+    'write_cells_in_pack': {
+        writeConfig: {
+            canId: '79B',
+            dataPrefix: '2ec02f191a',  // 2E C0 2F 19 1A -> sub 0x1A (cells_in_pack)
+            bytes: 2                    // u16 BE, valid 1..300
+        }
+    },
+
+    /**
      * Запит 220101: SOC in Ah
      */
     'bms_info_220101': {
@@ -583,7 +615,7 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const typeMap = { "0": "OFF", "1": "Volt 1", "2": "Leaf", "3": "CAB-500" };
+                const typeMap = { "0": "OFF", "1": "Volt 1", "2": "Leaf", "3": "CAB-500", "10": "Deye HV" };
                 const typeRaw = parseInt(dataHex.substring(8, 10), 16); // Байт 4
                 const curr_h = parseInt(dataHex.substring(12, 14), 16); // Байт 6
                 const curr_l = parseInt(dataHex.substring(14, 16), 16); // Байт 7
@@ -1435,6 +1467,23 @@ export const PARAMETER_REGISTRY = {
     },
 
     /**
+     * Запит 220F32: Dashboard display mode (speed / rpm)
+     * Відповідь приборки: 04 62 0F 32 <mode>
+     */
+    'dash_info_220F32': {
+        request: { canId: '79B', data: '220F32', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const raw = parseInt(dataHex.substring(8, 10), 16);
+                const label = t(raw === 1 ? 'opt_display_rpm' : 'opt_display_speed');
+                return { displayMode: label, displayModeRaw: raw };
+            }
+        }
+    },
+
+    /**
      * Запит 220408: Pump Temp
      */
     'settings_info_220408': {
@@ -1500,6 +1549,12 @@ export const PARAMETER_REGISTRY = {
     },
     'write_type_invertor': {
         writeConfig: { canId: '79B', dataPrefix: '2e013104', bytes: 1 }
+    },
+    'write_display_mode': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0f32', bytes: 1 }
+    },
+    'write_odometer': {
+        writeConfig: { canId: '79B', dataPrefix: '2e1201', bytes: 3, multiplier: 10 }
     },
     'write_pump_temp': {
         writeConfig: { canId: '79B', dataPrefix: '2e0408', bytes: 1 }

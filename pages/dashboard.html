@@ -25,7 +25,7 @@
 
 <hr style="margin: 20px 0;">
 
-<h3 data-lang-key="dash_lights">Lights & Signals</h3>
+<h3 data-lang-key="dash_lights" style="margin-bottom: 15px; font-weight: 500;">Lights & Signals</h3>
 <div class="bms-readonly-grid">
     <label data-lang-key="dash_right_turn">Right turn</label>
     <input type="text" id="readRightTurn" value="0 V" readonly data-bind="dashboard_info_221202.rightTurn">
@@ -47,4 +47,22 @@
 
     <label data-lang-key="dash_belt">Seat belt</label>
     <input type="text" id="readBelt" value="0 V" readonly data-bind="dashboard_info_221203.belt">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<div class="rw-grid">
+    <label data-lang-key="set_display_mode">Instrument display</label>
+    <input type="text" id="readDisplayMode" value="—" readonly data-bind="dash_info_220F32.displayMode">
+    <button class="write-button toggle-on" data-param-name="write_display_mode" data-value="0" data-lang-key="opt_display_speed">Speed</button>
+    <button class="write-button toggle-off" data-param-name="write_display_mode" data-value="1" data-lang-key="opt_display_rpm">RPM</button>
+
+    <label data-lang-key="dash_odometer">Odometer</label>
+    <input type="text" id="readOdometerW" value="0 km" readonly data-bind="dashboard_info_221201.odometer">
+    <input type="text" id="writeOdometer" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_odometer" data-target-id="writeOdometer" data-lang-key="btn_write">Write</button>
+
+    <label data-lang-key="dash_clock">Clock</label>
+    <input type="text" id="readBrowserClock" value="—" readonly>
+    <button class="write-button" id="syncClockBtn" data-lang-key="dash_clock_sync" style="grid-column: 4 / 5;">Sync</button>
 </div>
