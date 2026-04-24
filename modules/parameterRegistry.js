@@ -1451,7 +1451,10 @@ export const PARAMETER_REGISTRY = {
                 if (dataHex.length < 16) return null;
                 const selectorMap = { "0": "Button", "1": "Leaf", "2": "PSA" };
                 const buttonMap = { "0": "With fixation", "1": "Without fixation" };
-                const invMap = { "0": "AZE0", "1": "ZE0", "2": "ZE1" };
+                // InverterType enum (firmware include/globals.h): 0=OFF,
+                // 1=Leaf AZE0, 2=Leaf ZE0, 3=Leaf ZE1, 4=Tesla M3.
+                const invMap = { "0": "OFF", "1": "Leaf AZE0", "2": "Leaf ZE0",
+                                  "3": "Leaf ZE1", "4": "Tesla M3" };
 
                 const selRaw = parseInt(dataHex.substring(10, 12), 16); // Байт 5
                 const btnRaw = parseInt(dataHex.substring(12, 14), 16); // Байт 6
@@ -1548,7 +1551,9 @@ export const PARAMETER_REGISTRY = {
         writeConfig: { canId: '79B', dataPrefix: '2e013103', bytes: 1 }
     },
     'write_type_invertor': {
-        writeConfig: { canId: '79B', dataPrefix: '2e013104', bytes: 1 }
+        // Unified config_inv write (replaces legacy 2e013104 leaf_inv_type).
+        // 1=Leaf AZE0, 2=Leaf ZE0, 3=Leaf ZE1, 4=Tesla M3, 0=OFF.
+        writeConfig: { canId: '79B', dataPrefix: '2ec02f1915', bytes: 1 }
     },
     'write_display_mode': {
         writeConfig: { canId: '79B', dataPrefix: '2e0f32', bytes: 1 }
