@@ -4,6 +4,9 @@ import { logMessage } from './ui.js';
 
 let isWriting = false;
 
+let rawFrameConsumer = null;
+export function setRawFrameConsumer(fn) { rawFrameConsumer = fn; }
+
 // === ISO-TP Multi-Frame стан ===
 const isotpState = {
     active: false,
@@ -118,6 +121,16 @@ function parseCanResponse_ELM327(line) {
         id = clean.substring(0, 3);
         data = clean.substring(3);
     }
+    // Raw CAN frame з CCS-контролера (CANopen SDO відповідь 0x580+nodeId, типово 0x596).
+    // Парсер UDS не знає, що з ним робити — віддаємо споживачу (canopenSdo.js).
+    else if (clean.length >= 19 && (clean.startsWith('5') || clean.startsWith('6'))) {
+        const fid = clean.substring(0, 3);
+        const fdata = clean.substring(3);
+        if (rawFrameConsumer) {
+            try { rawFrameConsumer(fid, fdata); } catch (e) { console.warn('[rawFrame]', e); }
+        }
+        return null;
+    }
     // Формат без ID: "620301..." або "6141..."
     else if (clean.startsWith('62') || clean.startsWith('61')) {
         if (state.lastRequestId) {
@@ -216,7 +229,10 @@ function parseCanResponse_ELM327(line) {
         console.log(`[ISO-TP] CF: отримано ${receivedBytes}/${isotpState.expectedLength} bytes`);
 
         if (receivedBytes < isotpState.expectedLength) {
-            // Збірка не завершена — потрібен ще один FC для наступного CF (BS=1 ping-pong)
+            // ECU + BLE-ELM віддають рівно 1 CF на 1 FC (BLE-ELM слухає шину
+            // тільки поки веб пише команду). Тому BS=1 ping-pong: після кожного
+            // CF просимо наступний. БЕЗ 400 мс BS=0-fallback — саме зайвий другий
+            // FC при BLE-затримці десинхронізував ECU і губив ~кожен 9-й кадр.
             isotpState.needsFC = true;
         }
 
@@ -256,7 +272,7 @@ export function isIsotpActive() {
 /**
  * Відправка ручного Flow Control
  * Викликається з readLoop/BLE handler коли ELM закінчив прийом даних
- * FC = 30 01 00 00 00 00 00 00 (CTS, BS=1, STmin=0) + fallback BS=0
+ * FC = 30 01 00 00 00 00 00 00 (CTS, BS=1, STmin=0) — строгий ping-pong, без fallback
  */
 export async function sendPendingFlowControl() {
     if (!isotpState.needsFC || !isotpState.active) return false;
@@ -272,24 +288,10 @@ export async function sendPendingFlowControl() {
     }
 
     try {
-        // FC: CTS (30), BS=1 (01) — ECU відправляє 1 CF і чекає наступний FC
+        // FC: CTS (30), BS=1 (01), STmin=0 — ECU віддає 1 CF і чекає наступний FC.
+        // Жодного BS=0-fallback: зайвий другий FC десинхронізує ECU → втрати кадрів.
         await writer.write('3001000000000000\r');
         console.log(`[ISO-TP] FC відправлено (BS=1), буфер: ${isotpState.buffer.length/2}/${isotpState.expectedLength} bytes`);
-
-        // Fallback: якщо ECU не відповів на BS=1 протягом 400мс — шлемо BS=0
-        isotpState.fcFallback = setTimeout(async () => {
-            isotpState.fcFallback = null;
-            if (isotpState.active && !isotpState.needsFC) {
-                console.log('[ISO-TP] ECU не відповів на BS=1 → fallback BS=0');
-                try {
-                    await writer.write('3000000000000000\r');
-                    isotpState.needsFC = true;
-                } catch (e) {
-                    console.error('[ISO-TP] Помилка fallback FC:', e);
-                }
-            }
-        }, 400);
-
         return true;
     } catch (e) {
         console.error('[ISO-TP] Помилка відправки FC:', e);

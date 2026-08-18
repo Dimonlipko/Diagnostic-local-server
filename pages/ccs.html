@@ -1,29 +1,213 @@
 <h2 data-lang-key="ccs_title">CCS Combo Charging</h2>
 
-<div class="bms-readonly-grid">
-    <!-- Тут будуть параметри CCS зарядки -->
-    <label>CCS status</label>
-    <input type="text" id="readCcsStatus" value="---" readonly>
+<!-- Верхня секція: CCS-стан від ECU (UDS DID 0x0Bxx).
+     Spec: ~/Project/Leaf_V4/docs/ccs-clara-protocol.md, commit 46a59bb. -->
 
-    <label>DC voltage</label>
-    <input type="text" id="readCcsVoltage" value="0 V" readonly>
+<div class="ccs-ecu-cats">
 
-    <label>DC current</label>
-    <input type="text" id="readCcsCurrent" value="0 A" readonly>
+    <fieldset class="ccsctl-cat">
+        <legend>ECU runtime</legend>
+        <div class="ccsctl-grid">
+            <label>ccsState</label>
+            <input type="text" data-bind="ccs_ecu_220B0A.ccsState" value="—" readonly>
 
-    <label>Charging power</label>
-    <input type="text" id="readCcsPower" value="0 kW" readonly>
+            <label>bCcsMode (DC)</label>
+            <input type="text" data-bind="ccs_ecu_220B0A.dcMode" value="—" readonly>
 
-    <label>SOC</label>
-    <input type="text" id="readCcsSoc" value="0 %" readonly>
+            <label>bAcEvseMode (AC)</label>
+            <input type="text" data-bind="ccs_ecu_220B0A.acMode" value="—" readonly>
 
-    <label>Isolation status</label>
-    <input type="text" id="readIsolationStatus" value="---" readonly>
+            <label>ccsAskingAmps</label>
+            <input type="text" data-bind="ccs_ecu_220B0A.askingAmps" value="—" readonly>
+
+            <label>config_ccs</label>
+            <input type="text" data-bind="ccs_config_220B0B" value="—" readonly>
+        </div>
+    </fieldset>
+
+    <fieldset class="ccsctl-cat">
+        <legend>EVSE measurements (CCS_MEAS)</legend>
+        <div class="ccsctl-grid">
+            <label>Present voltage</label>
+            <input type="text" data-bind="ccs_meas_a_220B01.presentV" value="—" readonly>
+
+            <label>Present current</label>
+            <input type="text" data-bind="ccs_meas_a_220B01.presentI" value="—" readonly>
+
+            <label>EVSE max voltage</label>
+            <input type="text" data-bind="ccs_meas_b_220B02.maxV" value="—" readonly>
+
+            <label>EVSE max current</label>
+            <input type="text" data-bind="ccs_meas_b_220B02.maxI" value="—" readonly>
+        </div>
+    </fieldset>
+
+    <fieldset class="ccsctl-cat">
+        <legend>Clara state (CCS_STATE)</legend>
+        <div class="ccsctl-grid">
+            <label>opmode</label>
+            <input type="text" data-bind="ccs_state_a_220B03.opmode" value="—" readonly>
+
+            <label>Port state</label>
+            <input type="text" data-bind="ccs_state_a_220B03.portState" value="—" readonly>
+
+            <label>Stop reason</label>
+            <input type="text" data-bind="ccs_state_a_220B03.stopReason" value="—" readonly>
+
+            <label>Limitation</label>
+            <input type="text" data-bind="ccs_state_a_220B03.limitation" value="—" readonly>
+
+            <label>EV target current</label>
+            <input type="text" data-bind="ccs_state_b_220B04.evTarget" value="—" readonly>
+
+            <label>Temp-limited current</label>
+            <input type="text" data-bind="ccs_state_b_220B04.tempLim" value="—" readonly>
+
+            <label>Lock state</label>
+            <input type="text" data-bind="ccs_state_b_220B04.lockState" value="—" readonly>
+        </div>
+    </fieldset>
+
+    <fieldset class="ccsctl-cat">
+        <legend>Safety (CCS_SAFETY)</legend>
+        <div class="ccsctl-grid">
+            <label>Control Pilot duty</label>
+            <input type="text" data-bind="ccs_safety_a_220B05.cpDuty" value="—" readonly>
+
+            <label>Plug present</label>
+            <input type="text" data-bind="ccs_safety_a_220B05.plug" value="—" readonly>
+
+            <label>PP resistance</label>
+            <input type="text" data-bind="ccs_safety_a_220B05.ppResistance" value="—" readonly>
+
+            <label>Cable current limit</label>
+            <input type="text" data-bind="ccs_safety_b_220B06.cableLimit" value="—" readonly>
+
+            <label>Inlet max temp</label>
+            <input type="text" data-bind="ccs_safety_b_220B06.maxTemp" value="—" readonly>
+
+            <label>Contactor duty</label>
+            <input type="text" data-bind="ccs_safety_b_220B06.contactorDuty" value="—" readonly>
+        </div>
+    </fieldset>
+
+    <fieldset class="ccsctl-cat">
+        <legend>AC OBC (CCS_AC)</legend>
+        <div class="ccsctl-grid">
+            <label>OBC state</label>
+            <input type="text" data-bind="ccs_ac_220B07.obcState" value="—" readonly>
+
+            <label>BasicAcCharging</label>
+            <input type="text" data-bind="ccs_ac_220B07.basicAc" value="—" readonly>
+
+            <label>EVSE AC current limit</label>
+            <input type="text" data-bind="ccs_ac_220B07.acLimit" value="—" readonly>
+        </div>
+    </fieldset>
+
+    <fieldset class="ccsctl-cat">
+        <legend>Diagnostics (CCS_DIAG)</legend>
+        <div class="ccsctl-grid">
+            <label>Temp 1 (inlet+)</label>
+            <input type="text" data-bind="ccs_diag_a_220B08.temp1" value="—" readonly>
+
+            <label>Temp 2 (inlet−)</label>
+            <input type="text" data-bind="ccs_diag_a_220B08.temp2" value="—" readonly>
+
+            <label>Temp 3</label>
+            <input type="text" data-bind="ccs_diag_a_220B08.temp3" value="—" readonly>
+
+            <label>Last error</label>
+            <input type="text" data-bind="ccs_diag_a_220B08.lastErr" value="—" readonly>
+
+            <label>Checkpoint</label>
+            <input type="text" data-bind="ccs_diag_b_220B09.checkpoint" value="—" readonly>
+
+            <label>CAN watchdog</label>
+            <input type="text" data-bind="ccs_diag_b_220B09.canWdog" value="—" readonly>
+
+            <label>Flags</label>
+            <input type="text" data-bind="ccs_diag_b_220B09.flags" value="—" readonly>
+        </div>
+    </fieldset>
+
 </div>
 
 <hr style="margin: 20px 0;">
 
-<!-- Секція налаштувань -->
-<div class="rw-grid">
-    <!-- Тут будуть параметри для запису, якщо потрібно -->
-</div>
+<!-- Нижня секція: SDO-діагностика CCS-контролера (ccs32clara) -->
+<section id="ccsctl-section" class="ccsctl-section">
+    <header class="ccsctl-header">
+        <label class="ccsctl-toggle-row">
+            <input type="checkbox" id="ccsctlToggleBtn">
+            <span>Параметри CCS-контролера (CANopen SDO)</span>
+        </label>
+        <label class="ccsctl-toggle-row" title="0x600+NodeId (TX) / 0x580+NodeId (RX)">
+            NodeId
+            <input type="number" id="ccsctlNodeId" min="1" max="127" value="22" style="width:60px;">
+        </label>
+        <span class="ccsctl-status" id="ccsctlStatus">Згорнуто</span>
+    </header>
+
+    <div id="ccsctlPanel" class="ccsctl-panel" style="display:none;">
+        <div class="ccsctl-info">
+            <span><strong>Serial:</strong> <span id="ccsctlSerial">—</span></span>
+            <span><strong>FW version:</strong> <span id="ccsctlVersion">—</span></span>
+            <progress id="ccsctlProgress" max="20000" value="0" style="display:none; width:200px;"></progress>
+        </div>
+
+        <div class="ccsctl-controls">
+            <button type="button" id="ccsctlBtnSave">Save</button>
+            <button type="button" id="ccsctlBtnLoad">Load</button>
+            <button type="button" id="ccsctlBtnDefaults">Defaults</button>
+            <button type="button" id="ccsctlBtnReset">Reset</button>
+            <button type="button" id="ccsctlBtnReload">Reload params</button>
+        </div>
+
+        <div id="ccsctlTable" class="ccsctl-table"></div>
+
+        <details class="ccsctl-canmap">
+            <summary>CAN map (Clara ↔ ECU)</summary>
+            <p class="ccsctl-canmap-hint">
+                Обери файл канмапу (типово <code>~/Project/Leaf_V4/docs/clara-canmap.txt</code>)
+                і натисни <strong>Apply selected file</strong>. Перед записом усі поллінги зупиняються.
+                Після успіху Clara треба перезавантажити (<strong>Reset</strong> у панелі вище),
+                щоб застосувались <code>set CanSpeed</code>/<code>set NodeId</code>.
+            </p>
+            <div class="ccsctl-canmap-controls">
+                <input type="file" id="ccsctlCmFile" accept=".txt">
+                <button type="button" id="ccsctlCmApplyFile">Apply selected file</button>
+                <button type="button" id="ccsctlCmRead">Read current map</button>
+            </div>
+            <progress id="ccsctlCmProgress" max="100" value="0" style="width:100%;"></progress>
+            <textarea id="ccsctlCmLog" rows="14" readonly
+                      style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;"></textarea>
+        </details>
+    </div>
+</section>
+
+<style>
+.ccs-ecu-cats { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:8px; }
+.ccsctl-section { margin-top: 8px; }
+.ccsctl-canmap { margin-top:12px; padding:8px; border:1px solid rgba(127,127,127,0.3); border-radius:4px; }
+.ccsctl-canmap > summary { cursor:pointer; font-weight:600; padding:4px 0; }
+.ccsctl-canmap-hint { font-size:12px; opacity:0.75; margin:6px 0; }
+.ccsctl-canmap-controls { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:8px 0; }
+.ccsctl-canmap-controls button { padding:4px 12px; cursor:pointer; }
+.ccsctl-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.ccsctl-toggle-row { display:flex; gap:8px; align-items:center; cursor:pointer; }
+.ccsctl-status { font-size:12px; opacity:0.7; }
+.ccsctl-status[data-kind="error"] { color:#c00; opacity:1; }
+.ccsctl-info { display:flex; gap:24px; align-items:center; flex-wrap:wrap; margin:8px 0; font-size:13px; }
+.ccsctl-controls { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+.ccsctl-controls button { padding:4px 12px; cursor:pointer; }
+.ccsctl-cat { margin:6px 0; padding:6px 10px; }
+.ccsctl-cat > legend { padding:0 6px; font-weight:600; }
+.ccsctl-grid { display:grid; grid-template-columns: 1fr 1.4fr; gap:4px 10px; align-items:center; }
+.ccsctl-grid label { font-size:13px; }
+.ccsctl-grid input[type="text"], .ccsctl-grid input[type="number"] { width:100%; box-sizing:border-box; padding:2px 6px; }
+.ccsctl-input-wrap { display:flex; gap:4px; }
+.ccsctl-input-wrap input { flex:1; }
+.ccsctl-write-btn { padding:0 8px; cursor:pointer; }
+@media (max-width:600px) { .ccsctl-grid { grid-template-columns: 1fr; } }
+</style>

@@ -110,4 +110,8 @@
     <label data-lang-key="cab500_train_label" class="cab500-only" style="opacity:0.4">CAB-500 Training</label>
     <input type="text" id="readCab500TrainStatus" value="IDLE" readonly data-bind="cab500_train_220A01.trainStatus" class="cab500-only" style="opacity:0.4">
     <button class="write-button cab500-only" style="opacity:0.4" id="btnCab500Train" data-param-name="cab500Train" data-value="1" data-confirm-key="cab500_train_confirm" data-lang-key="cab500_train_btn" disabled>Train</button>
+
+    <label data-lang-key="cab500_dir_label" class="cab500-only" style="opacity:0.4">Sensor direction</label>
+    <input type="text" id="readCurrentInvert" value="Normal" readonly data-bind="bms_info_220119.currentInvert" class="cab500-only" style="opacity:0.4">
+    <button class="write-button cab500-only" style="opacity:0.4" id="btnCurrentInvert" data-param-name="currentInvert" data-value="1" data-lang-key="cab500_dir_btn" disabled>Reverse</button>
 </div>

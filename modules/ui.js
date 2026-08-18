@@ -8,6 +8,7 @@ import { initSocMapPage, cleanupSocMapPage } from './socMapPage.js';
 import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.js';
 import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
 import { initPresetPage, cleanupPresetPage } from './parameterPreset.js';
+import { initCcsCtlPage, cleanupCcsCtlPage } from './ccsCtlPage.js';
 import { sendCanRequest } from './canProtocol.js';
 
 let logElement = null;
@@ -66,6 +67,7 @@ export async function loadPage(pageFile) {
     if (clockTickInterval) { clearInterval(clockTickInterval); clockTickInterval = null; }
     cleanupCruiseChartPage();
     cleanupPedalChartPage();
+    cleanupCcsCtlPage();
     
     try {
         const response = await fetch(pageFile);
@@ -138,6 +140,10 @@ export async function loadPage(pageFile) {
 
         if (pageFile.includes('inverter.html')) {
             initPedalChartPage();
+        }
+
+        if (pageFile.includes('ccs.html')) {
+            initCcsCtlPage();
         }
 
         if (pageFile.includes('dashboard.html')) {

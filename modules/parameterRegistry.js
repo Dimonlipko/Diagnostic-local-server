@@ -634,6 +634,40 @@ export const PARAMETER_REGISTRY = {
     },
 
     /**
+     * Запит 220119: напрямок датчика струму CAB-500.
+     * Байт 4 — напрямок (0 прямий, 1 реверс), байт 5 — тип датчика.
+     * Той самий DID у Leaf_V4 ECU і у VoltBMS Fluence, тож один елемент
+     * керування обслуговує обидві прошивки.
+     */
+    'bms_info_220119': {
+        request: { canId: '79B', data: '220119', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 12) return null;
+                const invRaw  = parseInt(dataHex.substring(8, 10), 16);
+                const typeRaw = parseInt(dataHex.substring(10, 12), 16);
+                const isReverse = (invRaw === 1);
+
+                // Кнопка несе значення, яке піде наступним записом, тому це
+                // перемикач, а не дві окремі кнопки.
+                const btn = document.getElementById('btnCurrentInvert');
+                if (btn) btn.dataset.value = isReverse ? '0' : '1';
+
+                // Leaf_V4 не відповідає на 220108, тому гейтимо CAB-500 UI ще
+                // й звідси — інакше в тій прошивці елементи лишались би сірими.
+                const isCab500 = (typeRaw === 3);
+                document.querySelectorAll('.cab500-only').forEach(el => {
+                    el.style.opacity = isCab500 ? '1' : '0.4';
+                    if (el.tagName === 'BUTTON') el.disabled = !isCab500;
+                });
+
+                return { currentInvert: isReverse ? 'Reverse' : 'Normal' };
+            }
+        }
+    },
+
+    /**
      * Запит 220109: Current sens 1, Current sens 2
      */
     'bms_info_220109': {
@@ -764,6 +798,14 @@ export const PARAMETER_REGISTRY = {
         writeConfig: {
             canId: '79B',
             dataPrefix: '2e0A01',
+            bytes: 1
+        }
+    },
+    'currentInvert': {
+        // 2e0119 <0|1> — 0 прямий, 1 реверс. Статус читається з 220119.
+        writeConfig: {
+            canId: '79B',
+            dataPrefix: '2e0119',
             bytes: 1
         }
     },
@@ -932,6 +974,27 @@ export const PARAMETER_REGISTRY = {
                 return {
                     deviceId: id.toString(),
                     softVer: ver.toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220418: Версія ПЗ + версія бутлоадера (для OTA-прошивки).
+     * Відповідь 07 62 04 18 [appHi][appLo][blHi][blLo] (big-endian, як 220407).
+     * blVer = 0 → старий/неверсійований бутлоадер.
+     */
+    'internal_info_220418': {
+        request: { canId: '79B', data: '220418', interval: 5000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const app = parseInt(dataHex.substring(8, 12), 16);
+                const bl = parseInt(dataHex.substring(12, 16), 16);
+                return {
+                    appVer: app.toString(),
+                    blVer: bl.toString()
                 };
             }
         }
@@ -2325,6 +2388,222 @@ export const PARAMETER_REGISTRY = {
                 return {
                     soc100: `${voltage} mV`
                 };
+            }
+        }
+    },
+
+    // ========================================
+    // CCS / Clara state (UDS DID 0x0Bxx, BE)
+    // Spec: ~/Project/Leaf_V4/docs/ccs-clara-protocol.md, commit 46a59bb
+    // Frame: 07 62 0B SS B0 B1 B2 B3 — single-frame, big-endian
+    // ========================================
+
+    'ccs_meas_a_220B01': {
+        request: { canId: '79B', data: '220B01', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const v = parseUint16(parseInt(dataHex.substring(8, 10), 16), parseInt(dataHex.substring(10, 12), 16));
+                const i = parseUint16(parseInt(dataHex.substring(12, 14), 16), parseInt(dataHex.substring(14, 16), 16));
+                return { presentV: `${v} V`, presentI: `${i} A` };
+            }
+        }
+    },
+
+    'ccs_meas_b_220B02': {
+        request: { canId: '79B', data: '220B02', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const maxV = parseUint16(parseInt(dataHex.substring(8, 10), 16), parseInt(dataHex.substring(10, 12), 16));
+                const maxI = parseUint16(parseInt(dataHex.substring(12, 14), 16), parseInt(dataHex.substring(14, 16), 16));
+                return { maxV: `${maxV} V`, maxI: `${maxI} A` };
+            }
+        }
+    },
+
+    'ccs_state_a_220B03': {
+        request: { canId: '79B', data: '220B03', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const opmodeMap = {
+                    0:'NotYetInitialized', 1:'Connecting', 2:'SessionSetup',
+                    3:'ServiceDiscovery', 4:'ChargeParameterDiscovery', 5:'CableCheck',
+                    6:'PreCharge', 7:'ContactorsClosed', 8:'CurrentDemand',
+                    9:'WeldingDetection', 10:'SessionStop'
+                };
+                const portMap = {0:'Idle',1:'PluggedIn',2:'Ready',3:'ChargingAC',4:'ChargingDC',5:'Stopping',6:'Unlock',7:'PortError'};
+                const stopMap = {
+                    0:'None',1:'Button',2:'MissingEnable',3:'CANTimeout',4:'ChargerShutdown',
+                    5:'AccuFull',6:'ChargerEmergency',7:'InletOverheat',8:'EvseMalfunction',9:'InletVDeviation'
+                };
+                const limMap = {0:'None',1:'Charger',2:'Battery',3:'InletHot'};
+                const op = parseInt(dataHex.substring(8, 10), 16);
+                const port = parseInt(dataHex.substring(10, 12), 16);
+                const stop = parseInt(dataHex.substring(12, 14), 16);
+                const lim = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    opmode: opmodeMap[op] || `?(${op})`,
+                    portState: portMap[port] || `?(${port})`,
+                    stopReason: stopMap[stop] || `?(${stop})`,
+                    limitation: limMap[lim] || `?(${lim})`
+                };
+            }
+        }
+    },
+
+    'ccs_state_b_220B04': {
+        request: { canId: '79B', data: '220B04', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const lockMap = {0:'None',1:'Open',2:'Closed',3:'Opening',4:'Closing'};
+                const evTarget = parseUint16(parseInt(dataHex.substring(8, 10), 16), parseInt(dataHex.substring(10, 12), 16));
+                const tempLim = parseInt(dataHex.substring(12, 14), 16);
+                const lock = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    evTarget: `${evTarget} A`,
+                    tempLim: `${tempLim} A`,
+                    lockState: lockMap[lock] || `?(${lock})`
+                };
+            }
+        }
+    },
+
+    'ccs_safety_a_220B05': {
+        request: { canId: '79B', data: '220B05', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const cp = parseInt(dataHex.substring(8, 10), 16);
+                const plug = parseInt(dataHex.substring(10, 12), 16);
+                const pp = parseUint16(parseInt(dataHex.substring(12, 14), 16), parseInt(dataHex.substring(14, 16), 16));
+                return {
+                    cpDuty: `${cp} %`,
+                    plug: plug ? 'Plugged' : 'Unplugged',
+                    ppResistance: `${pp} Ω`
+                };
+            }
+        }
+    },
+
+    'ccs_safety_b_220B06': {
+        request: { canId: '79B', data: '220B06', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const cable = parseUint16(parseInt(dataHex.substring(8, 10), 16), parseInt(dataHex.substring(10, 12), 16));
+                let maxT = parseInt(dataHex.substring(12, 14), 16);
+                if (maxT & 0x80) maxT -= 0x100;
+                const contactor = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    cableLimit: `${cable} A`,
+                    maxTemp: `${maxT} °C`,
+                    contactorDuty: `${contactor} %`
+                };
+            }
+        }
+    },
+
+    'ccs_ac_220B07': {
+        request: { canId: '79B', data: '220B07', interval: 500 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const obcMap = {0:'Idle',1:'Lock',2:'Charge',3:'Pause',4:'Complete',5:'Error'};
+                const obc = parseInt(dataHex.substring(8, 10), 16);
+                const basic = parseInt(dataHex.substring(10, 12), 16);
+                const acLim = parseUint16(parseInt(dataHex.substring(12, 14), 16), parseInt(dataHex.substring(14, 16), 16));
+                return {
+                    obcState: obcMap[obc] || `?(${obc})`,
+                    basicAc: basic ? 'Yes' : 'No',
+                    acLimit: `${acLim} A`
+                };
+            }
+        }
+    },
+
+    'ccs_diag_a_220B08': {
+        request: { canId: '79B', data: '220B08', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const s8 = (h) => { let v = parseInt(h, 16); return v & 0x80 ? v - 0x100 : v; };
+                return {
+                    temp1: `${s8(dataHex.substring(8, 10))} °C`,
+                    temp2: `${s8(dataHex.substring(10, 12))} °C`,
+                    temp3: `${s8(dataHex.substring(12, 14))} °C`,
+                    lastErr: parseInt(dataHex.substring(14, 16), 16)
+                };
+            }
+        }
+    },
+
+    'ccs_diag_b_220B09': {
+        request: { canId: '79B', data: '220B09', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const cp = parseInt(dataHex.substring(8, 10), 16);
+                const wdog = parseInt(dataHex.substring(10, 12), 16);
+                const flags = parseInt(dataHex.substring(12, 14), 16);
+                const flagStr = [
+                    (flags & 0x01) ? 'BasicAC' : null,
+                    (flags & 0x02) ? 'BtnPush' : null,
+                    (flags & 0x04) ? 'CanAwake' : null,
+                    (flags & 0x08) ? 'VehIsoMon' : null,
+                ].filter(Boolean).join(', ') || '—';
+                return {
+                    checkpoint: cp,
+                    canWdog: `${wdog * 10} ms`,
+                    flags: flagStr
+                };
+            }
+        }
+    },
+
+    'ccs_ecu_220B0A': {
+        request: { canId: '79B', data: '220B0A', interval: 250 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const ccsStateMap = {
+                    0:'STOPPED', 1:'STARTUP', 2:'SEND_PARAMS', 3:'WAIT_EVSE_PARAMS',
+                    4:'PRECHARGE', 5:'CLOSE_CONTACTORS', 6:'RUNNING', 7:'CEASE_CURRENT',
+                    8:'WAIT_ZERO_CURRENT', 9:'OPEN_CONTACTOR', 10:'FAULTED', 11:'LIMBO'
+                };
+                const st = parseInt(dataHex.substring(8, 10), 16);
+                const dc = parseInt(dataHex.substring(10, 12), 16);
+                const ac = parseInt(dataHex.substring(12, 14), 16);
+                const amps = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    ccsState: ccsStateMap[st] || `?(${st})`,
+                    dcMode: dc ? 'Yes' : 'No',
+                    acMode: ac ? 'Yes' : 'No',
+                    askingAmps: `${amps} A`
+                };
+            }
+        }
+    },
+
+    'ccs_config_220B0B': {
+        request: { canId: '79B', data: '220B0B', interval: 5000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                return parseInt(dataHex.substring(8, 10), 16);
             }
         }
     }

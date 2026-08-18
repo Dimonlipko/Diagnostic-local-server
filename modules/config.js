@@ -103,6 +103,8 @@ export const translations = {
         'cab500_train_btn': 'Навчити',
         'cab500_train_confirm': 'Відключіть BMS від CAN1 шини! Залиште тільки датчик CAB-500. Продовжити?',
         'cab500_train_started': 'Навчання запущено...',
+        'cab500_dir_label': 'Напрямок датчика',
+        'cab500_dir_btn': 'Змінити',
 
         // Settings
         'settings_title': 'Налаштування ECU',
@@ -167,6 +169,7 @@ export const translations = {
         'int_d52': 'D52',
         'int_device_id': 'ID пристрою',
         'int_soft_ver': 'Версія ПЗ',
+        'int_bl_ver': 'Версія бута',
         'int_contactor_plus': 'A10 (Контактор +)',
         'int_contactor_minus': 'A11 (Контактор -)',
         'int_precharge': 'D11 (Попередній заряд)',
@@ -459,6 +462,8 @@ export const translations = {
         'cab500_train_btn': 'Train',
         'cab500_train_confirm': 'Disconnect BMS from CAN1 bus! Leave only the CAB-500 sensor. Continue?',
         'cab500_train_started': 'Training started...',
+        'cab500_dir_label': 'Sensor direction',
+        'cab500_dir_btn': 'Toggle',
 
         // Settings
         'settings_title': 'ECU settings',
@@ -523,6 +528,7 @@ export const translations = {
         'int_d52': 'D52',
         'int_device_id': 'Device ID',
         'int_soft_ver': 'Soft ver',
+        'int_bl_ver': 'Bootloader ver',
         'int_contactor_plus': 'A10 (Contactor +)',
         'int_contactor_minus': 'A11 (Contactor -)',
         'int_precharge': 'D11 (Precharge)',
