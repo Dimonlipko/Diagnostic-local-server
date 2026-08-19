@@ -30,6 +30,19 @@ function parseUint32(b1, b2, b3, b4) {
 }
 
 /**
+ * Версія прошивки як дата збірки: приборка віддає yy/mm/dd трьома байтами
+ * (див. OTA_VER_PACK в Nextion_STM32_dash/include/ota_shared.h).
+ * Показуємо у форматі YYMM (конвенція Leaf_V4/VoltBMS) + повна дата.
+ * Нульові байти = версії немає (немає бутлоадера / зібрано без version_gen.py).
+ */
+function formatBuildVersion(yy, mm, dd) {
+    if (!yy && !mm && !dd) return '—';
+    const soft = yy * 100 + mm;                     // YYMM, напр. 2608
+    return `${soft} (20${String(yy).padStart(2, '0')}-` +
+           `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')})`;
+}
+
+/**
  * Реєстр параметрів - центральне сховище всіх CAN-запитів.
  * Ключі - це логічні імена груп параметрів.
  * HTML-елементи посилаються на ці ключі через [data-bind].
@@ -1470,6 +1483,48 @@ export const PARAMETER_REGISTRY = {
                     handbrake: `${handbrake} V`,
                     belt: `${belt} V`
                 };
+            }
+        }
+    },
+
+    /**
+     * Запит 221205: Версія бутлоадера приборки (дата збірки) + ознака дескриптора
+     * Відповідь: 07 62 12 05 <yy> <mm> <dd> <desc_ok>
+     * desc_ok=1 — застосунок прийшов через OTA/env:combined і має валідний
+     * дескриптор; 0 — залито «голим» способом по SWD.
+     */
+    'dashboard_info_221205': {
+        request: { canId: '79B', data: '221205', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const yy = parseInt(dataHex.substring(8, 10), 16);
+                const mm = parseInt(dataHex.substring(10, 12), 16);
+                const dd = parseInt(dataHex.substring(12, 14), 16);
+                const descOk = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    bootVersion: formatBuildVersion(yy, mm, dd),
+                    appDescValid: descOk === 1 ? 'OTA' : 'SWD'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 221206: Версія ПО приборки (дата збірки застосунку)
+     * Відповідь: 06 62 12 06 <yy> <mm> <dd> 00
+     */
+    'dashboard_info_221206': {
+        request: { canId: '79B', data: '221206', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const yy = parseInt(dataHex.substring(8, 10), 16);
+                const mm = parseInt(dataHex.substring(10, 12), 16);
+                const dd = parseInt(dataHex.substring(12, 14), 16);
+                return { softVersion: formatBuildVersion(yy, mm, dd) };
             }
         }
     },

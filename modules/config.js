@@ -256,6 +256,9 @@ export const translations = {
         'dash_beam_lights': 'Дальне світло',
         'dash_handbrake': 'Ручне гальмо',
         'dash_belt': 'Ремінь безпеки',
+        'dash_fw_title': 'Версії прошивки',
+        'dash_soft_version': 'Версія ПО',
+        'dash_boot_version': 'Версія бутлоадера',
 
         // Cruise Control
         'cruise_title': 'Круїз контроль',
@@ -615,6 +618,9 @@ export const translations = {
         'dash_beam_lights': 'Beam lights',
         'dash_handbrake': 'Handbrake',
         'dash_belt': 'Seat belt',
+        'dash_fw_title': 'Firmware versions',
+        'dash_soft_version': 'Software version',
+        'dash_boot_version': 'Bootloader version',
 
         // Cruise Control
         'cruise_title': 'Cruise Control',
