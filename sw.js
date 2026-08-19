@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diag-app-v17';
+const CACHE_NAME = 'diag-app-v19';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -28,6 +28,7 @@ const ASSETS_TO_CACHE = [
   './modules/updatePage.js',
   './modules/webSerial.js',
   './modules/webBluetooth.js',
+  './modules/linkStatus.js',
   './modules/cruiseChartPage.js',
   './modules/pedalChartPage.js',
   './modules/chart.min.js',

@@ -1,49 +1,254 @@
 import { state } from './state.js';
 import { logMessage, updateConnectionTabs } from './ui.js';
 import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
+import {
+    noteRxActivity, noteTxActivity,
+    startLinkWatchdog, stopLinkWatchdog, handleLinkLost
+} from './linkStatus.js';
 
 // Глобальний буфер для зклеювання розірваних BLE пакетів
 let bleBuffer = "";
 
+// Поки не null — триває проба GATT-каналу: сирі дані не парсяться як CAN,
+// а накопичуються тут, щоб зрозуміти, яка пара характеристик жива.
+let probeBuffer = null;
+
 // Допоміжна функція затримки
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Відомі сервіси BLE-клонів ELM327. Web Bluetooth віддає у getPrimaryServices()
+// ЛИШЕ те, що перелічене тут або у filters, тож список має бути повним.
+const KNOWN_SERVICES = [
+    0xFFF0,                                   // vLinker, більшість дешевих клонів
+    0xFFE0,                                   // HM-10 / Vgate iCar Pro BLE
+    0xFFE5,                                   // HM-10 варіант із роздільним write-сервісом
+    0x18F0,                                   // частина OBDII BLE модулів
+    0xFEE7,                                   // Telink-клони
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e'    // Nordic UART Service
+];
+
+// Порядок перебору кандидатів на запис: спершу канонічні UART-характеристики.
+const WRITE_PREFERENCE = ['fff2', 'ffe1', 'ffe9', '2af1', 'fff1', '6e400002'];
+
+function charLabel(ch) {
+    // 16-бітні UUID приходять як 0000fff2-0000-1000-8000-00805f9b34fb
+    return /^0000[0-9a-f]{4}-0000-1000-8000-00805f9b34fb$/.test(ch.uuid)
+        ? '0x' + ch.uuid.slice(4, 8).toUpperCase()
+        : ch.uuid;
+}
+
+function shortUuid(ch) {
+    return ch.uuid.startsWith('0000') ? ch.uuid.slice(4, 8) : ch.uuid.split('-')[0];
+}
+
+function propsLabel(p) {
+    const flags = [];
+    if (p.notify) flags.push('notify');
+    if (p.indicate) flags.push('indicate');
+    if (p.write) flags.push('write');
+    if (p.writeWithoutResponse) flags.push('writeNR');
+    if (p.read) flags.push('read');
+    return flags.join(',') || '—';
+}
+
+// Низькорівневий запис у конкретну характеристику обраним методом.
+// BLE MTU за замовчуванням 23 байти (20 корисних), тож ріжемо довгі команди.
+async function rawWrite(candidate, text) {
+    const data = new TextEncoder().encode(text);
+    for (let offset = 0; offset < data.length; offset += 20) {
+        const chunk = data.slice(offset, offset + 20);
+        if (candidate.mode === 'writeNR' && candidate.char.writeValueWithoutResponse) {
+            await candidate.char.writeValueWithoutResponse(chunk);
+        } else if (candidate.char.writeValueWithResponse) {
+            await candidate.char.writeValueWithResponse(chunk);
+        } else {
+            await candidate.char.writeValue(chunk);
+        }
+        if (data.length > 20) await sleep(10);
+    }
+}
+
+// Обробка вхідного шматка даних: під час проби — тільки накопичення,
+// у робочому режимі — збірка до '>' і розбір CAN-кадрів.
+function handleChunk(chunk) {
+    noteRxActivity();
+
+    if (probeBuffer !== null) {
+        probeBuffer += chunk;
+        return;
+    }
+
+    bleBuffer += chunk;
+
+    // ELM327 сигналізує про кінець відповіді символом ">"
+    // Обробляємо тільки до першого ">", залишок зберігаємо для наступного циклу
+    if (bleBuffer.includes('>')) {
+        const promptIdx = bleBuffer.indexOf('>');
+        const toProcess = bleBuffer.substring(0, promptIdx);
+        bleBuffer = bleBuffer.substring(promptIdx + 1);
+
+        const parts = toProcess.split('\r');
+        for (let part of parts) {
+            const cleanLine = part.trim().toUpperCase();
+            if (cleanLine && cleanLine !== 'OK' && !cleanLine.startsWith('AT')) {
+                const parsed = parseCanResponse(cleanLine);
+                if (parsed && parsed.id && parsed.data && window.pollingManager) {
+                    window.pollingManager.handleCanResponse(parsed.id, parsed.data);
+                }
+            }
+        }
+
+        // ISO-TP: відправляємо FC якщо збірка потребує ще CF
+        sendPendingFlowControl();
+    }
+}
+
+// Шле ATI і чекає будь-яку відповідь. Повертає true, якщо канал живий.
+async function probeCandidate(candidate, timeoutMs = 1500) {
+    probeBuffer = "";
+    try {
+        await rawWrite(candidate, "ATI\r");
+    } catch (e) {
+        logMessage(`  ✗ ${candidate.label}: запис відхилено (${e.message})`);
+        probeBuffer = null;
+        return false;
+    }
+
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        if (probeBuffer.includes('>')) break;
+        await sleep(50);
+    }
+
+    const answer = probeBuffer.replace(/[\r\n>]+/g, ' ').trim();
+    probeBuffer = null;
+
+    if (answer.length > 0) {
+        logMessage(`  ✓ ${candidate.label}: відповідь [${answer}]`);
+        return true;
+    }
+    logMessage(`  ✗ ${candidate.label}: тиша`);
+    return false;
+}
+
 export async function connectBleAdapter() {
+    let notifyChars = [];
+
     try {
         logMessage("Пошук BLE пристроїв...");
         const device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [0xFFF0] }],
-            optionalServices: [0xFFF0]
+            filters: KNOWN_SERVICES.map(s => ({ services: [s] })),
+            optionalServices: KNOWN_SERVICES
         });
 
         logMessage(`Підключення до ${device.name}...`);
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService(0xFFF0);
 
-        const charRead = await service.getCharacteristic(0xFFF1);
-        const charWrite = await service.getCharacteristic(0xFFF2);
+        // Вішаємо ДО connect: якщо адаптер зникне (живлення, дальність, розряд),
+        // подія прилетить і UI не залишиться у фальшивому «підключено».
+        device.addEventListener('gattserverdisconnected', () => {
+            handleLinkLost('BLE-пристрій відключився');
+        });
+
+        const server = await device.gatt.connect();
+
+        // --- РОЗВІДКА GATT ---
+        // Різні ревізії клонів кладуть UART на різні сервіси і міняють місцями
+        // notify/write, тому профіль визначаємо, а не припускаємо.
+        const services = await server.getPrimaryServices();
+        const allChars = [];
+        for (const svc of services) {
+            for (const ch of await svc.getCharacteristics()) allChars.push(ch);
+        }
+
+        logMessage(`GATT: ${services.length} сервіс(ів), ${allChars.length} характеристик`);
+        for (const ch of allChars) {
+            logMessage(`  ${charLabel(ch)} [${propsLabel(ch.properties)}]`);
+        }
+
+        notifyChars = allChars.filter(c => c.properties.notify || c.properties.indicate);
+        if (notifyChars.length === 0) {
+            throw new Error("у пристрою немає характеристики з notify — це не UART-профіль");
+        }
+
+        // Кандидати на запис: кожна характеристика × кожен підтримуваний метод.
+        const candidates = [];
+        for (const ch of allChars) {
+            if (ch.properties.writeWithoutResponse) {
+                candidates.push({ char: ch, mode: 'writeNR', label: `${charLabel(ch)} writeNR` });
+            }
+            if (ch.properties.write) {
+                candidates.push({ char: ch, mode: 'write', label: `${charLabel(ch)} write` });
+            }
+        }
+        if (candidates.length === 0) {
+            throw new Error("у пристрою немає характеристики для запису");
+        }
+
+        candidates.sort((a, b) => {
+            const ra = WRITE_PREFERENCE.indexOf(shortUuid(a.char));
+            const rb = WRITE_PREFERENCE.indexOf(shortUuid(b.char));
+            return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
+        });
+
+        // Слухаємо ВСІ notify-характеристики, доки не зрозуміємо, яка відповідає.
+        const onValue = (event) => {
+            handleChunk(new TextDecoder().decode(event.target.value));
+            if (window.uiUpdater && window.uiUpdater.flashCanLed) {
+                window.uiUpdater.flashCanLed();
+            }
+        };
+        for (const ch of notifyChars) {
+            await ch.startNotifications();
+            ch.addEventListener('characteristicvaluechanged', onValue);
+        }
+
+        logMessage("Стабілізація з'єднання...");
+        await sleep(500); // Даємо час GATT стабілізуватися перед пробою
+
+        // --- ПРОБА КАНАЛУ ---
+        logMessage(`Перевірка каналу (${candidates.length} варіант(ів))...`);
+        let chosen = null;
+        for (let pass = 1; pass <= 2 && !chosen; pass++) {
+            if (pass === 2) {
+                // Частина клонів після GATT-конекту прокидається не миттєво.
+                // Другий прохід дешевший за хибний вердикт «адаптер німий».
+                logMessage("Повторна спроба після паузи...");
+                await sleep(1000);
+            }
+            for (const candidate of candidates) {
+                if (await probeCandidate(candidate)) {
+                    chosen = candidate;
+                    break;
+                }
+                await sleep(150);
+            }
+        }
+
+        if (!chosen) {
+            throw new Error("жодна характеристика не відповіла на ATI — адаптер не приймає команди");
+        }
+        logMessage(`✓ Робочий канал: ${chosen.label}`);
 
         state.connectionType = 'ble';
         state.bleDevice = device;
-        bleBuffer = ""; // Очищуємо буфер при новому підключенні
+        bleBuffer = "";
 
         // Налаштування "письменника" з логікою повторних спроб
         state.writer = {
             write: async (text) => {
-                const encoder = new TextEncoder();
                 const command = text.endsWith('\r') ? text : text + '\r';
-                const data = encoder.encode(command);
-                
+
                 if (window.uiUpdater && window.uiUpdater.flashAdapterLed) {
                     window.uiUpdater.flashAdapterLed();
                 }
+                noteTxActivity();
 
                 // Логіка Retry для стабільності (вирішує GATT busy)
                 let retries = 3;
                 while (retries > 0) {
                     try {
-                        if (charWrite.service.device.gatt.connected) {
-                            await charWrite.writeValueWithoutResponse(data);
+                        if (chosen.char.service.device.gatt.connected) {
+                            await rawWrite(chosen, command);
                         } else {
                             console.warn("BLE Write skipped: disconnected");
                         }
@@ -58,47 +263,7 @@ export async function connectBleAdapter() {
             }
         };
 
-        await charRead.startNotifications();
-        
-        // --- ОБРОБНИК ВХІДНИХ ДАНИХ З БУФЕРОМ ---
-        charRead.addEventListener('characteristicvaluechanged', (event) => {
-            const decoder = new TextDecoder();
-            const chunk = decoder.decode(event.target.value);
-            
-            // Накопичуємо дані в буфер
-            bleBuffer += chunk;
-
-            // ELM327 сигналізує про кінець відповіді символом ">"
-            // Обробляємо тільки до першого ">", залишок зберігаємо для наступного циклу
-            if (bleBuffer.includes('>')) {
-                const promptIdx = bleBuffer.indexOf('>');
-                const toProcess = bleBuffer.substring(0, promptIdx);
-                bleBuffer = bleBuffer.substring(promptIdx + 1);
-
-                const parts = toProcess.split('\r');
-                for (let part of parts) {
-                    const cleanLine = part.trim().toUpperCase();
-                    if (cleanLine && cleanLine !== 'OK' && !cleanLine.startsWith('AT')) {
-                        const parsed = parseCanResponse(cleanLine);
-                        if (parsed && parsed.id && parsed.data && window.pollingManager) {
-                            window.pollingManager.handleCanResponse(parsed.id, parsed.data);
-                        }
-                    }
-                }
-
-                // ISO-TP: відправляємо FC якщо збірка потребує ще CF
-                sendPendingFlowControl();
-            }
-
-            if (window.uiUpdater && window.uiUpdater.flashCanLed) {
-                window.uiUpdater.flashCanLed();
-            }
-        });
-
         // --- КРОК ІНІЦІАЛІЗАЦІЇ ---
-        logMessage("Стабілізація з'єднання...");
-        await sleep(500); // Даємо час GATT стабілізуватися перед інітом
-
         logMessage("Ініціалізація ELM327...");
 
         const initCommands = [
@@ -122,6 +287,7 @@ export async function connectBleAdapter() {
         }
 
         state.isConnected = true;
+        startLinkWatchdog();
         updateConnectionTabs();
         logMessage("✓ BLE підключено та налаштовано!");
 
@@ -131,12 +297,13 @@ export async function connectBleAdapter() {
         return true;
     } catch (error) {
         logMessage(`BLE Помилка: ${error.message}`);
-        
+
         // Спробуємо коректно відключитись при помилці ініціалізації
         if (state.bleDevice && state.bleDevice.gatt.connected) {
             state.bleDevice.gatt.disconnect();
         }
-        
+
+        probeBuffer = null;
         state.isConnected = false;
         return false;
     }
@@ -145,6 +312,8 @@ export async function connectBleAdapter() {
 // --- НОВА ФУНКЦІЯ ВІДКЛЮЧЕННЯ ---
 export async function disconnectBleAdapter() {
     try {
+        stopLinkWatchdog();
+
         if (state.bleDevice && state.bleDevice.gatt && state.bleDevice.gatt.connected) {
             logMessage("Відключення BLE...");
             state.bleDevice.gatt.disconnect();
@@ -159,6 +328,7 @@ export async function disconnectBleAdapter() {
         state.bleDevice = null;
         state.writer = null;
         bleBuffer = "";
+        probeBuffer = null;
 
         updateConnectionTabs();
         logMessage("BLE Відключено.");

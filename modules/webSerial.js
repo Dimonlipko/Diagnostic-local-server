@@ -7,8 +7,22 @@ import { logMessage, updateUI } from './ui.js';
 import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
 import { handleCanResponse, stopAllPolling } from './pollingManager.js';
 import { updateConnectionTabs } from './ui.js';
+import {
+    noteRxActivity, noteTxActivity,
+    startLinkWatchdog, stopLinkWatchdog, handleLinkLost
+} from './linkStatus.js';
 
 let lineBuffer = "";
+
+// Фізичне від'єднання USB-адаптера WebSerial повідомляє окремою подією.
+// Без неї обрив помічався б лише коли читання впаде або настане таймаут.
+if ('serial' in navigator) {
+    navigator.serial.addEventListener('disconnect', (event) => {
+        if (state.port && event.target === state.port) {
+            handleLinkLost("USB-адаптер від'єднано");
+        }
+    });
+}
 
 // ... (Функції readWithTimeout, detectAdapterType, initializeAdapter залишаються БЕЗ ЗМІН) ...
 // ... (Вони у вас реалізовані добре) ...
@@ -234,6 +248,8 @@ async function readLoop() {
 
             if (!value) continue;
 
+            noteRxActivity();
+
             // Декодуємо отримані байти у текст
             const textChunk = new TextDecoder().decode(value, {stream: true});
             lineBuffer += textChunk;
@@ -296,8 +312,15 @@ async function readLoop() {
     } catch (error) {
         if (error.name !== 'AbortError' && state.isConnected) {
             logMessage(`Помилка читання: ${error.message}`);
+            handleLinkLost(error.message);
         }
     } finally {
+        // Вихід із циклу при state.isConnected === true означає, що читання
+        // обірвалось само (адаптер від'єднали), а не через disconnectAdapter().
+        if (state.isConnected) {
+            handleLinkLost('потік читання завершився');
+        }
+
         if (state.reader) {
             try {
                 state.reader.releaseLock();
@@ -335,8 +358,19 @@ export async function connectAdapter() {
         
         // Налаштування потоку запису (Writer)
         const textEncoder = new TextEncoderStream();
-        state.writer = textEncoder.writable.getWriter(); // 💡 Цей об'єкт тепер доступний для pollingManager
+        const rawWriter = textEncoder.writable.getWriter();
         textEncoder.readable.pipeTo(port.writable);
+
+        // Обгортка над writer: фіксує момент TX для watchdog-а звʼязку.
+        // Інтерфейс сумісний з попереднім (використовуються лише write/close).
+        state.writer = {
+            write: (text) => {
+                noteTxActivity();
+                return rawWriter.write(text);
+            },
+            close: () => rawWriter.close(),
+            releaseLock: () => rawWriter.releaseLock()
+        };
         
         // Налаштування потоку читання (Reader)
         state.reader = port.readable.getReader(); 
@@ -348,6 +382,7 @@ export async function connectAdapter() {
         await initializeAdapter();
 
         state.isConnected = true; // 💡 ПІДТВЕРДЖЕННЯ: Тепер state.isConnected стає true лише після повної готовності
+        startLinkWatchdog();
         logMessage("✓ Стан: Підключено.");
 
         updateConnectionTabs();
@@ -433,8 +468,9 @@ export async function disconnectAdapter() {
     
     // 1. Встановлюємо прапорець, що відключаємось (щоб readLoop зупинився)
     state.isConnected = false;
-    
+
     // 2. Зупиняємо всі таймери опитування
+    stopLinkWatchdog();
     stopAllPolling();
     
     // 3. Закриваємо writer СПОЧАТКУ (це важливо!)
