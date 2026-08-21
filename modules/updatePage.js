@@ -21,6 +21,21 @@ function t(key) {
     return translations[currentLang]?.[key] || key;
 }
 
+let logTimer = null;
+
+/**
+ * Оверлей перекриває сторінку на всю заливку, а logMessage() пише в буфер
+ * термінала, якого тут немає. Без цього дзеркала єдиним місцем, де видно
+ * причину збою, лишалась би консоль DevTools.
+ */
+function refreshOverlayLog() {
+    const el = document.getElementById('overlay-log');
+    if (!el) return;
+
+    // terminalLog зберігається найновішим рядком угору
+    el.textContent = state.terminalLog.split('\n').slice(0, 14).join('\n');
+}
+
 /**
  * Показує/ховає оверлей блокування під час оновлення
  * @param {boolean} show - true для показу, false для приховання
@@ -29,6 +44,22 @@ function toggleUpdateOverlay(show) {
     const overlay = document.getElementById('update-overlay');
     if (overlay) {
         overlay.style.display = show ? 'flex' : 'none';
+    }
+
+    if (logTimer) { clearInterval(logTimer); logTimer = null; }
+    if (show) {
+        refreshOverlayLog();
+        logTimer = setInterval(refreshOverlayLog, 500);
+    }
+}
+
+/** Лог у буфер обміну — щоб було чим поділитись після невдалої спроби. */
+async function handleCopyLog() {
+    try {
+        await navigator.clipboard.writeText(state.terminalLog);
+        logMessage('Лог скопійовано в буфер обміну.');
+    } catch (e) {
+        logMessage(`Не вдалось скопіювати лог: ${e.message}`);
     }
 }
 
@@ -135,6 +166,18 @@ async function handleFileSelect(event) {
 }
 
 /**
+ * Поле CRC потрібне лише для сирого образу без заголовка. У штатному сценарії
+ * (контейнер із --pack) воно тільки заважає, тому показуємо його аж тоді, коли
+ * з файлу CRC не дістати.
+ */
+function setCrcVisible(show) {
+    for (const id of ['ota-crc', 'ota-crc-label', 'ota-crc-hint']) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = show ? '' : 'none';
+    }
+}
+
+/**
  * Якщо файл — контейнер LEAFOTA1, CRC і таргет беруться з заголовка, а поля
  * блокуються: ручне значення тут могло б лише суперечити файлу.
  */
@@ -157,6 +200,7 @@ async function applyContainerHeader(file) {
 
         crcInput.value = crc.toString(16).toUpperCase().padStart(8, '0');
         crcInput.disabled = true;
+        setCrcVisible(false);
 
         if (targetSelect) {
             targetSelect.value = unit === 0x01 ? 'boot' : 'app';
@@ -168,7 +212,10 @@ async function applyContainerHeader(file) {
                    `таргет = ${unit === 0x01 ? 'бутлоадер' : 'застосунок'}`);
     } else {
         crcInput.disabled = false;
+        crcInput.value = '';
+        setCrcVisible(true);
         if (targetSelect) targetSelect.disabled = false;
+        logMessage('Файл без заголовка LEAFOTA1 — потрібен CRC32 вручну.');
     }
 }
 
@@ -356,6 +403,13 @@ export function initUpdatePage() {
         cancelButton.disabled = true;
         cancelButton.addEventListener('click', handleCancel);
     }
+
+    const copyLogButton = document.getElementById('copy-log-button');
+    if (copyLogButton) {
+        copyLogButton.addEventListener('click', handleCopyLog);
+    }
+
+    setCrcVisible(false);
 
     // Обробник кліку на область вибору файлу
     const fileInputLabel = document.getElementById('file-input-label');

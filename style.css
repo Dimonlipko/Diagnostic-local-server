@@ -2005,3 +2005,19 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
     color: var(--text-muted);
     line-height: 1.4;
 }
+
+.ota-log {
+    max-height: 190px;
+    overflow-y: auto;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #ddd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75em;
+    line-height: 1.45;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
