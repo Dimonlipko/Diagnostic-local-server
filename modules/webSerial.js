@@ -252,6 +252,14 @@ async function readLoop() {
 
             // Декодуємо отримані байти у текст
             const textChunk = new TextDecoder().decode(value, {stream: true});
+
+            // Під час OTA сирі кадри забирає firmwareUpdate.js: ack блоку — це
+            // 2 байти, штатний ISO-TP парсер такого не розбирає.
+            if (state.rawChunkSink) {
+                state.rawChunkSink(textChunk);
+                continue;
+            }
+
             lineBuffer += textChunk;
 
             // Розбиваємо буфер на рядки за символами переносу

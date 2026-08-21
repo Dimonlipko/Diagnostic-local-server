@@ -14,6 +14,7 @@ export let state = {
     terminalLog: 'Очікування підключення...',
     activePollers: [],
     lastRequestId: null, // Додано для парсингу відповідей ELM без заголовків
+    rawChunkSink: null,  // Перехоплення сирого потоку ELM під час OTA (firmwareUpdate.js)
     isConnected: false
 };
 

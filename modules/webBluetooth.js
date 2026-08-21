@@ -73,6 +73,13 @@ async function rawWrite(candidate, text) {
 function handleChunk(chunk) {
     noteRxActivity();
 
+    // Під час OTA сирі кадри забирає firmwareUpdate.js: ack блоку — це 2 байти,
+    // штатний ISO-TP парсер такого не розбирає.
+    if (state.rawChunkSink) {
+        state.rawChunkSink(chunk);
+        return;
+    }
+
     if (probeBuffer !== null) {
         probeBuffer += chunk;
         return;

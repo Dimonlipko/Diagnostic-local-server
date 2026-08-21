@@ -1975,3 +1975,33 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 }
 
 /* --- КІНЕЦЬ CSS --- */
+
+/* --- Попередження про ризики на сторінці OTA ---------------------------- */
+.ota-warning {
+    margin: 12px 0;
+    padding: 10px 12px;
+    border-left: 3px solid #e0a800;
+    border-radius: 4px;
+    background: rgba(224, 168, 0, 0.12);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.ota-warning.critical {
+    border-left-color: #d9534f;
+    background: rgba(217, 83, 79, 0.15);
+    font-weight: 500;
+}
+
+#overlay-status-text {
+    font-size: 0.95em;
+    opacity: 0.85;
+}
+
+.ota-hint {
+    margin: 8px 0 4px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    line-height: 1.4;
+}

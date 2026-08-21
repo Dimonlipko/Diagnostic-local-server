@@ -10,6 +10,14 @@
         <h3 data-lang-key="update_overlay_title">Йде оновлення прошивки...</h3>
         <p data-lang-key="update_overlay_text1">Будь ласка, не закривайте і не оновлюйте цю сторінку!</p>
         <p data-lang-key="update_overlay_text2">Це може пошкодити ваш пристрій.</p>
+
+        <div class="progress-bar-container" style="margin: 18px 0 10px;">
+            <div class="progress-bar" id="overlay-progress-bar">0%</div>
+        </div>
+        <div id="overlay-status-text">—</div>
+
+        <button id="cancel-button" class="write-button" style="margin-top: 18px;"
+                data-lang-key="update_cancel_button">Скасувати</button>
     </div>
 </div>
 
@@ -23,6 +31,29 @@
         <span id="file-name" data-lang-key="update_file_not_selected">Файл не обрано</span>
     </label>
     <input type="file" id="file-input" accept=".bin,.img,.hex">
+
+    <!-- 1a. Що саме оновлюємо -->
+    <div class="bms-readonly-grid" style="margin-top: 15px;">
+        <label for="ota-target" data-lang-key="update_target">Що оновлюємо</label>
+        <select id="ota-target">
+            <option value="app" data-lang-key="update_target_app">Застосунок (0x79B, FLASH0)</option>
+            <option value="boot" data-lang-key="update_target_boot">Бутлоадер (0x7E4, FLASH1)</option>
+        </select>
+
+        <label for="ota-crc" data-lang-key="update_crc">CRC32 плейнтексту</label>
+        <input type="text" id="ota-crc" autocomplete="off" spellcheck="false"
+               maxlength="10" placeholder="38664E2C">
+    </div>
+
+    <div id="ota-crc-hint" class="ota-hint" data-lang-key="update_crc_hint">
+        Потрібен вихід can_flash.py --no-send --out (уже зашифрований образ).
+        CRC32 візьми з рядка «CRC32 = 0x…» у логу того ж запуску.
+    </div>
+
+    <!-- 1b. Попередження про ризики -->
+    <div id="ota-warning" class="ota-warning" data-lang-key="update_warn_app">
+        OTA дозволено лише в P/N і без руху. Заливка займає 10–30 хв через ELM327.
+    </div>
 
     <!-- 2. Кнопка "Залити прошивку" -->
     <button id="upload-button" disabled data-lang-key="update_upload_button">Залити прошивку</button>
