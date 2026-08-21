@@ -367,6 +367,12 @@ async function streamData(image, target, onProgress) {
     let lastPct = -1;
     let lastBroadcast = -1;
 
+    // Темп у мс/блок — єдина цифра, за якою видно, що саме обмежує заливку
+    // (інтервал BLE-зʼєднання чи таймаут ELM), і чи має сенс правити ATST.
+    const startedAt = Date.now();
+    let lastReportPct = 0;
+    let retriesTotal = 0;
+
     for (let i = 0; i < total; i++) {
         if (cancelRequested) throw new Error('Скасовано користувачем');
 
@@ -384,6 +390,7 @@ async function streamData(image, target, onProgress) {
 
         let ack = null;
         for (let retry = 0; retry < FIRMWARE_CONFIG.blockRetries && !ack; retry++) {
+            if (retry > 0) retriesTotal++;
             ack = await sendFrame(frame, isAck, FIRMWARE_CONFIG.blockTimeoutMs);
         }
 
@@ -402,8 +409,21 @@ async function streamData(image, target, onProgress) {
                 lastBroadcast = pct;
                 await broadcastStatus(target, PHASE.PROGRESS, pct);
             }
+
+            if (pct - lastReportPct >= 10) {
+                lastReportPct = pct;
+                const perBlock = (Date.now() - startedAt) / (i + 1);
+                const leftMin = (total - i - 1) * perBlock / 60000;
+                logMessage(`OTA: ${pct}% · ${perBlock.toFixed(1)} мс/блок · ` +
+                           `ретраїв ${retriesTotal} · залишилось ~${leftMin.toFixed(1)} хв`);
+            }
         }
     }
+
+    const perBlock = (Date.now() - startedAt) / total;
+    logMessage(`OTA: потік завершено за ${((Date.now() - startedAt) / 60000).toFixed(1)} хв · ` +
+               `${perBlock.toFixed(1)} мс/блок · ретраїв ${retriesTotal} ` +
+               `(ATST${FIRMWARE_CONFIG.elmStreamSt}, таймаут блоку ${FIRMWARE_CONFIG.blockTimeoutMs} мс)`);
 }
 
 /**
