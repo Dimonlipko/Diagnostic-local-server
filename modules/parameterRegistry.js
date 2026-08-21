@@ -1529,6 +1529,44 @@ export const PARAMETER_REGISTRY = {
         }
     },
 
+    /**
+     * Запит 221207: Версія прошивки HMI (Nextion .tft)
+     * Відповідь: 06 62 12 07 <yy> <mm> <dd> 00
+     * Значення кладе сама панель (Variable hmiver = YYMMDD), приборка приймає
+     * його по UART. Нулі = HMI не відрапортувала (стара .tft без hmiver).
+     */
+    'dashboard_info_221207': {
+        request: { canId: '79B', data: '221207', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const yy = parseInt(dataHex.substring(8, 10), 16);
+                const mm = parseInt(dataHex.substring(10, 12), 16);
+                const dd = parseInt(dataHex.substring(12, 14), 16);
+                return { hmiVersion: formatBuildVersion(yy, mm, dd) };
+            }
+        }
+    },
+
+    /**
+     * Запит 221208: Тріп-одометр (3 bytes, step 0.1, Km)
+     * Рахує STM32 (база зберігається поруч з одометром), HMI лише показує.
+     */
+    'dashboard_info_221208': {
+        request: { canId: '79B', data: '221208', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 14) return null;
+                const b1 = parseInt(dataHex.substring(8, 10), 16);
+                const b2 = parseInt(dataHex.substring(10, 12), 16);
+                const b3 = parseInt(dataHex.substring(12, 14), 16);
+                return { trip: `${(((b1 << 16) | (b2 << 8) | b3) * 0.1).toFixed(1)} km` };
+            }
+        }
+    },
+
     'settings_info_220901': {
         request: { canId: '79B', data: '220901', interval: 2000 },
         response: {
@@ -1675,6 +1713,9 @@ export const PARAMETER_REGISTRY = {
     },
     'write_display_mode': {
         writeConfig: { canId: '79B', dataPrefix: '2e0f32', bytes: 1 }
+    },
+    'write_trip': {
+        writeConfig: { canId: '79B', dataPrefix: '2e1208', bytes: 3, multiplier: 10 }
     },
     'write_odometer': {
         writeConfig: { canId: '79B', dataPrefix: '2e1201', bytes: 3, multiplier: 10 }

@@ -62,6 +62,11 @@
     <input type="text" id="writeOdometer" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_odometer" data-target-id="writeOdometer" data-lang-key="btn_write">Write</button>
 
+    <label data-lang-key="dash_trip">Trip</label>
+    <input type="text" id="readTrip" value="0.0 km" readonly data-bind="dashboard_info_221208.trip">
+    <input type="text" id="writeTrip" data-lang-key="placeholder_new_value" placeholder="New Value">
+    <button class="write-button" data-param-name="write_trip" data-target-id="writeTrip" data-lang-key="btn_write">Write</button>
+
     <label data-lang-key="dash_clock">Clock</label>
     <input type="text" id="readBrowserClock" value="—" readonly>
     <button class="write-button" id="syncClockBtn" data-lang-key="dash_clock_sync" style="grid-column: 4 / 5;">Sync</button>
@@ -76,4 +81,7 @@
 
     <label data-lang-key="dash_boot_version">Bootloader version</label>
     <input type="text" id="readBootVersion" value="—" readonly data-bind="dashboard_info_221205.bootVersion">
+
+    <label data-lang-key="dash_hmi_version">HMI version</label>
+    <input type="text" id="readHmiVersion" value="—" readonly data-bind="dashboard_info_221207.hmiVersion">
 </div>
