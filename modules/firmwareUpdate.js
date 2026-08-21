@@ -36,6 +36,10 @@ const FW_END_MARKER = 'DEFADEC0';
 
 const PHASE = { START: 1, PROGRESS: 2, END_OK: 3, END_FAIL: 4 };
 
+// Скільки після заливки не чіпати watchdog: ECU ще ребутиться в новий
+// застосунок (bootloader -> GPNVM2=0 -> reset -> setup()).
+const OTA_REBOOT_GRACE_MS = 20000;
+
 // Таймінги. ELM327 тримає лінію до ATST-таймауту, тож він домінує у вартості
 // блоку — звідси коротке ATST для потоку і довше для фінального статусу.
 const FIRMWARE_CONFIG = {
@@ -555,7 +559,9 @@ export async function updateFirmware(firmwareData, options = {}) {
             console.warn('Не вдалось відновити режим ELM:', e.message);
         }
 
-        if (state.isConnected) startLinkWatchdog();
+        // Після app-OTA ECU ребутиться в новий застосунок і кілька секунд
+        // мовчить — без цієї паузи watchdog оголошував би це втратою звʼязку.
+        if (state.isConnected) startLinkWatchdog(OTA_REBOOT_GRACE_MS);
         cancelRequested = false;
         otaActive = false;
         await releaseWakeLock();
