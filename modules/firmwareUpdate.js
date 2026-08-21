@@ -498,6 +498,14 @@ export async function updateFirmware(firmwareData, options = {}) {
                                                      : 'CRC задано вручну'));
 
         onPhase('elm');
+
+        // ATD0 = не показувати DLC. Якщо адаптер стартував із ATD1, перед даними
+        // стояв би зайвий байт довжини, і ехо індексу блоку не збіглося б жодного
+        // разу. Шлемо ПЕРШИМ: частина клонів плутає ATD0 з ATD (скидання до
+        // дефолтів), тож усе решта нижче однаково переставить конфіг як треба.
+        await elmCommand('ATD0');
+        await elmCommand('ATE0');
+
         // Сирий CAN без ISO-TP-форматування, з заголовками, короткий таймаут.
         await elmCommand('ATCAF0');
         await elmCommand('ATH1');
