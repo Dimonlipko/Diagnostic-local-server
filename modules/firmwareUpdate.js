@@ -19,6 +19,7 @@ import { state } from './state.js';
 import { logMessage } from './ui.js';
 import { stopAllPolling } from './pollingManager.js';
 import { startLinkWatchdog, stopLinkWatchdog } from './linkStatus.js';
+import { runElmInit } from './elmInit.js';
 
 export const OTA_TARGETS = {
     app:  { txId: '79B', unit: 0x00, reboots: true },
@@ -44,7 +45,6 @@ const OTA_REBOOT_GRACE_MS = 20000;
 // блоку — звідси коротке ATST для потоку і довше для фінального статусу.
 const FIRMWARE_CONFIG = {
     elmStreamSt: '08',      // ATST08 ≈ 32 мс — таймаут ELM під час стріму
-    elmNormalSt: '32',      // повертаємо штатне значення з init адаптера
     blockTimeoutMs: 400,
     blockRetries: 5,
     startTimeoutMs: 1500,
@@ -570,11 +570,12 @@ export async function updateFirmware(firmwareData, options = {}) {
         state.rawChunkSink = null;
         flushRx();
 
-        // Повертаємо адаптер у штатний UDS-режим (значення з init транспорту).
+        // Повертаємо адаптер у штатний UDS-режим. Раніше тут поверталися лише
+        // ATAT1/ATST/ATSH — а якщо адаптер за час заливки встиг скинутись у
+        // дефолти, ехо й вимкнені заголовки лишалися б назавжди.
         try {
             await elmCommand('ATAT1');
-            await elmCommand(`ATST${FIRMWARE_CONFIG.elmNormalSt}`);
-            await elmCommand('ATSH79B');
+            await runElmInit({ log: logMessage });
         } catch (e) {
             console.warn('Не вдалось відновити режим ELM:', e.message);
         }

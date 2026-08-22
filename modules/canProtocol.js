@@ -1,8 +1,43 @@
 import { state } from './state.js';
 import { logMessage } from './ui.js';
+import { reinitAdapter } from './elmInit.js';
 
 
 let isWriting = false;
+
+// --- Виявлення злетілої конфігурації адаптера --------------------------------
+// При ATE0 адаптер НЕ МАЄ повертати надіслане. Якщо повертає — на ньому знову
+// ATE1, тобто конфігурацію збито (просадка живлення, ресет модуля), і разом з
+// нею зникли ATH1/ATCRA/ATSH. Запити після цього йдуть у нікуди назавжди,
+// бо watchdog бачить трафік і вважає звʼязок живим.
+
+const ECHO_STRIKES_TO_REINIT = 3;
+
+let recentSends = [];
+let echoStrikes = 0;
+
+function rememberSend(payload) {
+    recentSends.push(payload);
+    if (recentSends.length > 4) recentSends.shift();
+}
+
+/** Рядок дослівно збігається з нещодавно відправленим — це ехо, не відповідь. */
+function looksLikeOwnEcho(clean) {
+    return recentSends.includes(clean);
+}
+
+function noteEcho() {
+    if (++echoStrikes < ECHO_STRIKES_TO_REINIT) return;
+
+    echoStrikes = 0;
+    recentSends = [];
+    reinitAdapter('адаптер повертає ехо команд (ATE0 злетів)', logMessage);
+}
+
+/** Валідна відповідь означає, що конфігурація на місці. */
+function noteValidFrame() {
+    echoStrikes = 0;
+}
 
 let rawFrameConsumer = null;
 export function setRawFrameConsumer(fn) { rawFrameConsumer = fn; }
@@ -51,6 +86,7 @@ export async function sendCanRequest(canId, data) {
         // 2. ВІДПРАВКА ДАНИХ (ATCAF0: додаємо PCI байт вручну)
         const pciHex = (data.length / 2).toString(16).padStart(2, '0');
         await writer.write(`${pciHex}${data}\r`);
+        rememberSend(`${pciHex}${data}`.toUpperCase());
         console.log(`[Protocol] >>> SEND: ${pciHex}${data}`);
 
         // 3. ПАУЗА ПІСЛЯ ЗАПИТУ
@@ -102,6 +138,13 @@ function parseCanResponse_ELM327(line) {
 
     console.log(`[DEBUG RAW IN]: "${clean}" | Len: ${clean.length}`);
 
+    // Дослівне повернення нашого ж запиту — доказ, що ATE0 на адаптері злетів
+    if (looksLikeOwnEcho(clean)) {
+        console.log(`[DEBUG PARSER]: ЕХО власного запиту: ${clean}`);
+        noteEcho();
+        return null;
+    }
+
     // Ігноруємо ЕХО команд (запити без CAN ID префіксу)
     if (clean.startsWith('AT') ||
         clean.startsWith('22') ||
@@ -142,6 +185,8 @@ function parseCanResponse_ELM327(line) {
     }
 
     if (!id || !data || data.length < 2) return null;
+
+    noteValidFrame(); // конфігурація адаптера на місці — лічильник ехо скидається
 
     // === ISO-TP Multi-Frame обробка ===
     const firstNibble = parseInt(data.charAt(0), 16);
