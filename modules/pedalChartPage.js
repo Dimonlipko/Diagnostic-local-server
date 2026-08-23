@@ -1,15 +1,27 @@
 import { addDataListener, removeDataListener } from './ui.js';
 
-// Calibration data (from ECU params)
+// Calibration data (from ECU params).
+//
+// Дзеркалить readPedals() у src/Pedal.cpp — саме там живе крива, яку тут видно:
+//   calibration_pedal_torque_point = MaxTrq_pedal * calibration_pedal_torque_percent / 100
+//   ThrotVal_neg = map(pos, pedal_min, pedal_min - pedal_not_press, 0, regen)
+// Звідси два наслідки, які графік раніше не враховував: точка калібрування задана
+// у ВІДСОТКАХ від максимуму, а не в Нм, і pedal_not_press — це відступ ВНИЗ від
+// pedal_min, а не абсолютна позиція педалі.
 let cal = {
-    notPressed: 0,
-    torqueNotPressed: 0,
+    notPressDelta: 0,      // pedal_not_press: наскільки нижче pedalMin тягнеться рекуперація
+    regen: 0,              // max_regen з налаштувань BMS (Нм, додатнє число)
     pedalMin: 0,
     pedalMax: 1000,
     pedalCal: 500,
-    torqueCal: 0,
+    torqueCalPercent: 0,   // % від maxTorque, НЕ Нм
     maxTorque: 0
 };
+
+// Початок гілки рекуперації по осі X і момент у точці калібрування — обидва
+// похідні, тож рахуємо в одному місці, щоб крива й підписи не розʼїхались.
+function regenStart() { return cal.pedalMin - cal.notPressDelta; }
+function torqueCalNm() { return cal.maxTorque * cal.torqueCalPercent / 100; }
 
 // Live data
 let livePedal = 0;
@@ -33,21 +45,27 @@ function addListener(key, cb) {
  * Interpolate torque for a given pedal position using the calibration curve
  */
 function torqueAtPedal(pedal) {
-    if (pedal <= cal.notPressed) return cal.torqueNotPressed;
+    const start = regenStart();
+    const torqueCal = torqueCalNm();
+
+    // Нижче вікна рекуперації момент уже не росте — повне гальмування.
+    if (pedal <= start) return -cal.regen;
+
     if (pedal <= cal.pedalMin) {
-        // Linear: notPressed->pedalMin maps torqueNotPressed->0
-        const t = (pedal - cal.notPressed) / (cal.pedalMin - cal.notPressed || 1);
-        return cal.torqueNotPressed * (1 - t);
+        // ThrotVal_neg: pedalMin -> 0, regenStart -> regen. На графіку це вниз,
+        // тому знак мінус: рекуперація гальмує.
+        const t = (cal.pedalMin - pedal) / (cal.notPressDelta || 1);
+        return -cal.regen * t;
     }
     if (pedal <= cal.pedalCal) {
         // Linear: pedalMin->pedalCal maps 0->torqueCal
         const t = (pedal - cal.pedalMin) / (cal.pedalCal - cal.pedalMin || 1);
-        return cal.torqueCal * t;
+        return torqueCal * t;
     }
     if (pedal <= cal.pedalMax) {
         // Linear: pedalCal->pedalMax maps torqueCal->maxTorque
         const t = (pedal - cal.pedalCal) / (cal.pedalMax - cal.pedalCal || 1);
-        return cal.torqueCal + (cal.maxTorque - cal.torqueCal) * t;
+        return torqueCal + (cal.maxTorque - torqueCal) * t;
     }
     return cal.maxTorque;
 }
@@ -73,10 +91,10 @@ function draw() {
     ctx.clearRect(0, 0, W, H);
 
     // Determine data ranges
-    const xMin = Math.min(cal.notPressed, 0);
+    const xMin = Math.min(regenStart(), 0);
     const xMax = Math.max(cal.pedalMax, cal.pedalCal, 1);
-    const yMin = Math.min(cal.torqueNotPressed, 0);
-    const yMax = Math.max(cal.maxTorque, cal.torqueCal, 1);
+    const yMin = Math.min(-cal.regen, 0);
+    const yMax = Math.max(cal.maxTorque, torqueCalNm(), 1);
 
     // Coordinate transforms
     const toX = (v) => pad.left + ((v - xMin) / (xMax - xMin)) * gW;
@@ -151,11 +169,11 @@ function draw() {
     ctx.restore();
 
     // --- Calibration curve: 3 segments ---
-    const pointLabels = ['Not pressed', 'Pedal MIN', 'Calibration', 'Pedal MAX'];
+    const pointLabels = ['Max regen', 'Pedal MIN', 'Calibration', 'Pedal MAX'];
     const points = [
-        { x: cal.notPressed, y: cal.torqueNotPressed },
+        { x: regenStart(), y: -cal.regen },
         { x: cal.pedalMin, y: 0 },
-        { x: cal.pedalCal, y: cal.torqueCal },
+        { x: cal.pedalCal, y: torqueCalNm() },
         { x: cal.pedalMax, y: cal.maxTorque }
     ];
 
@@ -261,14 +279,21 @@ export function initPedalChartPage() {
     });
 
     addListener('inverter_info_220307', (key, data) => {
-        cal.torqueCal = parseFloat(data.torqueCal) || 0;
+        cal.torqueCalPercent = parseFloat(data.torqueCal) || 0;
         cal.pedalCal = parseFloat(data.pedalCal) || 0;
-        cal.torqueNotPressed = parseInt(data.torqueNotPressed) || 0;
         draw();
     });
 
     addListener('inverter_info_220308', (key, data) => {
-        cal.notPressed = parseFloat(data.notPressed) || 0;
+        cal.notPressDelta = parseFloat(data.notPressed) || 0;
+        draw();
+    });
+
+    // Рекуперація приходить із налаштувань BMS (max_regen, 0x0408) — в ECU саме
+    // вона задає ThrotVal_neg. На сторінці інвертора параметр опитується завдяки
+    // полю «Recuperation (BMS)» у розмітці.
+    addListener('bms_info_220408', (key, data) => {
+        cal.regen = Math.abs(parseFloat(data.recuperation) || 0);
         draw();
     });
 

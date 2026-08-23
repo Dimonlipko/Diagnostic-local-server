@@ -81,6 +81,12 @@
     <input type="text" id="readTorqueNotPressed" value="0 Nm" readonly data-bind="inverter_info_220307.torqueNotPressed">
     <input type="text" id="writeTorqueNotPressed" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_torque_not_pressed" data-target-id="writeTorqueNotPressed" data-lang-key="btn_write">Write</button>
+
+    <!-- Рекуперація живе в налаштуваннях BMS (max_regen), але саме вона задає
+         від'ємну гілку кривої педалі, тож показуємо її і тут — лише для читання.
+         Наявність data-bind водночас додає параметр в опитування цієї сторінки. -->
+    <label data-lang-key="inv_regen_from_bms">Recuperation (BMS)</label>
+    <input type="text" id="readRegenFromBms" value="0 Nm" readonly data-bind="bms_info_220408.recuperation">
 </div>
 
 <hr style="margin: 20px 0;">
