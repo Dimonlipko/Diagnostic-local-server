@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diag-app-v30';
+const CACHE_NAME = 'diag-app-v31';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

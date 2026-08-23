@@ -1014,6 +1014,60 @@ export const PARAMETER_REGISTRY = {
     },
 
     /**
+     * Запит 220419: Ідентичність збірки — дата + номер білда в межах місяця.
+     * Відповідь 07 62 04 19 [yy][mm][dd|dirty<<7][build].
+     * 0x0418 віддає лише YYMM і не розрізняє дві збірки одного місяця; ця — розрізняє.
+     * `*` = зібрано з незакоміченими змінами (біт 7 байта дня; день ніколи не > 31).
+     */
+    'internal_info_220419': {
+        request: { canId: '79B', data: '220419', interval: 5000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const yy = parseInt(dataHex.substring(8, 10), 16);
+                const mm = parseInt(dataHex.substring(10, 12), 16);
+                const rawDay = parseInt(dataHex.substring(12, 14), 16);
+                const build = parseInt(dataHex.substring(14, 16), 16);
+                const dd = rawDay & 0x7F;
+                const dirty = (rawDay & 0x80) !== 0 ? '*' : '';
+                if (!yy && !mm && !dd) return { softBuild: '—', buildDate: '—' };
+                const pad = (v) => String(v).padStart(2, '0');
+                return {
+                    softBuild: `${yy * 100 + mm} / ${build}${dirty}`,
+                    buildDate: `20${pad(yy)}-${pad(mm)}-${pad(dd)}`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 22041A: Ідентичність ВСТАНОВЛЕНОГО БУТЛОАДЕРА — та сама схема, що й 220419,
+     * але прочитана застосунком із дескриптора у FLASH1.
+     * Усі нулі = бутлоадер, зібраний до розширення дескриптора (build-інфи не має).
+     */
+    'internal_info_22041A': {
+        request: { canId: '79B', data: '22041A', interval: 5000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const yy = parseInt(dataHex.substring(8, 10), 16);
+                const mm = parseInt(dataHex.substring(10, 12), 16);
+                const rawDay = parseInt(dataHex.substring(12, 14), 16);
+                const build = parseInt(dataHex.substring(14, 16), 16);
+                const dd = rawDay & 0x7F;
+                if (!yy && !mm && !dd) return { blBuild: '—' };
+                const pad = (v) => String(v).padStart(2, '0');
+                return {
+                    blBuild: `20${pad(yy)}-${pad(mm)}-${pad(dd)} / ` +
+                             `${build}${(rawDay & 0x80) !== 0 ? '*' : ''}`
+                };
+            }
+        }
+    },
+
+    /**
      * Запит 220415: Контактори та Помпа
      */
     'internal_info_220415': {
