@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { BAUD_RATE } from './config.js';
 // 💡 ВИПРАВЛЕНО: Додано logMessage до імпорту (він використовувався, але не імпортувався)
 import { logMessage, updateUI } from './ui.js'; 
-import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
+import { parseCanResponse, sendPendingFlowControl, notePrompt, resetPromptGate } from './canProtocol.js';
 import { handleCanResponse, stopAllPolling } from './pollingManager.js';
 import { updateConnectionTabs } from './ui.js';
 import {
@@ -76,9 +76,31 @@ async function readWithTimeout(timeoutMs) {
 
 async function detectAdapterType() {
     lineBuffer = "";
-    
-    // КРОК 0: Спробуємо вимкнути ехо
-    logMessage("Крок 0: Спроба вимкнути ехо (ATE0)...");
+
+    // КРОК 0: Скидання. Адаптер, який попередня сесія залишила у збійному стані
+    // (ERR9x після команди поверх зайнятої шини), на ATE0/ATI мовчить, а ATZ
+    // піднімає його. Порожній CR перед цим добиває недописану команду в буфері.
+    // Раніше ATZ був захований у гілці, куди повна тиша не доводила.
+    logMessage("Крок 0: Скидання адаптера (ATZ)...");
+    await state.writer.write("\r");
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await state.writer.write("ATZ\r");
+
+    const { value: vz, timeout: tz } = await readWithTimeout(3000);
+    if (vz && !tz) {
+        const cleanedZ = vz.trim().toUpperCase().replace(/^ATZ[\r\n]*/g, '').trim();
+        logMessage(`Відповідь на 'ATZ': [${cleanedZ}]`);
+
+        if (cleanedZ.includes('ELM')) {
+            logMessage("✓ Виявлено ELM327 адаптер (через ATZ)!");
+            return 'elm327';
+        }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // КРОК 1: Спробуємо вимкнути ехо
+    logMessage("Крок 1: Спроба вимкнути ехо (ATE0)...");
     await state.writer.write("ATE0\r");
     
     const { value: v0, timeout: t0 } = await readWithTimeout(2000); // ЗБІЛЬШЕНО таймаут
@@ -101,8 +123,8 @@ async function detectAdapterType() {
     // Додаткова затримка перед наступною командою
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // КРОК 1: Перевірка ELM327 через ATI
-    logMessage("Крок 1: Перевірка ELM327 'ATI'...");
+    // КРОК 2: Перевірка ELM327 через ATI
+    logMessage("Крок 2: Перевірка ELM327 'ATI'...");
     await state.writer.write("ATI\r");
     
     const { value: v1, timeout: t1 } = await readWithTimeout(2000); // ЗБІЛЬШЕНО таймаут
@@ -131,8 +153,8 @@ async function detectAdapterType() {
     
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // КРОК 2: Перевірка slcan через V
-    logMessage("Крок 2: Перевірка slcan 'V'...");
+    // КРОК 3: Перевірка slcan через V
+    logMessage("Крок 3: Перевірка slcan 'V'...");
     await state.writer.write("V\r");
     
     const { value: v2, timeout: t2 } = await readWithTimeout(1500);
@@ -274,6 +296,7 @@ async function readLoop() {
                 // Перевіряємо чи є ">" (ELM327 завершив прийом, готовий до команди)
                 if (line.includes('>')) {
                     promptReady = true;
+                    notePrompt();
                 }
 
                 const trimmedLine = line.replace(/>/g, '').trim();
@@ -301,6 +324,7 @@ async function readLoop() {
             // Перевіряємо залишок буфера на ">"
             if (lineBuffer.includes('>')) {
                 promptReady = true;
+                notePrompt();
                 const remaining = lineBuffer.replace(/>/g, '').trim();
                 if (remaining) {
                     const parsed = parseCanResponse(remaining);
@@ -388,6 +412,10 @@ export async function connectAdapter() {
         if (state.adapterType === 'unknown') throw new Error('Не вдалося визначити тип адаптера.');
 
         await initializeAdapter();
+
+        // Init шле AT-команди повз чергу, тож gate міг лишитись «зайнятим» від
+        // останньої з них. Опитування має стартувати з чистого стану.
+        resetPromptGate();
 
         state.isConnected = true; // 💡 ПІДТВЕРДЖЕННЯ: Тепер state.isConnected стає true лише після повної готовності
         startLinkWatchdog();

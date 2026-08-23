@@ -1,9 +1,26 @@
 // --- modules/pollingManager.js ---
 import { state } from './state.js';
-import { sendCanRequest, isIsotpActive } from './canProtocol.js';
+import { sendCanRequest, isIsotpActive, msSinceLastSend } from './canProtocol.js';
 
 let isPollingActive = false;
 const activeRequests = new Map();
+
+// Скільки промахів підряд робить параметр «мовчазним». DID, якого немає в
+// прошивці ECU або який належить вузлу, відсутньому на шині (наприклад 0x12xx
+// даху), тримає ELM зайнятим повний ATST32 на КОЖНОМУ колі. Кілька таких у
+// списку — і цикл опитування складається з самих таймаутів.
+const MISS_LIMIT = 3;
+// Мовчазний параметр не викидаємо назовсім: вузол може зʼявитись на шині.
+const RETRY_EVERY = 10;
+const missCounts = new Map();
+const skipCounts = new Map();
+
+// Скільки чекати відповідь, перш ніж вважати запит загубленим. ATST32 = 200 мс
+// таймауту самого ELM плюс запас на BLE-затримку і розбір ISO-TP.
+const STALL_MS = 1200;
+
+// Зростає на кожному startPolling: черги від попередніх сторінок мають вмерти.
+let pollGeneration = 0;
 
 function logMessage(message) {
     console.log(`[Polling] ${message}`);
@@ -18,11 +35,36 @@ async function startSequentialPolling(parameterKeys, registry, updateCallback) {
     isPollingActive = true;
 
     let currentIndex = 0;
+    // Токен покоління: stopAllPolling() знімає прапорець, але вже запланований
+    // setTimeout(pollNext) від попередньої сторінки міг спрацювати вже після
+    // старту нової — і тоді дві черги пишуть в адаптер одночасно.
+    const generation = ++pollGeneration;
+
+    const advance = () => {
+        currentIndex = (currentIndex + 1) % parameterKeys.length;
+    };
 
     const pollNext = async () => {
         if (!isPollingActive || !state.isConnected) return;
+        if (generation !== pollGeneration) return;
 
-        const key = parameterKeys[currentIndex];
+        // Мовчазні параметри пропускаємо більшість кіл, лишаючи рідку ретрай-спробу.
+        // Перебираємо в циклі, а не рекурсією: інакше список, де мовчать усі,
+        // розганяється в ланцюг таймерів.
+        let key = parameterKeys[currentIndex];
+        for (let skipped = 0; skipped < parameterKeys.length; skipped++) {
+            if ((missCounts.get(key) || 0) < MISS_LIMIT) break;
+
+            const seen = (skipCounts.get(key) || 0) + 1;
+            if (seen >= RETRY_EVERY) {
+                skipCounts.set(key, 0);
+                break;
+            }
+            skipCounts.set(key, seen);
+            advance();
+            key = parameterKeys[currentIndex];
+        }
+
         const paramGroup = registry[key];
 
         if (paramGroup?.request) {
@@ -42,7 +84,10 @@ async function startSequentialPolling(parameterKeys, registry, updateCallback) {
                 expectedDid: expectedDid,
                 // Callback який викличе наступний крок після отримання відповіді
                 onComplete: () => {
-                    currentIndex = (currentIndex + 1) % parameterKeys.length;
+                    if (generation !== pollGeneration) return;
+                    missCounts.delete(key);
+                    skipCounts.delete(key);
+                    advance();
                     setTimeout(pollNext, 10);
                 }
             });
@@ -50,7 +95,7 @@ async function startSequentialPolling(parameterKeys, registry, updateCallback) {
             await sendCanRequest(canId, data);
         } else {
             // Якщо параметра немає в реєстрі, йдемо далі
-            currentIndex = (currentIndex + 1) % parameterKeys.length;
+            advance();
             pollNext();
         }
     };
@@ -58,19 +103,32 @@ async function startSequentialPolling(parameterKeys, registry, updateCallback) {
     // Запускаємо перший запит
     pollNext();
 
-    // Захисний таймер: якщо відповідь не прийшла, штовхаємо чергу далі
+    // Захисний таймер: якщо відповідь не прийшла, штовхаємо чергу далі.
+    // Тікає частіше за поріг, але штовхає ЛИШЕ коли запит справді завис. Раніше
+    // він рухав чергу за власним годинником, незалежно від onComplete: два
+    // драйвери періодично збігались і друга команда йшла в ELM327, поки той ще
+    // опитував шину — на клонах це ERR9x, ресет і ехо до кінця сесії.
     const watchdog = setInterval(() => {
-        if (!isPollingActive) {
+        if (!isPollingActive || generation !== pollGeneration) {
             clearInterval(watchdog);
             return;
         }
         // НЕ штовхаємо чергу якщо ISO-TP збірка активна (чекаємо на CF)
         if (isIsotpActive()) return;
 
-        // Якщо черга "зависла" (наприклад, пакет загубився)
-        currentIndex = (currentIndex + 1) % parameterKeys.length;
+        // Запит ще в польоті — ELM має право доопитувати шину.
+        if (msSinceLastSend() < STALL_MS) return;
+
+        const stuckKey = parameterKeys[currentIndex];
+        const misses = (missCounts.get(stuckKey) || 0) + 1;
+        missCounts.set(stuckKey, misses);
+        if (misses === MISS_LIMIT) {
+            logMessage(`${stuckKey} не відповідає ${misses} рази — опитуємо рідше`);
+        }
+
+        advance();
         pollNext();
-    }, 1500);
+    }, 500);
 
     if (!state.activePollers) state.activePollers = [];
     state.activePollers.push(watchdog);
@@ -150,12 +208,17 @@ export function handleCanResponse(canId, dataHex) {
 
 export function stopAllPolling() {
     isPollingActive = false;
+    // Осиротілі pollNext, заплановані до зупинки, більше не пройдуть перевірку.
+    pollGeneration++;
     state.lastSetHeader = "";
     if (state.activePollers) {
         state.activePollers.forEach(id => clearInterval(id));
         state.activePollers = [];
     }
     activeRequests.clear();
+    // missCounts свідомо переживають зміну сторінки: вузол, якого немає на шині,
+    // не зʼявляється від того, що користувач перемкнув вкладку. Успішна відповідь
+    // або рідкий ретрай обнулять лічильник самі.
 }
 
 /**

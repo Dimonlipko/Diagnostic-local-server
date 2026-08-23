@@ -2,10 +2,83 @@ import { state } from './state.js';
 import { logMessage } from './ui.js';
 
 
-let isWriting = false;
-
 let rawFrameConsumer = null;
 export function setRawFrameConsumer(fn) { rawFrameConsumer = fn; }
+
+// === Prompt-gate ===
+// ELM327 приймає нову команду лише після того, як віддав '>'. Команда, надіслана
+// поки він ще опитує шину, на оригіналі дає '?' або STOPPED, а на клонах — ERR9x
+// і внутрішній ресет, після якого ехо вмикається назад і сесія мертва до
+// перепідключення вручну. Фіксовані паузи цього не гарантували: DID, який ECU не
+// віддає, тримає адаптер зайнятим повний ATST32 (200 мс), а наступний запит ішов
+// уже через 20.
+let promptReady = true;
+let promptWaiters = [];
+let lastSendAt = 0;
+
+// AT-команди ELM виконує локально й відповідає одразу; запит на шину чекає
+// відповіді ECU або власного таймауту ATST32=200 мс, тож запас більший.
+const AT_PROMPT_TIMEOUT = 400;
+const DATA_PROMPT_TIMEOUT = 700;
+
+// Кожен '>' у вхідному потоці — дозвіл на наступну команду.
+export function notePrompt() {
+    promptReady = true;
+    const waiters = promptWaiters;
+    promptWaiters = [];
+    for (const w of waiters) w();
+}
+
+// Після конекту й після OTA адаптер конфігурується в обхід черги — стан gate
+// треба привести до реальності, інакше перший запит чекатиме неіснуючий '>'.
+export function resetPromptGate() {
+    lastSendAt = 0;
+    notePrompt();
+}
+
+// Скільки минуло з останньої відправленої команди. Watchdog у pollingManager
+// використовує це, щоб не штовхати чергу поверх запиту, який ще в польоті.
+export function msSinceLastSend() {
+    return lastSendAt ? Date.now() - lastSendAt : Infinity;
+}
+
+function awaitPrompt(timeoutMs) {
+    if (promptReady) return Promise.resolve(true);
+
+    return new Promise(resolve => {
+        let settled = false;
+        const waiter = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(true);
+        };
+        const timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            promptWaiters = promptWaiters.filter(w => w !== waiter);
+            resolve(false);
+        }, timeoutMs);
+        promptWaiters.push(waiter);
+    });
+}
+
+// Єдина точка запису в адаптер для всього, що йде через чергу запитів.
+async function writeGated(writer, text, timeoutMs) {
+    const gotPrompt = await awaitPrompt(timeoutMs);
+    if (!gotPrompt) {
+        console.warn(`[Protocol] '>' не дочекались за ${timeoutMs} мс, шлемо ${text.trim()}`);
+    }
+    promptReady = false;
+    lastSendAt = Date.now();
+    await writer.write(text);
+}
+
+// Серіалізація всіх запитів: polling, разові читання, SOC-мапа. Раніше замок
+// існував лише для BLE й при зайнятості ПРОПУСКАВ запит, а для Web Serial його
+// не було зовсім — два драйвери черги (onComplete і watchdog) писали в адаптер
+// одночасно.
+let txChain = Promise.resolve();
 
 // === ISO-TP Multi-Frame стан ===
 const isotpState = {
@@ -19,52 +92,40 @@ const isotpState = {
     fcFallback: null
 };
 
-export async function sendCanRequest(canId, data) {
+export function sendCanRequest(canId, data) {
+    // Стаємо в чергу незалежно від результату попереднього запиту: помилка
+    // одного не має зупиняти решту.
+    const run = () => doSendCanRequest(canId, data);
+    txChain = txChain.then(run, run);
+    return txChain;
+}
+
+async function doSendCanRequest(canId, data) {
     const writer = state.writer;
     if (!writer) return false;
 
     const isBle = state.connectionType === 'ble';
 
-    // 1. ЗАМОК (Тільки для BLE)
-    // Для Classic ми не блокуємо запити, щоб не переривати паралельні інтервали
-    if (isBle && isWriting) {
-        await new Promise(r => setTimeout(r, 20));
-        if (isWriting) return false;
-    }
-
-    isWriting = true;
-
     try {
         if (canId) {
             state.lastRequestId = canId;
-            // Оптимізація заголовка ТІЛЬКИ для BLE
+            // Заголовок не переставляємо, якщо він уже той самий (економія на BLE,
+            // де кожна команда коштує окремого GATT-запису).
             if (!isBle || canId !== state.lastSetHeader) {
-                await writer.write(`ATSH${canId}\r`);
-
-                // Classic: 20мс (як було), BLE: 60мс (для стабільності)
-                await new Promise(r => setTimeout(r, isBle ? 60 : 20));
-
+                await writeGated(writer, `ATSH${canId}\r`, AT_PROMPT_TIMEOUT);
                 if (isBle) state.lastSetHeader = canId;
             }
         }
 
-        // 2. ВІДПРАВКА ДАНИХ (ATCAF0: додаємо PCI байт вручну)
+        // ATCAF0: PCI-байт додаємо вручну.
         const pciHex = (data.length / 2).toString(16).padStart(2, '0');
-        await writer.write(`${pciHex}${data}\r`);
+        await writeGated(writer, `${pciHex}${data}\r`, DATA_PROMPT_TIMEOUT);
         console.log(`[Protocol] >>> SEND: ${pciHex}${data}`);
-
-        // 3. ПАУЗА ПІСЛЯ ЗАПИТУ
-        // Classic: твої робочі 50мс
-        // BLE: ТІЛЬКИ 20мс (решту часу ми чекаємо в реактивній черзі)
-        const postWait = isBle ? 20 : 50;
-        await new Promise(r => setTimeout(r, postWait));
 
         return true;
     } catch (e) {
         console.error(`[Protocol] Помилка запису:`, e);
         return false;
-    } finally {
-        isWriting = false;
     }
 }
 
@@ -290,6 +351,10 @@ export async function sendPendingFlowControl() {
     try {
         // FC: CTS (30), BS=1 (01), STmin=0 — ECU віддає 1 CF і чекає наступний FC.
         // Жодного BS=0-fallback: зайвий другий FC десинхронізує ECU → втрати кадрів.
+        // Черга обходиться свідомо: FC має піти негайно, поки ECU чекає, — але
+        // gate про це знати мусить, інакше наступний запит вийде поверх нього.
+        promptReady = false;
+        lastSendAt = Date.now();
         await writer.write('3001000000000000\r');
         console.log(`[ISO-TP] FC відправлено (BS=1), буфер: ${isotpState.buffer.length/2}/${isotpState.expectedLength} bytes`);
         return true;

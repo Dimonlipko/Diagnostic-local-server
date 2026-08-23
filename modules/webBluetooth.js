@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { logMessage, updateConnectionTabs } from './ui.js';
-import { parseCanResponse, sendPendingFlowControl } from './canProtocol.js';
+import { parseCanResponse, sendPendingFlowControl, notePrompt, resetPromptGate } from './canProtocol.js';
 import {
     noteRxActivity, noteTxActivity,
     startLinkWatchdog, stopLinkWatchdog, handleLinkLost
@@ -12,6 +12,12 @@ let bleBuffer = "";
 // Поки не null — триває проба GATT-каналу: сирі дані не парсяться як CAN,
 // а накопичуються тут, щоб зрозуміти, яка пара характеристик жива.
 let probeBuffer = null;
+
+// Обрана notify-характеристика для прийому та час останнього пакета з неї.
+// Поки вона говорить, пакети з інших вважаються дублями того ж UART.
+let rxChar = null;
+let lastRxAt = 0;
+const RX_STICKY_MS = 2000;
 
 // Допоміжна функція затримки
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -72,6 +78,10 @@ async function rawWrite(candidate, text) {
 // у робочому режимі — збірка до '>' і розбір CAN-кадрів.
 function handleChunk(chunk) {
     noteRxActivity();
+
+    // Prompt-gate ведемо до всіх фільтрів: '>' — це дозвіл на наступну команду
+    // незалежно від того, хто зараз споживає потік.
+    if (chunk.includes('>')) notePrompt();
 
     // Під час OTA сирі кадри забирає firmwareUpdate.js: ack блоку — це 2 байти,
     // штатний ISO-TP парсер такого не розбирає.
@@ -202,6 +212,17 @@ export async function connectBleAdapter() {
         // і воно не обовʼязково збігається з характеристикою запису.
         let activeNotify = null;
         const onValue = (event) => {
+            // Клон із кількома notify віддає той самий UART на кожну, і буфер
+            // склеїв би подвоєний текст. Тому приймаємо лише з обраного каналу —
+            // але підписки не рвемо: якщо здогадка хибна і обраний замовк,
+            // наступний пакет з іншої характеристики перебирає роль RX на себе.
+            if (rxChar && event.target !== rxChar) {
+                if (Date.now() - lastRxAt < RX_STICKY_MS) return; // обраний живий → це дубль
+                rxChar = event.target;
+                logMessage(`  RX-канал перемкнуто на ${charLabel(rxChar)}`);
+            }
+            lastRxAt = Date.now();
+
             activeNotify = event.target;
             handleChunk(new TextDecoder().decode(event.target.value));
             if (window.uiUpdater && window.uiUpdater.flashCanLed) {
@@ -240,19 +261,14 @@ export async function connectBleAdapter() {
         }
         logMessage(`✓ Робочий канал: ${chosen.label}`);
 
-        // Слухати всі notify-характеристики треба було лише на час проби. Якщо
-        // адаптер має їх кілька і всі віддають той самий UART, кожна відповідь
-        // приходила б двічі — буфер склеював би подвоєний текст. Лишаємо ту,
-        // що реально відповіла; якщо джерело невідоме — не чіпаємо нічого.
+        // Дублі відсікаємо за джерелом, а не відпискою: stopNotifications() на
+        // частині клонів гасить CCCD так, що прийом не повертається взагалі, а
+        // характеристика, яка відповіла на пробу, не завжди та, якою потім
+        // приходять дані. Фіксуємо канал м'яко — onValue вміє перемкнутися.
         if (activeNotify && notifyChars.length > 1) {
-            logMessage(`  RX-канал: ${charLabel(activeNotify)}`);
-            for (const ch of notifyChars) {
-                if (ch === activeNotify) continue;
-                ch.removeEventListener('characteristicvaluechanged', onValue);
-                try {
-                    await ch.stopNotifications();
-                } catch (e) { /* уже зупинено або не підтримує */ }
-            }
+            rxChar = activeNotify;
+            lastRxAt = Date.now();
+            logMessage(`  RX-канал: ${charLabel(rxChar)} (решта ${notifyChars.length - 1} у резерві)`);
         }
 
         state.connectionType = 'ble';
@@ -312,6 +328,9 @@ export async function connectBleAdapter() {
             await sleep(item.wait);
         }
 
+        // Init ішов повз чергу — вирівнюємо gate перед стартом опитування.
+        resetPromptGate();
+
         state.isConnected = true;
         startLinkWatchdog();
         updateConnectionTabs();
@@ -330,6 +349,8 @@ export async function connectBleAdapter() {
         }
 
         probeBuffer = null;
+        rxChar = null;
+        lastRxAt = 0;
         state.isConnected = false;
         return false;
     }
@@ -355,6 +376,9 @@ export async function disconnectBleAdapter() {
         state.writer = null;
         bleBuffer = "";
         probeBuffer = null;
+        rxChar = null;
+        lastRxAt = 0;
+        resetPromptGate();
 
         updateConnectionTabs();
         logMessage("BLE Відключено.");
