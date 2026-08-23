@@ -1743,6 +1743,18 @@ export const PARAMETER_REGISTRY = {
                     el.style.display = isDea ? 'block' : 'none';
                 });
 
+                // Leaf BMS: кількість комірок не налаштовується. Парсер в ECU
+                // розкладає кадри в Cell[1..96] жорстко — 96 зашито в саму
+                // структуру повідомлень (0x47E = «Module 4 cells 94-96»). Запис
+                // іншого числа лише зіпсував би пороги пака, які рахуються з
+                // cells_in_pack. Читання лишаємо: значення варто бачити.
+                const isLeafBms = (bmsRaw === 2);
+                document.querySelectorAll('.leaf-cells-fixed').forEach(el => {
+                    el.disabled = isLeafBms;
+                    el.style.opacity = isLeafBms ? '0.4' : '1';
+                    el.title = isLeafBms ? 'Leaf BMS: 96 комірок, не змінюється' : '';
+                });
+
                 return {
                     fanHighTemp: `${highTemp} °C`,
                     typeBms: bmsMap[bmsRaw.toString()] || "Unknown",
