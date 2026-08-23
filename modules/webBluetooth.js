@@ -198,7 +198,11 @@ export async function connectBleAdapter() {
         });
 
         // Слухаємо ВСІ notify-характеристики, доки не зрозуміємо, яка відповідає.
+        // Джерело останнього пакета запамʼятовуємо: саме воно — робочий RX-канал,
+        // і воно не обовʼязково збігається з характеристикою запису.
+        let activeNotify = null;
         const onValue = (event) => {
+            activeNotify = event.target;
             handleChunk(new TextDecoder().decode(event.target.value));
             if (window.uiUpdater && window.uiUpdater.flashCanLed) {
                 window.uiUpdater.flashCanLed();
@@ -235,6 +239,21 @@ export async function connectBleAdapter() {
             throw new Error("жодна характеристика не відповіла на ATI — адаптер не приймає команди");
         }
         logMessage(`✓ Робочий канал: ${chosen.label}`);
+
+        // Слухати всі notify-характеристики треба було лише на час проби. Якщо
+        // адаптер має їх кілька і всі віддають той самий UART, кожна відповідь
+        // приходила б двічі — буфер склеював би подвоєний текст. Лишаємо ту,
+        // що реально відповіла; якщо джерело невідоме — не чіпаємо нічого.
+        if (activeNotify && notifyChars.length > 1) {
+            logMessage(`  RX-канал: ${charLabel(activeNotify)}`);
+            for (const ch of notifyChars) {
+                if (ch === activeNotify) continue;
+                ch.removeEventListener('characteristicvaluechanged', onValue);
+                try {
+                    await ch.stopNotifications();
+                } catch (e) { /* уже зупинено або не підтримує */ }
+            }
+        }
 
         state.connectionType = 'ble';
         state.bleDevice = device;
