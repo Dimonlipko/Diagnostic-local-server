@@ -1057,11 +1057,15 @@ export const PARAMETER_REGISTRY = {
                 const rawDay = parseInt(dataHex.substring(12, 14), 16);
                 const build = parseInt(dataHex.substring(14, 16), 16);
                 const dd = rawDay & 0x7F;
-                if (!yy && !mm && !dd) return { blBuild: '—' };
+                const dirty = (rawDay & 0x80) !== 0 ? '*' : '';
+                if (!yy && !mm && !dd) return { blBuild: '—', blBuildDate: '—' };
                 const pad = (v) => String(v).padStart(2, '0');
+                // Розбито на два поля так само, як 220419 для застосунку: дата й
+                // номер в одному рядку дають 15 символів, а колонка інпута — 80px,
+                // тож рік обрізався і поле читалось як «026-08-23 / 4».
                 return {
-                    blBuild: `20${pad(yy)}-${pad(mm)}-${pad(dd)} / ` +
-                             `${build}${(rawDay & 0x80) !== 0 ? '*' : ''}`
+                    blBuild: `${yy * 100 + mm} / ${build}${dirty}`,
+                    blBuildDate: `20${pad(yy)}-${pad(mm)}-${pad(dd)}`
                 };
             }
         }
