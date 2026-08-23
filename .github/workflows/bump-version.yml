@@ -37,7 +37,10 @@ jobs:
           # README чи самого workflow нової версії застосунку не роблять.
           changed=$(git diff --name-only HEAD^ HEAD)
           echo "Changed files:"; echo "$changed"
-          if ! echo "$changed" | grep -qE '^(modules/|pages/)|^app\.js$|\.(html|css)$'; then
+          # sw.js входить сюди свідомо: він і є те, що вирішує, чи побачить
+          # браузер новий код. Правка в ньому без бампа CACHE_NAME лишає клієнтів
+          # на старому кеші — рівно та проблема, яку такий бамп має ловити.
+          if ! echo "$changed" | grep -qE '^(modules/|pages/)|^(app|sw)\.js$|\.(html|css)$'; then
             echo "Немає змін у коді застосунку — версію не чіпаємо."
             exit 0
           fi
