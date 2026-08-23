@@ -17,8 +17,13 @@ const ASSETS_TO_CACHE = [
 
   // Modules
   './modules/canProtocol.js',
+  './modules/canopenCanmap.js',
+  './modules/canopenSdo.js',
+  './modules/ccsCtlEnums.js',
+  './modules/ccsCtlPage.js',
   './modules/config.js',
   './modules/elmInit.js',
+  './modules/parameterPreset.js',
   './modules/firmwareUpdate.js',
   './modules/parameterRegistry.js',
   './modules/pollingManager.js',
@@ -90,8 +95,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Повертаємо файл з кешу або робимо запит в мережу
-      return response || fetch(event.request);
+      if (response) return response;
+
+      // У кеші немає — пробуємо мережу. Офлайн вона впаде, і для навігації
+      // треба віддати оболонку застосунку: інакше браузер покаже свою сторінку
+      // помилки. Точного збігу може не бути через query-рядок (?utm=…), який
+      // caches.match враховує, — а це той самий index.html.
+      return fetch(event.request).catch(() => {
+        if (event.request.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
+      });
     })
   );
 });
