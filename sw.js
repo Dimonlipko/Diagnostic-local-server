@@ -59,7 +59,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching all files');
-      return cache.addAll(ASSETS_TO_CACHE);
+      // cache: 'reload' обовʼязковий. GitHub Pages віддає max-age=600, а addAll
+      // за замовчуванням ходить через HTTP-кеш браузера — тож новий CACHE_NAME
+      // наповнювався СТАРИМИ файлами, якщо оновлення трапилось у ті 10 хвилин.
+      // Зовні це виглядало як «кеш перебудувався, а сторінка стара»: версія в
+      // футері нова, розмітка й парсери попередні.
+      return cache.addAll(
+        ASSETS_TO_CACHE.map((url) => new Request(url, { cache: 'reload' }))
+      );
     })
   );
 });
