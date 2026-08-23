@@ -5,6 +5,7 @@ import { BAUD_RATE } from './config.js';
 // 💡 ВИПРАВЛЕНО: Додано logMessage до імпорту (він використовувався, але не імпортувався)
 import { logMessage, updateUI } from './ui.js'; 
 import { parseCanResponse, sendPendingFlowControl, notePrompt, resetPromptGate } from './canProtocol.js';
+import { resetReinitState } from './elmInit.js';
 import { handleCanResponse, stopAllPolling } from './pollingManager.js';
 import { updateConnectionTabs } from './ui.js';
 import {
@@ -416,6 +417,7 @@ export async function connectAdapter() {
         // Init шле AT-команди повз чергу, тож gate міг лишитись «зайнятим» від
         // останньої з них. Опитування має стартувати з чистого стану.
         resetPromptGate();
+        resetReinitState();
 
         state.isConnected = true; // 💡 ПІДТВЕРДЖЕННЯ: Тепер state.isConnected стає true лише після повної готовності
         startLinkWatchdog();

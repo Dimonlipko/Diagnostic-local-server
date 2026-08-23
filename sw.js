@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diag-app-v32';
+const CACHE_NAME = 'diag-app-v33';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const ASSETS_TO_CACHE = [
   // Modules
   './modules/canProtocol.js',
   './modules/config.js',
+  './modules/elmInit.js',
   './modules/firmwareUpdate.js',
   './modules/parameterRegistry.js',
   './modules/pollingManager.js',

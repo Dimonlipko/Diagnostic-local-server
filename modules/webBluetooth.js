@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { logMessage, updateConnectionTabs } from './ui.js';
 import { parseCanResponse, sendPendingFlowControl, notePrompt, resetPromptGate } from './canProtocol.js';
+import { resetReinitState } from './elmInit.js';
 import {
     noteRxActivity, noteTxActivity,
     startLinkWatchdog, stopLinkWatchdog, handleLinkLost
@@ -330,6 +331,7 @@ export async function connectBleAdapter() {
 
         // Init ішов повз чергу — вирівнюємо gate перед стартом опитування.
         resetPromptGate();
+        resetReinitState();
 
         state.isConnected = true;
         startLinkWatchdog();

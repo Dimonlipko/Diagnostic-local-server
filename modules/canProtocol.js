@@ -2,8 +2,36 @@ import { state } from './state.js';
 import { logMessage } from './ui.js';
 
 
+import { reinitAdapter } from './elmInit.js';
+
 let rawFrameConsumer = null;
 export function setRawFrameConsumer(fn) { rawFrameConsumer = fn; }
+
+// --- Виявлення злетілої конфігурації адаптера --------------------------------
+// При ATE0 адаптер НЕ МАЄ повертати надіслане. Якщо повертає — на ньому знову
+// ATE1, тобто конфігурацію збито, і разом з нею зникли ATH1/ATCRA/ATSH. Запити
+// після цього йдуть у нікуди назавжди: watchdog бачить трафік і вважає звʼязок
+// живим, хоч усе, що приходить, — наші ж команди.
+const ECHO_STRIKES_TO_REINIT = 3;
+
+let recentSends = [];
+let echoStrikes = 0;
+
+function rememberSend(payload) {
+    recentSends.push(payload);
+    if (recentSends.length > 4) recentSends.shift();
+}
+
+function looksLikeOwnEcho(clean) {
+    return recentSends.includes(clean);
+}
+
+function noteEcho() {
+    if (++echoStrikes < ECHO_STRIKES_TO_REINIT) return;
+    echoStrikes = 0;
+    recentSends = [];
+    reinitAdapter('адаптер повертає ехо команд (ATE0 злетів)', logMessage);
+}
 
 // === Prompt-gate ===
 // ELM327 приймає нову команду лише після того, як віддав '>'. Команда, надіслана
@@ -15,6 +43,7 @@ export function setRawFrameConsumer(fn) { rawFrameConsumer = fn; }
 let promptReady = true;
 let promptWaiters = [];
 let lastSendAt = 0;
+let missedPrompts = 0;
 
 // AT-команди ELM виконує локально й відповідає одразу; запит на шину чекає
 // відповіді ECU або власного таймауту ATST32=200 мс, тож запас більший.
@@ -33,6 +62,9 @@ export function notePrompt() {
 // треба привести до реальності, інакше перший запит чекатиме неіснуючий '>'.
 export function resetPromptGate() {
     lastSendAt = 0;
+    missedPrompts = 0;
+    echoStrikes = 0;
+    recentSends = [];
     notePrompt();
 }
 
@@ -67,7 +99,14 @@ function awaitPrompt(timeoutMs) {
 async function writeGated(writer, text, timeoutMs) {
     const gotPrompt = await awaitPrompt(timeoutMs);
     if (!gotPrompt) {
-        console.warn(`[Protocol] '>' не дочекались за ${timeoutMs} мс, шлемо ${text.trim()}`);
+        // Мертвий адаптер дає промах на КОЖНІЙ команді — друкуємо перший і далі
+        // раз на десять, інакше консоль стає нечитабельною саме тоді, коли її
+        // читають.
+        if (missedPrompts++ % 10 === 0) {
+            console.log(`[Protocol] '>' не дочекались за ${timeoutMs} мс, шлемо ${text.trim()}`);
+        }
+    } else {
+        missedPrompts = 0;
     }
     promptReady = false;
     lastSendAt = Date.now();
@@ -104,6 +143,15 @@ async function doSendCanRequest(canId, data) {
     const writer = state.writer;
     if (!writer) return false;
 
+    // Черга могла набратись до того, як звʼязок обірвався. Кидати ці запити в
+    // мертвий транспорт немає сенсу: кожен дає промах промпта плюс виняток від
+    // GATT, і лог тоне в сотнях однакових рядків.
+    if (!state.isConnected) return false;
+
+    // Під час переініціалізації адаптер отримує ATZ і всю AT-послідовність повз
+    // чергу — UDS-запит, що вклинився б між ними, зіпсував би налаштування.
+    if (state.reinitInProgress) return false;
+
     const isBle = state.connectionType === 'ble';
 
     try {
@@ -119,6 +167,7 @@ async function doSendCanRequest(canId, data) {
 
         // ATCAF0: PCI-байт додаємо вручну.
         const pciHex = (data.length / 2).toString(16).padStart(2, '0');
+        rememberSend(`${pciHex}${data}`.toUpperCase());
         await writeGated(writer, `${pciHex}${data}\r`, DATA_PROMPT_TIMEOUT);
         console.log(`[Protocol] >>> SEND: ${pciHex}${data}`);
 
@@ -163,6 +212,17 @@ function parseCanResponse_ELM327(line) {
 
     console.log(`[DEBUG RAW IN]: "${clean}" | Len: ${clean.length}`);
 
+    // ERR9x — внутрішня помилка клона, після якої він перезавантажується і
+    // повертається в дефолти (ехо ON, ATH/ATCRA/ATSH скинуті). Однозначніший і
+    // швидший сигнал, ніж рахувати ехо: реагуємо з першої появи.
+    if (/^ERR\d/.test(clean)) {
+        console.warn(`[Protocol] Адаптер повідомив ${clean}`);
+        echoStrikes = 0;
+        recentSends = [];
+        reinitAdapter(`адаптер повідомив ${clean}`, logMessage);
+        return null;
+    }
+
     // Ігноруємо ЕХО команд (запити без CAN ID префіксу)
     if (clean.startsWith('AT') ||
         clean.startsWith('22') ||
@@ -171,6 +231,8 @@ function parseCanResponse_ELM327(line) {
         (clean.startsWith('02') && clean.length <= 8) ||
         (clean.startsWith('03') && clean.length <= 12)) {
         console.log(`[DEBUG PARSER]: Ігноруємо ЕХО: ${clean}`);
+        // Дослівне повернення нашого ж запиту — доказ, що ATE0 злетів.
+        if (looksLikeOwnEcho(clean)) noteEcho();
         return null;
     }
 
@@ -181,6 +243,7 @@ function parseCanResponse_ELM327(line) {
     if (clean.length > 3 && clean.startsWith('7')) {
         id = clean.substring(0, 3);
         data = clean.substring(3);
+        echoStrikes = 0; // кадр з заголовком — ATH1 і ATE0 на місці
     }
     // Raw CAN frame з CCS-контролера (CANopen SDO відповідь 0x580+nodeId, типово 0x596).
     // Парсер UDS не знає, що з ним робити — віддаємо споживачу (canopenSdo.js).

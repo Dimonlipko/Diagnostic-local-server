@@ -15,6 +15,7 @@ export let state = {
     activePollers: [],
     lastRequestId: null, // Додано для парсингу відповідей ELM без заголовків
     rawChunkSink: null,  // Перехоплення сирого потоку ELM під час OTA (firmwareUpdate.js)
-    isConnected: false
+    isConnected: false,
+    reinitInProgress: false  // Йде ATZ+init після збою адаптера — черга запитів мовчить
 };
 

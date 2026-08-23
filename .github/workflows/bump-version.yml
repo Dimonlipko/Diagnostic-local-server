@@ -1,0 +1,73 @@
+# Автоматичний бамп версії застосунку.
+#
+# APP_VERSION у version.js і CACHE_NAME у sw.js мають рухатись разом: перший —
+# те, що видно у футері, другий — те, що змушує браузер забрати нові файли.
+# Вручну це розʼїжджалось: 13 комітів поспіль без бампа, і футер перестав бути
+# способом зрозуміти, що саме крутиться у вкладці.
+#
+# Пуш, зроблений GITHUB_TOKEN, не тригерить workflow повторно, тож рекурсії тут
+# немає; [skip-bump] у меседжі лишається як явний ручний запобіжник.
+name: Bump version
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: bump-version
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: ${{ !contains(github.event.head_commit.message, '[skip-bump]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Bump version.js and sw.js
+        run: |
+          set -euo pipefail
+
+          # Бампаємо лише коли змінилось те, що реально їде в браузер. Правки
+          # README чи самого workflow нової версії застосунку не роблять.
+          changed=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"; echo "$changed"
+          if ! echo "$changed" | grep -qE '^(modules/|pages/)|^app\.js$|\.(html|css)$'; then
+            echo "Немає змін у коді застосунку — версію не чіпаємо."
+            exit 0
+          fi
+
+          cur=$(sed -nE "s/.*APP_VERSION = 'ver\. ([0-9]+)\.([0-9]+)'.*/\1 \2/p" version.js)
+          major=$(echo "$cur" | cut -d' ' -f1)
+          minor=$(echo "$cur" | cut -d' ' -f2)
+          if [ -z "$major" ] || [ -z "$minor" ]; then
+            echo "Не вдалось розібрати APP_VERSION у version.js"; exit 1
+          fi
+
+          minor=$((10#$minor + 1))
+          if [ "$minor" -gt 99 ]; then major=$((major + 1)); minor=0; fi
+          new=$(printf '%d.%02d' "$major" "$minor")
+
+          cache=$(sed -nE "s/.*CACHE_NAME = 'diag-app-v([0-9]+)'.*/\1/p" sw.js)
+          if [ -z "$cache" ]; then echo "Не вдалось розібрати CACHE_NAME у sw.js"; exit 1; fi
+          newcache=$((cache + 1))
+
+          sed -i -E "s/APP_VERSION = 'ver\. [0-9]+\.[0-9]+'/APP_VERSION = 'ver. ${new}'/" version.js
+          sed -i -E "s/CACHE_NAME = 'diag-app-v[0-9]+'/CACHE_NAME = 'diag-app-v${newcache}'/" sw.js
+
+          echo "APP_VERSION -> ver. ${new}, CACHE_NAME -> diag-app-v${newcache}"
+
+          if git diff --quiet; then
+            echo "Нічого не змінилось."; exit 0
+          fi
+
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add version.js sw.js
+          git commit -m "Bump to ver. ${new} / cache v${newcache} [skip-bump]"
+          git push
