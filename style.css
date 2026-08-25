@@ -931,6 +931,15 @@ label { font-weight: 600; margin-top: 10px; display: block; color: var(--text-la
 .bms-readonly-grid label { text-align: left; }
 .bms-readonly-grid input { width: 100%; }
 
+/* Випадайка, підпис якої не вміщається у вузьку колонку значення (на широких
+   екранах вона 80px). «Застосунок (FLASH0)» обрізалось до «Applicatio».
+   Розтягуємо від другої колонки до кінця рядка — працює і в двоколонковій
+   розкладці, і в чотириколонковій, без окремих правил під кожну. */
+.bms-readonly-grid select.wide-select {
+    grid-column: 2 / -1;
+    width: 100%;
+}
+
 /* --- РЯДКИ ПАРАМЕТРІВ --- */
 .param-row {
     display: grid;
