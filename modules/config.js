@@ -202,6 +202,13 @@ export const translations = {
 
         // Charging
         'ac_charging_title': 'AC зарядка',
+        'ac_diag_title': 'Діагностика заряду',
+        'ac_charge_state': 'Стан заряду',
+        'ac_charge_phase': 'Фаза старту',
+        'ac_max_a_in_ecu': 'Макс. А (в ECU)',
+        'ac_power_byte': '0x1F2 байт потужності',
+        'ac_tx_sent': 'Кадрів PDM надіслано',
+        'ac_tx_dropped': 'Кадрів PDM втрачено',
         'ac_pwm_plug': 'PWM роз\'єм',
         'ac_charge_plug_status': 'Статус роз\'єму зарядки',
         'ac_pdm_temp': 'Температура PDM',
@@ -592,6 +599,13 @@ export const translations = {
 
         // Charging
         'ac_charging_title': 'AC Charging',
+        'ac_diag_title': 'Charging diagnostics',
+        'ac_charge_state': 'Charge state',
+        'ac_charge_phase': 'Start phase',
+        'ac_max_a_in_ecu': 'Max A (in ECU)',
+        'ac_power_byte': '0x1F2 power byte',
+        'ac_tx_sent': 'PDM frames sent',
+        'ac_tx_dropped': 'PDM frames dropped',
         'ac_pwm_plug': 'PWM plug',
         'ac_charge_plug_status': 'Charge plug status',
         'ac_pdm_temp': 'PDM temperature',

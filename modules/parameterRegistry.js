@@ -1848,8 +1848,68 @@ export const PARAMETER_REGISTRY = {
     'write_cc_kd': {
         writeConfig: { canId: '79B', dataPrefix: '2e050203', bytes: 2 }
     },
+    /**
+     * Запит 220420: стан машини AC-заряду. Те, чого не видно в 0x0411:
+     * у якій фазі Start_charg, що реально йде в 0x1F2 і чи дійшло налаштування.
+     */
+    'pdm_diag_220420': {
+        request: { canId: '79B', data: '220420', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const flags = parseInt(dataHex.substring(8, 10), 16);
+                const maxA  = parseInt(dataHex.substring(10, 12), 16);
+                const pwr   = parseInt(dataHex.substring(12, 14), 16);
+                const phase = parseInt(dataHex.substring(14, 16), 16);
+
+                const st = [];
+                if (flags & 0x04) st.push('start');
+                if (flags & 0x02) st.push('charging');
+                if (flags & 0x01) st.push('finished');
+                if (flags & 0x08) st.push('DC-DC');
+
+                // Start_charg проходить 0..99 -> 100..199 -> робоча фаза.
+                const phaseName = phase < 100 ? `init (${phase}/100)`
+                                : phase < 200 ? `handshake (${phase}/200)`
+                                : 'active';
+
+                return {
+                    chargeState: st.length ? st.join(', ') : 'idle',
+                    maxChargeA: `${maxA} A`,
+                    powerByte: `0x${pwr.toString(16).toUpperCase().padStart(2, '0')}`,
+                    chargePhase: phaseName
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220421: скільки кадрів PDM-набору пішло на шину, а скільки згинуло
+     * у переповненій черзі due_can. dropped > 0 означає, що зарядник фізично не
+     * отримує частину кадрів.
+     */
+    'pdm_diag_220421': {
+        request: { canId: '79B', data: '220421', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const sent = (parseInt(dataHex.substring(8, 10), 16) << 8) | parseInt(dataHex.substring(10, 12), 16);
+                const drop = (parseInt(dataHex.substring(12, 14), 16) << 8) | parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    pdmTxSent: `${sent}`,
+                    pdmTxDropped: drop > 0 ? `${drop} ⚠` : '0'
+                };
+            }
+        }
+    },
+
     'write_ac_charge_current': {
-        writeConfig: { canId: '79B', dataPrefix: '2e0205', bytes: 1 }
+        // 2E 06 01 00 -> settings.maxChargeAmperage (Can0_rx.cpp).
+        // Раніше стояло 2e0205 — DID, якого в прошивці немає зовсім, тож запис
+        // мовчки нікуди не доходив.
+        writeConfig: { canId: '79B', dataPrefix: '2e060100', bytes: 1 }
     },
     'write_target_current': {
         writeConfig: { canId: '79B', dataPrefix: '2e0601', bytes: 2 }

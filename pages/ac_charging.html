@@ -22,3 +22,29 @@
     <input type="text" id="writeAcChargeCurrent" placeholder="A">
     <button class="write-button" data-param-name="write_ac_charge_current" data-target-id="writeAcChargeCurrent" data-lang-key="btn_write">Write</button>
 </div>
+
+<hr style="margin: 20px 0;">
+
+<h3 style="color: #9C27B0; font-size: 14px; margin: 20px 0 10px 0; font-weight: 500;">
+    <span data-lang-key="ac_diag_title">Charging diagnostics</span>
+</h3>
+
+<div class="bms-readonly-grid">
+    <label data-lang-key="ac_charge_state">Charge state</label>
+    <input type="text" id="readChargeState" value="---" readonly data-bind="pdm_diag_220420.chargeState">
+
+    <label data-lang-key="ac_charge_phase">Start phase</label>
+    <input type="text" id="readChargePhase" value="---" readonly data-bind="pdm_diag_220420.chargePhase">
+
+    <label data-lang-key="ac_max_a_in_ecu">Max A (in ECU)</label>
+    <input type="text" id="readMaxChargeA" value="---" readonly data-bind="pdm_diag_220420.maxChargeA">
+
+    <label data-lang-key="ac_power_byte">0x1F2 power byte</label>
+    <input type="text" id="readPowerByte" value="---" readonly data-bind="pdm_diag_220420.powerByte">
+
+    <label data-lang-key="ac_tx_sent">PDM frames sent</label>
+    <input type="text" id="readPdmTxSent" value="---" readonly data-bind="pdm_diag_220421.pdmTxSent">
+
+    <label data-lang-key="ac_tx_dropped">PDM frames dropped</label>
+    <input type="text" id="readPdmTxDropped" value="---" readonly data-bind="pdm_diag_220421.pdmTxDropped">
+</div>
