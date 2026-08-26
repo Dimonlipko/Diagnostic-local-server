@@ -1776,6 +1776,31 @@ export const PARAMETER_REGISTRY = {
     'write_type_start_btn': {
         writeConfig: { canId: '79B', dataPrefix: '2e013103', bytes: 1 }
     },
+    /**
+     * Запит 220130: конфіг силової частини одним кадром.
+     * byte[4]=config_inv, byte[5]=config_bms, byte[6]=config_charger, byte[7]=config_chademo.
+     * Тут читаємо лише тип зарядника — решта вже приходить іншими DID.
+     */
+    'settings_info_220130': {
+        request: { canId: '79B', data: '220130', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                // config_charger у прошивці: 0=немає, 1=Leaf PDM, 2=Tesla PCS.
+                // Leaf_V4.cpp обирає гілку за == 2, решта веде до Charging().
+                const chargerMap = { "0": "OFF", "1": "Leaf PDM", "2": "Tesla PCS" };
+                const raw = parseInt(dataHex.substring(12, 14), 16); // Байт 6
+                return { chargerType: chargerMap[raw.toString()] || 'Unknown' };
+            }
+        }
+    },
+
+    'write_type_charger': {
+        // 2E C0 2F 19 17 -> sub 0x17 (config_charger), Can0_rx.cpp case 0x17
+        writeConfig: { canId: '79B', dataPrefix: '2ec02f1917', bytes: 1 }
+    },
+
     'write_type_invertor': {
         // Unified config_inv write (replaces legacy 2e013104 leaf_inv_type).
         // 1=Leaf AZE0, 2=Leaf ZE0, 3=Leaf ZE1, 4=Tesla M3, 0=OFF.
