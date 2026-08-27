@@ -1452,6 +1452,165 @@ export const PARAMETER_REGISTRY = {
         }
     },
 
+    // ----------------------------------------
+    // Зовнішній CHAdeMO-контролер (config_chademo_2 == 3), DID 0x0Cxx.
+    // Специфікація: Chademo_ECU_STM32F105/docs/bridge-protocol.md
+    // 0x0601..0x0605 вище спільні для внутрішнього і зовнішнього режимів.
+    // ----------------------------------------
+
+    /**
+     * Запит 220C01: стан лінку з платою, heartbeat, пілот-лінії, остання помилка
+     */
+    'chademo_info_220C01': {
+        request: { canId: '79B', data: '220C01', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const linkUp = parseInt(dataHex.substring(8, 10), 16);
+                const heartbeat = parseInt(dataHex.substring(10, 12), 16);
+                const pilots = parseInt(dataHex.substring(12, 14), 16);
+                const lastError = parseInt(dataHex.substring(14, 16), 16);
+                const bit = (v, m) => (v & m) ? 'ON' : 'OFF';
+                return {
+                    linkStatus: linkUp ? 'Connected' : 'No link',
+                    heartbeat: heartbeat.toString(),
+                    pilotD1: bit(pilots, 0x01),
+                    pilotD2: bit(pilots, 0x02),
+                    pilotJ: bit(pilots, 0x04),
+                    pilotK: bit(pilots, 0x08),
+                    lastError: lastError.toString()
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C02: номер протоколу EV / EVSE, режим config_chademo_2
+     */
+    'chademo_info_220C02': {
+        request: { canId: '79B', data: '220C02', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                // 1 = V0.9.1; 2 = V1.0.0/1.0.1/1.1/1.2; 3 = V2.0 (IEC 61851-24 Annex A)
+                const protoMap = { "0": "—", "1": "V0.9.1", "2": "V1.0…1.2", "3": "V2.0", "255": "—" };
+                const modeMap = { "0": "OFF", "1": "CAN1", "2": "CAN3", "3": "External F105" };
+                const protoEv = parseInt(dataHex.substring(8, 10), 16);
+                const protoEvse = parseInt(dataHex.substring(10, 12), 16);
+                const mode = parseInt(dataHex.substring(12, 14), 16);
+                return {
+                    protocolEv: protoMap[protoEv.toString()] || `? (${protoEv})`,
+                    protocolEvse: protoMap[protoEvse.toString()] || `? (${protoEvse})`,
+                    chademoMode: modeMap[mode.toString()] || 'Unknown'
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C03: max / min напруга батареї, які ECU віддає контролеру
+     */
+    'chademo_info_220C03': {
+        request: { canId: '79B', data: '220C03', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const max_h = parseInt(dataHex.substring(8, 10), 16);
+                const max_l = parseInt(dataHex.substring(10, 12), 16);
+                const min_h = parseInt(dataHex.substring(12, 14), 16);
+                const min_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    maxBatteryVoltage: `${parseUint16(max_h, max_l)} V`,
+                    minBatteryVoltage: `${parseUint16(min_h, min_l)} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C04: max / min струм заряду, номінальна ємність пакета
+     */
+    'chademo_info_220C04': {
+        request: { canId: '79B', data: '220C04', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const maxA = parseInt(dataHex.substring(8, 10), 16);
+                const minA = parseInt(dataHex.substring(10, 12), 16);
+                const cap_h = parseInt(dataHex.substring(12, 14), 16);
+                const cap_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    maxChargeCurrent: `${maxA} A`,
+                    minChargeCurrent: `${minA} A`,
+                    // передається у 0.1 kWh (0x101 b5-6)
+                    ratedCapacity: `${(parseUint16(cap_h, cap_l) / 10).toFixed(1)} kWh`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C05: залишок часу заряду, порогова напруга станції
+     */
+    'chademo_info_220C05': {
+        request: { canId: '79B', data: '220C05', interval: 1000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const sec_h = parseInt(dataHex.substring(8, 10), 16);
+                const sec_l = parseInt(dataHex.substring(10, 12), 16);
+                const thr_h = parseInt(dataHex.substring(12, 14), 16);
+                const thr_l = parseInt(dataHex.substring(14, 16), 16);
+                return {
+                    remainingTime: `${parseUint16(sec_h, sec_l)} s`,
+                    thresholdVoltage: `${parseUint16(thr_h, thr_l)} V`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C06: V2X — дозвіл розряду, max струм розряду, ліміт станції
+     */
+    'chademo_info_220C06': {
+        request: { canId: '79B', data: '220C06', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const enabled = parseInt(dataHex.substring(8, 10), 16);
+                const maxDischargeA = parseInt(dataHex.substring(10, 12), 16);
+                const evseMaxInputA = parseInt(dataHex.substring(12, 14), 16);
+                return {
+                    dischargeEnabled: enabled ? 'ON' : 'OFF',
+                    maxDischargeCurrent: `${maxDischargeA} A`,
+                    evseMaxInputCurrent: `${evseMaxInputA} A`
+                };
+            }
+        }
+    },
+
+    /**
+     * Запит 220C07: V2X — максимальна вхідна напруга станції
+     */
+    'chademo_info_220C07': {
+        request: { canId: '79B', data: '220C07', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 16) return null;
+                const v_h = parseInt(dataHex.substring(8, 10), 16);
+                const v_l = parseInt(dataHex.substring(10, 12), 16);
+                return { evseMaxInputVoltage: `${parseUint16(v_h, v_l)} V` };
+            }
+        }
+    },
+
     // ========================================
     // PDM / AC CHARGING
     // ========================================
@@ -1791,7 +1950,14 @@ export const PARAMETER_REGISTRY = {
                 // Leaf_V4.cpp обирає гілку за == 2, решта веде до Charging().
                 const chargerMap = { "0": "OFF", "1": "Leaf PDM", "2": "Tesla PCS" };
                 const raw = parseInt(dataHex.substring(12, 14), 16); // Байт 6
-                return { chargerType: chargerMap[raw.toString()] || 'Unknown' };
+                // Байт 7 = config_chademo_2 (Can1_tx.cpp, DID 0x0130).
+                // 0=OFF, 1=CAN1, 2=CAN3, 3=зовнішня плата F105 по CAN0.
+                const chademoMap = { "0": "OFF", "1": "CAN1", "2": "CAN3", "3": "External F105" };
+                const chademoRaw = parseInt(dataHex.substring(14, 16), 16); // Байт 7
+                return {
+                    chargerType: chargerMap[raw.toString()] || 'Unknown',
+                    chademoType: chademoMap[chademoRaw.toString()] || 'Unknown'
+                };
             }
         }
     },
@@ -1799,6 +1965,13 @@ export const PARAMETER_REGISTRY = {
     'write_type_charger': {
         // 2E C0 2F 19 17 -> sub 0x17 (config_charger), Can0_rx.cpp case 0x17
         writeConfig: { canId: '79B', dataPrefix: '2ec02f1917', bytes: 1 }
+    },
+
+    'write_type_chademo': {
+        // 2E C0 2F 19 18 -> sub 0x18 (config_chademo_2), Can0_rx.cpp case 0x18
+        // 0=OFF, 1=CAN1, 2=CAN3 (ECU is the car-side controller),
+        // 3=external Chademo_ECU_STM32F105 over the CAN0 bridge 0x510..0x515.
+        writeConfig: { canId: '79B', dataPrefix: '2ec02f1918', bytes: 1 }
     },
 
     'write_type_invertor': {

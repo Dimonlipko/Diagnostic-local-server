@@ -54,6 +54,16 @@
     </select>
     <button class="write-button" data-param-name="write_type_charger" data-target-id="writeTypeCharger" data-lang-key="btn_write">Write</button>
 
+    <label data-lang-key="set_type_chademo">CHAdeMO type</label>
+    <input type="text" id="readTypeChademo" value="No Data" readonly data-bind="settings_info_220130.chademoType">
+    <select id="writeTypeChademo">
+        <option value="0" data-lang-key="opt_off">OFF</option>
+        <option value="1" data-lang-key="opt_chademo_can1">Internal (CAN1)</option>
+        <option value="2" data-lang-key="opt_chademo_can3">Internal (CAN3)</option>
+        <option value="3" data-lang-key="opt_chademo_ext">External F105</option>
+    </select>
+    <button class="write-button" data-param-name="write_type_chademo" data-target-id="writeTypeChademo" data-lang-key="btn_write">Write</button>
+
     <label data-lang-key="set_pump_temp">Pump start temperature</label>
     <input type="text" id="readPumpTemp" value="0°C" readonly data-bind="settings_info_220408.pumpTemp">
     <input type="text" id="writePumpTemp" data-lang-key="placeholder_new_value" placeholder="New Value">

@@ -1,5 +1,43 @@
 <h2 data-lang-key="chademo_title">CHAdeMO Fast Charging</h2>
 
+<h3 data-lang-key="chd_controller">Controller</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_mode">Mode</label>
+    <input type="text" id="readChdMode" value="—" readonly data-bind="chademo_info_220C02.chademoMode">
+
+    <label data-lang-key="chd_link">Link to F105</label>
+    <input type="text" id="readChdLink" value="—" readonly data-bind="chademo_info_220C01.linkStatus">
+
+    <label data-lang-key="chd_heartbeat">Heartbeat</label>
+    <input type="text" id="readChdHeartbeat" value="0" readonly data-bind="chademo_info_220C01.heartbeat">
+
+    <label data-lang-key="chd_last_error">Last error</label>
+    <input type="text" id="readChdLastError" value="0" readonly data-bind="chademo_info_220C01.lastError">
+
+    <label data-lang-key="chd_proto_ev">Protocol (EV)</label>
+    <input type="text" id="readChdProtoEv" value="—" readonly data-bind="chademo_info_220C02.protocolEv">
+
+    <label data-lang-key="chd_proto_evse">Protocol (station)</label>
+    <input type="text" id="readChdProtoEvse" value="—" readonly data-bind="chademo_info_220C02.protocolEvse">
+</div>
+
+<h3 data-lang-key="chd_pilots">Pilot Lines</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_pilot_d1">d1 — sequence signal 1</label>
+    <input type="text" id="readChdD1" value="—" readonly data-bind="chademo_info_220C01.pilotD1">
+
+    <label data-lang-key="chd_pilot_d2">d2 — sequence signal 2</label>
+    <input type="text" id="readChdD2" value="—" readonly data-bind="chademo_info_220C01.pilotD2">
+
+    <label data-lang-key="chd_pilot_j">j — charge permission</label>
+    <input type="text" id="readChdJ" value="—" readonly data-bind="chademo_info_220C01.pilotJ">
+
+    <label data-lang-key="chd_pilot_k">k — contactor closed</label>
+    <input type="text" id="readChdK" value="—" readonly data-bind="chademo_info_220C01.pilotK">
+</div>
+
+<hr style="margin: 20px 0;">
+
 <h3 data-lang-key="chd_ev_params">EV Parameters</h3>
 <div class="bms-readonly-grid">
     <label data-lang-key="chd_target_current">Target current</label>
@@ -51,6 +89,46 @@
 
     <label data-lang-key="chd_present_current">Present current</label>
     <input type="text" id="readPresentCurrent" value="0 A" readonly data-bind="chademo_info_220605.presentCurrent">
+
+    <label data-lang-key="chd_remaining_time">Remaining time (bridge)</label>
+    <input type="text" id="readChdRemainingTime" value="0 s" readonly data-bind="chademo_info_220C05.remainingTime">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="chd_limits">Battery Limits Sent to Controller</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_max_batt_voltage">Max battery voltage</label>
+    <input type="text" id="readChdMaxV" value="0 V" readonly data-bind="chademo_info_220C03.maxBatteryVoltage">
+
+    <label data-lang-key="chd_min_batt_voltage">Min battery voltage</label>
+    <input type="text" id="readChdMinV" value="0 V" readonly data-bind="chademo_info_220C03.minBatteryVoltage">
+
+    <label data-lang-key="chd_max_charge_current">Max charge current</label>
+    <input type="text" id="readChdMaxA" value="0 A" readonly data-bind="chademo_info_220C04.maxChargeCurrent">
+
+    <label data-lang-key="chd_min_charge_current">Min charge current</label>
+    <input type="text" id="readChdMinA" value="0 A" readonly data-bind="chademo_info_220C04.minChargeCurrent">
+
+    <label data-lang-key="chd_rated_capacity">Rated capacity</label>
+    <input type="text" id="readChdCapacity" value="0 kWh" readonly data-bind="chademo_info_220C04.ratedCapacity">
+</div>
+
+<hr style="margin: 20px 0;">
+
+<h3 data-lang-key="chd_v2x">V2X / Discharge</h3>
+<div class="bms-readonly-grid">
+    <label data-lang-key="chd_discharge_enabled">Discharge enabled</label>
+    <input type="text" id="readChdDischargeEn" value="—" readonly data-bind="chademo_info_220C06.dischargeEnabled">
+
+    <label data-lang-key="chd_max_discharge_current">Max discharge current</label>
+    <input type="text" id="readChdMaxDischargeA" value="0 A" readonly data-bind="chademo_info_220C06.maxDischargeCurrent">
+
+    <label data-lang-key="chd_evse_max_input_current">Station max input current</label>
+    <input type="text" id="readChdEvseMaxInA" value="0 A" readonly data-bind="chademo_info_220C06.evseMaxInputCurrent">
+
+    <label data-lang-key="chd_evse_max_input_voltage">Station max input voltage</label>
+    <input type="text" id="readChdEvseMaxInV" value="0 V" readonly data-bind="chademo_info_220C07.evseMaxInputVoltage">
 </div>
 
 <hr style="margin: 20px 0;">
