@@ -1784,6 +1784,23 @@ export const PARAMETER_REGISTRY = {
         }
     },
 
+    /**
+     * Запит 220F33: Режим поворотників
+     * 0 — вхід уже блимає сам (важіль з реле-переривачем)
+     * 1 — вхід постійний від тумблера, блимання генерує панель на PA9/PA10
+     */
+    'dash_info_220F33': {
+        request: { canId: '79B', data: '220F33', interval: 2000 },
+        response: {
+            canId: '7BB',
+            parser: (dataHex) => {
+                if (dataHex.length < 10) return null;
+                const v = parseInt(dataHex.substring(8, 10), 16);
+                return { turnMode: v === 1 ? 'tumbler_gen' : 'passive' };
+            }
+        }
+    },
+
     'settings_info_220901': {
         request: { canId: '79B', data: '220901', interval: 2000 },
         response: {
@@ -1983,6 +2000,9 @@ export const PARAMETER_REGISTRY = {
     },
     'write_display_mode': {
         writeConfig: { canId: '79B', dataPrefix: '2e0f32', bytes: 1 }
+    },
+    'write_turn_mode': {
+        writeConfig: { canId: '79B', dataPrefix: '2e0f33', bytes: 1 }
     },
     'write_trip': {
         writeConfig: { canId: '79B', dataPrefix: '2e1208', bytes: 3, multiplier: 10 }

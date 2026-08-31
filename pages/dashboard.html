@@ -57,6 +57,11 @@
     <button class="write-button toggle-on" data-param-name="write_display_mode" data-value="0" data-lang-key="opt_display_speed">Speed</button>
     <button class="write-button toggle-off" data-param-name="write_display_mode" data-value="1" data-lang-key="opt_display_rpm">RPM</button>
 
+    <label data-lang-key="dash_turn_mode">Turn signals</label>
+    <input type="text" id="readTurnMode" value="—" readonly data-bind="dash_info_220F33.turnMode">
+    <button class="write-button toggle-on" data-param-name="write_turn_mode" data-value="0" data-lang-key="opt_turn_passive">Passive</button>
+    <button class="write-button toggle-off" data-param-name="write_turn_mode" data-value="1" data-lang-key="opt_turn_gen">Generate</button>
+
     <label data-lang-key="dash_odometer">Odometer</label>
     <input type="text" id="readOdometerW" value="0 km" readonly data-bind="dashboard_info_221201.odometer">
     <input type="text" id="writeOdometer" data-lang-key="placeholder_new_value" placeholder="New Value">
