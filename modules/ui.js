@@ -148,6 +148,7 @@ export async function loadPage(pageFile) {
 
         if (pageFile.includes('dashboard.html')) {
             initDisplayModeToggleHighlight(pageContainer);
+            initTurnModeToggleHighlight(pageContainer);
             initDashboardClockSync(pageContainer);
         }
 
@@ -168,6 +169,16 @@ function initDisplayModeToggleHighlight(container) {
         const raw = data?.displayModeRaw;
         if (raw === undefined) return;
         container.querySelectorAll('button[data-param-name="write_display_mode"]').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.value, 10) === raw);
+        });
+    });
+}
+
+function initTurnModeToggleHighlight(container) {
+    addDataListener('dash_info_220F33', (_key, data) => {
+        const raw = data?.turnModeRaw;
+        if (raw === undefined) return;
+        container.querySelectorAll('button[data-param-name="write_turn_mode"]').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.value, 10) === raw);
         });
     });

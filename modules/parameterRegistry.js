@@ -36,6 +36,7 @@ function parseUint32(b1, b2, b3, b4) {
  * Нульові байти = версії немає (немає бутлоадера / зібрано без version_gen.py).
  */
 function formatBuildVersion(yy, mm, dd) {
+    dd &= 0x7F;   // біт 7 — ознака dirty, не частина дня
     if (!yy && !mm && !dd) return '—';
     const soft = yy * 100 + mm;                     // YYMM, напр. 2608
     return `${soft} (20${String(yy).padStart(2, '0')}-` +
@@ -1732,16 +1733,30 @@ export const PARAMETER_REGISTRY = {
      * Запит 221206: Версія ПО приборки (дата збірки застосунку)
      * Відповідь: 06 62 12 06 <yy> <mm> <dd> 00
      */
+    /**
+     * Запит 221206: Ідентичність збірки ЗАСТОСУНКУ панелі.
+     * Відповідь 07 62 12 06 [yy][mm][dd|dirty<<7][build] — та сама схема, що
+     * 220419 у Leaf-ECU, тож обидва модулі читаються однаково.
+     * `*` = зібрано з незакоміченими змінами (біт 7 байта дня; день не > 31).
+     */
     'dashboard_info_221206': {
         request: { canId: '79B', data: '221206', interval: 2000 },
         response: {
             canId: '7BB',
             parser: (dataHex) => {
-                if (dataHex.length < 14) return null;
+                if (dataHex.length < 16) return null;
                 const yy = parseInt(dataHex.substring(8, 10), 16);
                 const mm = parseInt(dataHex.substring(10, 12), 16);
-                const dd = parseInt(dataHex.substring(12, 14), 16);
-                return { softVersion: formatBuildVersion(yy, mm, dd) };
+                const rawDay = parseInt(dataHex.substring(12, 14), 16);
+                const build = parseInt(dataHex.substring(14, 16), 16);
+                const dd = rawDay & 0x7F;
+                const dirty = (rawDay & 0x80) !== 0 ? '*' : '';
+                if (!yy && !mm && !dd) return { softBuild: '—', softDate: '—' };
+                const pad = (v) => String(v).padStart(2, '0');
+                return {
+                    softBuild: `${yy * 100 + mm} / ${build}${dirty}`,
+                    softDate: `20${pad(yy)}-${pad(mm)}-${pad(dd)}`
+                };
             }
         }
     },
@@ -1796,7 +1811,10 @@ export const PARAMETER_REGISTRY = {
             parser: (dataHex) => {
                 if (dataHex.length < 10) return null;
                 const v = parseInt(dataHex.substring(8, 10), 16);
-                return { turnMode: v === 1 ? 'tumbler_gen' : 'passive' };
+                // t() — інакше в поле потрапляє сирий ключ; turnModeRaw живить
+                // підсвітку активної кнопки (див. initTurnModeToggleHighlight).
+                const label = t(v === 1 ? 'opt_turn_gen' : 'opt_turn_passive');
+                return { turnMode: label, turnModeRaw: v };
             }
         }
     },
