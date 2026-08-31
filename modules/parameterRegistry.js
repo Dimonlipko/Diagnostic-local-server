@@ -1822,7 +1822,9 @@ export const PARAMETER_REGISTRY = {
             canId: '7BB',
             parser: (dataHex) => {
                 if (dataHex.length < 16) return null;
-                const selectorMap = { "0": "Button", "1": "Leaf", "2": "PSA" };
+                // SelectorType (firmware include/globals.h): 0=GPIO кнопки,
+                // 1=CAN 0x540, 2=аналоговий PSA, 3=CAN з переставленими D/R.
+                const selectorMap = { "0": "Button", "1": "CAN", "2": "PSA", "3": "CAN inverted" };
                 const buttonMap = { "0": "With fixation", "1": "Without fixation" };
                 // InverterType enum (firmware include/globals.h): 0=OFF,
                 // 1=Leaf AZE0, 2=Leaf ZE0, 3=Leaf ZE1, 4=Tesla M3.
