@@ -17,6 +17,21 @@ const ECHO_STRIKES_TO_REINIT = 3;
 let recentSends = [];
 let echoStrikes = 0;
 
+// Останній наш UDS-запит без PCI (напр. "220408"). ATCRA7BB пропускає будь-який
+// 0x7BB на шині, зокрема відповіді ECU на чужі запити (LeafSpy-емуляція 21 04 —
+// 39-байтний FF "61 41 …"). Такий FF не наш: FC на нього ламає чужу сесію, а
+// активна збірка ставить полінг на паузу до 5 с.
+let lastUdsRequest = '';
+
+function isOwnFirstFrame(ffPayloadHex) {
+    if (lastUdsRequest.length < 2) return false;
+    const sid = parseInt(lastUdsRequest.substring(0, 2), 16);
+    const respSid = ((sid + 0x40) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+    // Для 0x22 звіряємо ще й DID — запізніла відповідь на попередній DID теж не наша.
+    const expected = sid === 0x22 ? respSid + lastUdsRequest.substring(2, 6) : respSid;
+    return ffPayloadHex.startsWith(expected);
+}
+
 function rememberSend(payload) {
     recentSends.push(payload);
     if (recentSends.length > 4) recentSends.shift();
@@ -168,6 +183,7 @@ async function doSendCanRequest(canId, data) {
         // ATCAF0: PCI-байт додаємо вручну.
         const pciHex = (data.length / 2).toString(16).padStart(2, '0');
         rememberSend(`${pciHex}${data}`.toUpperCase());
+        lastUdsRequest = data.toUpperCase();
         await writeGated(writer, `${pciHex}${data}\r`, DATA_PROMPT_TIMEOUT);
         console.log(`[Protocol] >>> SEND: ${pciHex}${data}`);
 
@@ -279,6 +295,11 @@ function parseCanResponse_ELM327(line) {
         // Payload FF = все після 4 hex символів (2 байти заголовку FF)
         const payloadHex = data.substring(4);
 
+        if (!isOwnFirstFrame(payloadHex)) {
+            console.log(`[ISO-TP] Чужий First Frame (${payloadHex.substring(0, 6)}, наш запит ${lastUdsRequest}) — без FC`);
+            return null;
+        }
+
         isotpState.active = true;
         isotpState.canId = id;
         isotpState.expectedLength = totalLength;
@@ -381,6 +402,9 @@ function parseCanResponse_ELM327(line) {
 
         return null; // Чекаємо на наступні CF
     }
+
+    // CF без нашої збірки (хвіст чужого трансферу) — це не single frame.
+    if (firstNibble === 2) return null;
 
     // --- Single Frame: звичайна відповідь ---
     return { id, data };
