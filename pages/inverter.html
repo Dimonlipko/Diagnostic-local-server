@@ -23,7 +23,7 @@
     <input type="text" id="readMotorRPM" value="0 rpm" readonly data-bind="inverter_info_220303.rpm">
 
     <label data-lang-key="inv_pedal">Pedal position</label>
-    <input type="text" id="readPedalPosition" value="0" readonly data-bind="inverter_info_220303.pedal">
+    <input type="text" id="readPedalPosition" value="0 mV" readonly data-bind="inverter_info_220303.pedal">
 
     <label data-lang-key="inv_torque_req">Torque request</label>
     <input type="text" id="readTorqueRequest" value="0 Nm" readonly data-bind="inverter_info_220304.torqueReq">
@@ -48,31 +48,31 @@
     
     <!-- Pedal MIN position -->
     <label data-lang-key="inv_pedal_min">Pedal MIN position</label>
-    <input type="text" id="readPedalMin" value="0" readonly data-bind="inverter_info_220305.pedalMin">
+    <input type="text" id="readPedalMin" value="0 mV" readonly data-bind="inverter_info_220305.pedalMin">
     <input type="text" id="writePedalMin" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_pedal_min" data-target-id="writePedalMin" data-lang-key="btn_write">Write</button>
 
     <!-- Pedal MAX position -->
     <label data-lang-key="inv_pedal_max">Pedal MAX position</label>
-    <input type="text" id="readPedalMax" value="0" readonly data-bind="inverter_info_220305.pedalMax">
+    <input type="text" id="readPedalMax" value="0 mV" readonly data-bind="inverter_info_220305.pedalMax">
     <input type="text" id="writePedalMax" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_pedal_max" data-target-id="writePedalMax" data-lang-key="btn_write">Write</button>
 
     <!-- Torque in calibration point -->
     <label data-lang-key="inv_torque_cal">Torque in calibration point</label>
-    <input type="text" id="readTorqueCal" value="0" readonly data-bind="inverter_info_220307.torqueCal">
+    <input type="text" id="readTorqueCal" value="0 %" readonly data-bind="inverter_info_220307.torqueCal">
     <input type="text" id="writeTorqueCal" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_torque_cal" data-target-id="writeTorqueCal" data-lang-key="btn_write">Write</button>
     
     <!-- Pedal position in calibration point -->
     <label data-lang-key="inv_pedal_cal">Pedal position in calibration point</label>
-    <input type="text" id="readPedalCal" value="0" readonly data-bind="inverter_info_220307.pedalCal">
+    <input type="text" id="readPedalCal" value="0 mV" readonly data-bind="inverter_info_220307.pedalCal">
     <input type="text" id="writePedalCal" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_pedal_cal" data-target-id="writePedalCal" data-lang-key="btn_write">Write</button>
 
     <!-- Not presed pedal position -->
     <label data-lang-key="inv_not_pressed">Not presed pedal position</label>
-    <input type="text" id="readNotPressed" value="0" readonly data-bind="inverter_info_220308.notPressed">
+    <input type="text" id="readNotPressed" value="0 mV" readonly data-bind="inverter_info_220308.notPressed">
     <input type="text" id="writeNotPressed" data-lang-key="placeholder_new_value" placeholder="New Value">
     <button class="write-button" data-param-name="write_not_pressed" data-target-id="writeNotPressed" data-lang-key="btn_write">Write</button>
 

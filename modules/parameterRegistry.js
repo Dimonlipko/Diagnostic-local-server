@@ -159,7 +159,7 @@ export const PARAMETER_REGISTRY = {
                 
                 return {
                     rpm: `${rpm} rpm`,
-                    pedal: pedal.toString()
+                    pedal: `${pedal} mV`
                 };
             }
         }
@@ -222,8 +222,8 @@ export const PARAMETER_REGISTRY = {
                 const pedalMax = parseUint16(max_h, max_l);
                 
                 return {
-                    pedalMin: pedalMin.toString(),
-                    pedalMax: pedalMax.toString()
+                    pedalMin: `${pedalMin} mV`,
+                    pedalMax: `${pedalMax} mV`
                 };
             }
         }
@@ -258,8 +258,8 @@ export const PARAMETER_REGISTRY = {
                 }
 
                 return {
-                    torqueCal: torqueCal.toString(),
-                    pedalCal: pedalCal.toString(),
+                    torqueCal: `${torqueCal} %`, // % від maxTorque, не Нм
+                    pedalCal: `${pedalCal} mV`,
                     torqueNotPressed: `${torqueNotPressed} Nm`
                 };
             }
@@ -286,7 +286,7 @@ export const PARAMETER_REGISTRY = {
                 const notPressed = parseUint16(h, l);
                 
                 return {
-                    notPressed: notPressed.toString()
+                    notPressed: `${notPressed} mV`
                 };
             }
         }
