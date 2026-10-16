@@ -1,0 +1,116 @@
+/* Print edition (A4) — layered on top of manual.css. */
+@page {
+  size: A4;
+  margin: 17mm 15mm 18mm 15mm;
+  @bottom-left { font: 400 7.5pt 'Roboto', sans-serif; color: #7a828b; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 600 7.5pt 'Roboto Mono', monospace; color: #00797a; }
+  @top-right { content: "ELECTRIC ENGINES"; font: 700 6.5pt 'Orbitron', sans-serif; letter-spacing: .14em; color: #aab3bb; }
+}
+@page toc { @bottom-left { content: none; } }
+
+html.print, html.print body { background: #fff; }
+:root { --sch-bg: #fff; --paper: #fff; color-scheme: light; }
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-size: 9.6pt; line-height: 1.5; color: #1f2328; }
+
+/* ── cover ── */
+.cover {
+  position: relative; width: 210mm; height: 296.5mm; overflow: hidden; color: #eef2f4;
+  background: radial-gradient(160mm 90mm at 92% 4%, rgba(0, 221, 192, .28), transparent 62%), linear-gradient(160deg, #15181b 0%, #1f2529 55%, #0f3533 100%);
+}
+.cover::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1px); background-size: 5mm 5mm; }
+.cover > * { position: relative; }
+.cover-logo { position: absolute; left: 18mm; top: 16mm; height: 15mm; }
+.cover-main { position: absolute; left: 18mm; top: 62mm; width: 120mm; }
+.cover .kicker { font: 600 8pt 'Roboto'; letter-spacing: .22em; text-transform: uppercase; color: #00ddc0; }
+.cover h1 { font: 800 52pt/1 'Orbitron'; letter-spacing: .04em; color: #fff; margin: 6mm 0 3mm; }
+.cover h1 span { color: #00ddc0; }
+.cover-sub { font: 500 17pt 'Roboto'; color: #fff; }
+.cover .lead { font: 400 10.5pt/1.55 'Roboto'; color: #b8c4ca; margin-top: 6mm; max-width: 86mm; }
+.cover-img { position: absolute; right: 14mm; top: 104mm; width: 86mm; }
+.cover-img img { width: 100%; border-radius: 5mm; box-shadow: 0 8mm 20mm rgba(0,0,0,.5); transform: rotate(3deg); }
+.cover-foot { position: absolute; left: 18mm; right: 18mm; bottom: 16mm; display: flex; align-items: flex-end; gap: 8mm; font: 400 8.5pt 'Roboto'; color: #a8b4ba; border-top: .3mm solid rgba(255,255,255,.14); padding-top: 6mm; }
+.cover-foot b { color: #fff; font-weight: 600; }
+.cover-foot .grow { flex: 1; }
+.cover-foot .qr { width: 26mm; height: 26mm; background: #fff; border-radius: 2mm; padding: 2mm; }
+.cover-foot .qr svg { width: 100%; height: 100%; display: block; }
+.cover-ring { position: absolute; left: -40mm; bottom: -70mm; width: 170mm; opacity: .06; }
+
+/* ── contents ── */
+.toc-page { page: toc; break-after: page; }
+.toc-h { font: 700 20pt 'Roboto'; margin: 0 0 5mm; display: flex; align-items: center; gap: 4mm; }
+.toc-h::before { content: ''; width: 3mm; height: 9mm; background: #00ddc0; border-radius: 1mm; }
+.toc-print { list-style: none; margin: 0; padding: 0; }
+.toc-print a { display: flex; align-items: baseline; gap: 3mm; color: inherit; text-decoration: none; }
+.toc-print .tp-h2 { margin-top: 2.3mm; font: 600 10.5pt 'Roboto'; }
+.toc-print .tp-h3 { font: 400 9pt 'Roboto'; color: #4a5159; padding-left: 11mm; margin-top: .5mm; }
+.toc-print .n { font-family: 'Roboto Mono'; color: #00797a; min-width: 8mm; }
+.toc-print .tp-h3 .n { min-width: 9mm; font-size: 8.6pt; }
+.toc-print .tt { flex: 1; display: flex; align-items: baseline; }
+.toc-print .tt::after { content: ''; flex: 1; border-bottom: .25mm dotted #b9c0c7; margin: 0 2mm 1mm; }
+.toc-print .pg { font-family: 'Roboto Mono'; font-size: 9pt; color: #00797a; min-width: 7mm; text-align: right; }
+
+/* ── article ── */
+.article { max-width: none; margin: 0; }
+.article .sec { break-before: page; }
+.article h2 { margin: 0 0 5mm; font-size: 18pt; break-after: avoid; }
+.article h2 .num { width: 11mm; height: 11mm; border-radius: 2.6mm; font-size: 13pt; }
+.article h3 { font-size: 12.5pt; margin: 7mm 0 2.5mm; break-after: avoid; }
+.article h3 .num { font-size: 11.5pt; }
+.article h4 { font-size: 10.5pt; margin: 5mm 0 2mm; break-after: avoid; }
+.article p, .article li { orphans: 3; widows: 3; }
+.anchor, .fig-btn, .fig-bar .hint, .netinfo, .fig-expand { display: none !important; }
+
+.callout { padding: 3mm 4mm; margin: 4mm 0; grid-template-columns: 6mm 1fr; gap: 3mm; }
+.callout .ic { width: 6mm; height: 6mm; border-radius: 1.6mm; }
+.callout .ic svg { width: 3.8mm; height: 3.8mm; }
+.callout .ttl { font-size: 7.5pt; }
+
+.tbl-wrap { border-radius: 2mm; margin: 3.5mm 0; overflow: visible; }
+.article table { font-size: 8.6pt; }
+.article th { font-size: 7pt; padding: 1.8mm 3mm; }
+.article td { padding: 1.6mm 3mm; }
+.article tr { break-inside: avoid; }
+.article thead { display: table-header-group; }
+
+.pin-chip { font-size: .84em; padding: 0 .4em; border-radius: 1.2mm; }
+
+/* figures */
+.fig { margin: 4.5mm 0 6mm; break-inside: avoid; }
+.fig-card { border-radius: 2.6mm; box-shadow: none; }
+.fig-bar { display: none; }
+.ref-fig .fig-bar { display: none; }
+.fig-canvas { background-image: none; padding: 3mm; }
+.fig.tall .fig-canvas svg.sch { max-height: 205mm; width: auto; max-width: 100%; margin: 0 auto; }
+.legend { padding: 2mm 3mm; gap: 1.2mm; }
+.lg-item { height: auto; padding: .6mm 2.2mm; font-size: 7pt; border-radius: 3mm; }
+.lg-sw { width: 4mm; height: .9mm; }
+.fig figcaption { font-size: 8.6pt; margin: 2mm 1mm 0; }
+.fig figcaption b { font-size: 8.4pt; }
+.fig-canvas.photo img { max-height: 105mm; width: auto; max-width: 100%; margin: 0 auto; }
+.fig-canvas.photo { background: #fff; text-align: center; }
+.fig-canvas.photo.contain img { max-height: 150mm; }
+.photo-fig.small { max-width: 110mm; }
+.ref-fig .fig-canvas.photo.contain img { max-height: 225mm; }
+.ref-fig details { display: block; }
+
+.pinout { grid-template-columns: 38% 62%; break-inside: avoid; }
+.pinout .po-face { padding: 4mm; justify-content: center; }
+.pinout .po-face-in { position: static; }
+.pinout .po-table table { font-size: 7.8pt; }
+.pinout .po-table td, .pinout .po-table th { padding: 1.1mm 2.2mm; }
+.face-svg { max-height: 70mm; }
+.uses a { font-size: 7pt; padding: 0 1.2mm; }
+.face-fig { break-inside: auto; }
+.face-fig .pinout { break-inside: avoid; }
+
+ul.check li { cursor: default; }
+.article ul.check li::before { width: 3.6mm; height: 3.6mm; border-width: .4mm; top: .8mm; }
+.inline-ico { height: 5mm; vertical-align: -1.4mm; }
+
+/* back cover */
+.back { width: 210mm; height: 296.5mm; overflow: hidden; position: relative; background: #15181b; color: #b8c4ca; }
+.back .inner { position: absolute; left: 18mm; right: 18mm; bottom: 22mm; display: flex; align-items: flex-end; gap: 10mm; font: 400 9pt/1.6 'Roboto'; }
+.back img { height: 14mm; }
+.back b { color: #fff; }
+.back .ring { position: absolute; right: -30mm; top: 40mm; width: 150mm; opacity: .06; }
