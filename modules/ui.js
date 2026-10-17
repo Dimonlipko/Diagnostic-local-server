@@ -9,6 +9,7 @@ import { initCruiseChartPage, cleanupCruiseChartPage } from './cruiseChartPage.j
 import { initPedalChartPage, cleanupPedalChartPage } from './pedalChartPage.js';
 import { initPresetPage, cleanupPresetPage } from './parameterPreset.js';
 import { initCcsCtlPage, cleanupCcsCtlPage } from './ccsCtlPage.js';
+import { initTireCalc } from './tireCalc.js';
 import { sendCanRequest } from './canProtocol.js';
 
 let logElement = null;
@@ -144,6 +145,10 @@ export async function loadPage(pageFile) {
 
         if (pageFile.includes('ccs.html')) {
             initCcsCtlPage();
+        }
+
+        if (pageFile.includes('settings.html')) {
+            initTireCalc(pageContainer);
         }
 
         if (pageFile.includes('dashboard.html')) {

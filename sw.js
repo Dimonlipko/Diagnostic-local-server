@@ -37,6 +37,7 @@ const ASSETS_TO_CACHE = [
   './modules/linkStatus.js',
   './modules/cruiseChartPage.js',
   './modules/pedalChartPage.js',
+  './modules/tireCalc.js',
   './modules/chart.min.js',
 
   // Pages

@@ -10,7 +10,60 @@
     <label data-lang-key="set_wheel_circ">Wheel circumference</label>
     <input type="text" id="readWheelCirc" value="0" readonly data-bind="settings_info_220901.wheelCirc">
     <input type="text" id="writeWheelCirc" data-lang-key="placeholder_new_value" placeholder="New Value">
-    <button class="write-button" data-param-name="write_wheel_circ" data-target-id="writeWheelCirc" data-lang-key="btn_write">Write</button>
+    <div class="rw-actions">
+        <button class="write-button" data-param-name="write_wheel_circ" data-target-id="writeWheelCirc" data-lang-key="btn_write">Write</button>
+        <button type="button" id="tireCalcToggle" class="icon-button" aria-expanded="false" aria-controls="tireCalc">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                <line x1="8" y1="6" x2="16" y2="6"/>
+                <line x1="16" y1="14" x2="16" y2="18"/>
+                <path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>
+            </svg>
+            <span class="visually-hidden" data-lang-key="tire_calc_title">Wheel circumference from tire size</span>
+        </button>
+    </div>
+
+    <div class="tire-calc" id="tireCalc" hidden>
+        <div class="tire-calc-row">
+        <div class="tire-calc-size">
+            <div class="tire-calc-field">
+                <span data-lang-key="tire_calc_width">Width, mm</span>
+                <input type="text" id="tireCalcWidth" inputmode="numeric" maxlength="3" placeholder="205" autocomplete="off">
+            </div>
+            <span class="tire-calc-sep">/</span>
+            <div class="tire-calc-field">
+                <span data-lang-key="tire_calc_profile">Profile, %</span>
+                <input type="text" id="tireCalcProfile" inputmode="numeric" maxlength="3" placeholder="55" autocomplete="off">
+            </div>
+            <span class="tire-calc-sep">R</span>
+            <div class="tire-calc-field">
+                <span data-lang-key="tire_calc_rim">Rim, inch</span>
+                <input type="text" id="tireCalcRim" inputmode="decimal" maxlength="4" placeholder="16" autocomplete="off">
+            </div>
+        </div>
+        <div class="tire-calc-field tire-calc-ratio">
+            <span data-lang-key="tire_calc_ratio">Gear ratio</span>
+            <input type="text" id="tireCalcRatio" inputmode="decimal" maxlength="6" placeholder="8" autocomplete="off">
+        </div>
+        </div>
+        <div class="tire-calc-row">
+        <div class="tire-calc-out">
+            <span data-lang-key="tire_calc_diameter">Diameter, mm</span>
+            <b id="tireCalcDiameter">—</b>
+        </div>
+        <div class="tire-calc-out">
+            <span data-lang-key="tire_calc_circ">Circumference, mm</span>
+            <b id="tireCalcCirc">—</b>
+        </div>
+        <div class="tire-calc-out">
+            <span data-lang-key="tire_calc_ecu">Value for ECU, mm</span>
+            <b id="tireCalcEcu">—</b>
+        </div>
+        <button type="button" id="tireCalcApply" class="tire-calc-apply" data-lang-key="tire_calc_apply" disabled>Use value</button>
+        </div>
+        <p class="tire-calc-error" id="tireCalcError" data-lang-key="tire_calc_err" hidden>Digits only: width 100–400 mm, profile 20–100 %, rim 10–26″, gear ratio 1–30.</p>
+        <p class="tire-calc-hint" data-lang-key="tire_calc_hint">The ECU computes speed with a fixed gear ratio of 8. Enter the real one (Leaf — 8.19) and the value to write is corrected. Leave it empty for no correction.</p>
+    </div>
 
     <label data-lang-key="set_contactor_voltage">Contactor ON voltage</label>
     <input type="text" id="readContactorVoltage" value="0 V" readonly data-bind="settings_info_220110.contactorVoltage">
