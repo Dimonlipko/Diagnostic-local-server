@@ -653,3 +653,88 @@ td.uses { white-space: nowrap; }
 .pinpair .po-face-in > .pp-one { flex: 1 1 200px; max-width: 300px; display: flex; flex-direction: column; gap: 6px; }
 .pinpair { grid-template-columns: minmax(300px, 1.05fr) minmax(0, 1fr); }
 @media (max-width: 900px) { .pinpair { grid-template-columns: 1fr; } }
+
+/* ── Mechanical drawing (enclosure) ────────────────────────────────────── */
+.mech .mx-body { fill: color-mix(in srgb, var(--sch-stroke) 10%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 1.6; }
+.mech .mx-body.ear { fill: color-mix(in srgb, var(--sch-stroke) 18%, var(--sch-part)); }
+.mech .mx-lid { fill: none; stroke: var(--sch-stroke); stroke-width: 1; stroke-dasharray: 5 4; }
+.mech .mx-rib { stroke: var(--sch-stroke); stroke-width: 1.2; }
+.mech .mx-flange { fill: color-mix(in srgb, var(--sch-stroke) 22%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 1.2; }
+.mech .mx-conn { stroke: var(--sch-sym); stroke-width: 1.2; }
+.mech .mx-conn.x2 { fill: #b9bec4; } .mech .mx-conn.x1 { fill: #3a3f45; }
+.mech .mx-hole { fill: var(--sch-bg); stroke: var(--brand); stroke-width: 2.2; }
+.mech .mx-aux { fill: var(--sch-bg); stroke: var(--sch-sym); stroke-width: 1.2; }
+.mech .mx-cross { stroke: var(--brand); stroke-width: 1; }
+.mech .mx-axis { stroke: var(--brand); stroke-width: 1; stroke-dasharray: 10 4 2 4; }
+.mech .mx-ext { stroke: var(--muted); stroke-width: .9; }
+.mech .mx-dim { stroke: var(--ink-2); stroke-width: 1.1; }
+.mech .mx-arrow { fill: var(--ink-2); }
+.mech .mx-dt { font: 700 14px var(--mono); fill: var(--ink); paint-order: stroke; stroke: var(--sch-bg); stroke-width: 4px; }
+.mech .mx-lead { fill: none; stroke: var(--brand); stroke-width: 1.2; }
+.mech .mx-call { font: 600 13px var(--font); fill: var(--brand-ink); }
+.mech .mx-call.sm { font-size: 12px; fill: var(--ink-2); }
+.mech .mx-view { font: 700 11.5px var(--font); letter-spacing: .14em; fill: var(--muted); }
+.mech .mx-cl { font: 700 13px var(--mono); fill: var(--ink); }
+.mech .mx-cs { font: 400 11.5px var(--font); fill: var(--muted); }
+.mech .mx-plane { stroke: var(--ink-2); stroke-width: 2; stroke-dasharray: 8 5; }
+.mech .mx-card { fill: var(--paper-2); stroke: var(--line); }
+.mech .mx-k { font: 400 12.5px var(--font); fill: var(--muted); }
+.mech .mx-v { font: 700 15px var(--font); fill: var(--ink); }
+.mech .mx-note { font: italic 11.5px var(--font); fill: var(--muted); }
+.mech .mx-recess { fill: color-mix(in srgb, var(--sch-stroke) 16%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 1.2; }
+.mech .mx-hidden { fill: none; stroke: var(--sch-stroke); stroke-width: 1; stroke-dasharray: 4 3; }
+.mech .mx-dt.sm { font-size: 12px; }
+.mech .mx-cl.on { fill: #23272b; } .mech .mx-cl.on.dark { fill: #e9edf0; }
+.mech .mx-label .lb { fill: #16181b; stroke: #000; stroke-width: .8; }
+.mech .mx-label .lb-ring { fill: none; stroke: #c9ced3; stroke-width: 2.6; }
+.mech .mx-label .lb-bolt { fill: #29b6f6; }
+.mech .mx-label .lb-brand { font: 600 10px var(--display); letter-spacing: .1em; fill: #d5dade; }
+.mech .mx-label .lb-model { font: 700 12px var(--font); fill: #e9edf0; }
+.mech .mx-label .lb-small { font: 400 8.5px var(--font); fill: #d5dade; }
+
+/* ── Controller housing (display / selector board layout) ─────────────── */
+.hsg .hs-head { font: 700 11.5px var(--font); letter-spacing: .14em; fill: var(--muted); }
+.hsg .hs-board { fill: color-mix(in srgb, var(--sch-stroke) 8%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 2; }
+.hsg .hs-hole { fill: var(--sch-bg); stroke: var(--sch-sym); stroke-width: 1.8; }
+.hsg .hs-latch { fill: var(--sch-part); stroke: var(--sch-sym); stroke-width: 1.4; }
+.hsg .hs-name { font: 700 16px var(--mono); fill: var(--brand-ink); }
+.hsg .hs-cav { fill: var(--sch-part); stroke: var(--sch-stroke); stroke-width: 1.1; }
+.hsg .hs-cell.used .hs-cav { fill: color-mix(in srgb, var(--wc) 16%, var(--sch-part)); }
+.hsg .hs-ring { fill: none; stroke: var(--wc); stroke-width: 2.2; }
+.hsg .hs-shell { fill: none; stroke: var(--sch-sym); stroke-width: 2.4; }
+.hsg .hs-num { font: 500 14px var(--mono); fill: var(--muted); }
+.hsg .hs-cell.used .hs-num { font-weight: 700; fill: var(--ink); }
+.hsg .hs-lead { fill: none; stroke: var(--brand); stroke-width: 1.4; }
+.hsg .hs-dot { fill: var(--brand); }
+.hsg .hs-card { fill: var(--paper-2); stroke: var(--line-2); }
+.hsg .hs-pill rect { fill: var(--brand); }
+.hsg .hs-pill-t { font: 700 13px var(--mono); fill: #fff; }
+.hsg .hs-ttl { font: 600 14px var(--font); fill: var(--ink); }
+.hsg .hs-chip { fill: color-mix(in srgb, var(--wc) 16%, var(--sch-part)); stroke: var(--wc); stroke-width: 1.6; }
+.hsg .hs-chip-t { font: 700 11px var(--mono); fill: var(--ink); }
+.hsg .hs-pt { font: 400 13px var(--font); fill: var(--ink-2); }
+.hsg .hs-note { font: italic 12px var(--font); fill: var(--muted); }
+/* Nextion drawing */
+.mech .mx-head { font: 700 15px var(--font); fill: var(--brand-ink); }
+.mech .mx-pcb { fill: color-mix(in srgb, #2b9348 16%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 1.4; }
+.mech .mx-lcd { fill: #2a2f35; stroke: var(--sch-sym); stroke-width: 1; }
+.mech .mx-screen { fill: #11161c; stroke: #3b4652; stroke-width: 1; }
+.mech .mx-scr-t { font: 500 11px var(--font); fill: #8fa3b5; }
+.mech .mx-hid { fill: none; stroke: var(--sch-stroke); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.mech .mx-hid-t { font: italic 11px var(--font); fill: var(--muted); }
+.mech .mx-glass { fill: #9fd3f5; stroke: var(--sch-sym); stroke-width: 1; }
+.mech .mx-lcdside { fill: #3a4048; stroke: var(--sch-sym); stroke-width: 1; }
+.mech .mx-pcbside { fill: #2b9348; stroke: var(--sch-sym); stroke-width: 1; }
+.mech .mx-j4 { fill: #e9e2cf; stroke: var(--sch-sym); stroke-width: 1.2; }
+.mech .mx-v.sm { font-size: 13.5px; }
+.mech .mx-hid-t.on-dark { fill: #9fb0bf; }
+.mech .mx-lay { font: 600 11px var(--font); fill: var(--ink-2); }
+/* LEM drawing */
+.mech .mx-pin { fill: var(--sch-sym); }
+.mech .mx-ip { stroke: var(--w-hv); stroke-width: 3; fill: none; }
+.mech .mx-ip-h { fill: var(--w-hv); }
+.mech .mx-ap { fill: var(--sch-bg); stroke: var(--sch-sym); stroke-width: 1.6; }
+.mech .mx-lem { font: italic 800 15px var(--font); fill: var(--ink-2); letter-spacing: .04em; }
+.mech .mx-ce { font: 600 14px var(--font); fill: var(--ink-2); }
+.mech .mx-pinbadge { fill: var(--paper); stroke: var(--line-2); }
+.mech .mx-k.dk { fill: var(--ink); }
