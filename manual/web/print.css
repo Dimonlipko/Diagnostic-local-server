@@ -114,3 +114,8 @@ ul.check li { cursor: default; }
 .back img { height: 14mm; }
 .back b { color: #fff; }
 .back .ring { position: absolute; right: -30mm; top: 40mm; width: 150mm; opacity: .06; }
+.pinout.pinpair { grid-template-columns: 52% 48%; }
+.pinpair .po-face .po-face-in { flex-direction: row; flex-wrap: nowrap; gap: 3mm; }
+.pinpair .po-face-in > .pp-one { flex: 1 1 0; min-width: 0; max-width: none; }
+.pinpair .face-svg { max-height: 62mm; }
+.face-svg .fbadge text { font-size: 9.5px; }
