@@ -385,6 +385,8 @@ svg.sch { display: block; width: 100%; height: auto; font-family: var(--font); u
 .sch .face-housing { fill: var(--paper-2); stroke: var(--sch-stroke); stroke-width: 1.6; }
 .sch .face-inner { fill: var(--sch-part); stroke: var(--line-2); stroke-width: 1; }
 .sch .face-key { fill: var(--sch-stroke); }
+.sch .face-flange { fill: color-mix(in srgb, var(--sch-stroke) 14%, var(--paper-2)); stroke: var(--sch-stroke); stroke-width: 1.6; }
+.sch .face-hole { fill: var(--sch-bg); stroke: var(--sch-stroke); stroke-width: 1.6; }
 .sch .face-cav { fill: var(--sch-part); stroke: var(--sch-stroke); stroke-width: 1.4; }
 .sch .face-cav.used { stroke: var(--wc); stroke-width: 2.6; }
 .sch .face-gear { fill: none; stroke: var(--line-2); stroke-width: 6; stroke-dasharray: 5 4; }
@@ -427,6 +429,8 @@ svg.sch { display: block; width: 100%; height: auto; font-family: var(--font); u
 .face-svg .fh { fill: var(--paper-2); stroke: var(--sch-stroke); stroke-width: 1.6; }
 .face-svg .fh2 { fill: var(--sch-part); stroke: var(--line-2); stroke-width: 1; }
 .face-svg .fk { fill: var(--sch-stroke); }
+.face-svg .ffl { fill: color-mix(in srgb, var(--sch-stroke) 14%, var(--paper-2)); stroke: var(--sch-stroke); stroke-width: 1.6; }
+.face-svg .fhole { fill: var(--sch-bg, var(--paper)); stroke: var(--sch-stroke); stroke-width: 1.6; }
 .face-svg .fc { fill: var(--sch-part); stroke: var(--sch-stroke); stroke-width: 1.3; transition: fill .12s; }
 .face-svg .fc.used { stroke: var(--wc); stroke-width: 2.6; }
 .face-svg .fc.nc { fill: var(--paper-2); stroke-dasharray: 2 2; }
@@ -448,6 +452,8 @@ svg.sch { display: block; width: 100%; height: auto; font-family: var(--font); u
 .viewer .vw-title { font-weight: 700; font-size: 16px; line-height: 1.35; }
 .viewer .vw-tag { font: 600 11.5px var(--mono); color: var(--brand-ink); letter-spacing: .08em; }
 .viewer .vw-tools { position: absolute; right: 14px; top: 14px; display: flex; gap: 6px; z-index: 2; }
+.viewer .vw-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2; pointer-events: none; font: 500 12px var(--font); color: var(--muted); background: color-mix(in srgb, var(--paper) 88%, transparent); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; white-space: nowrap; max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; }
+@media (hover: none) { .viewer .vw-hint { display: none; } }
 .viewer .vw-tools button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--paper); cursor: pointer; display: grid; place-items: center; box-shadow: var(--shadow); }
 .viewer .vw-tools svg { width: 18px; height: 18px; }
 .viewer .netinfo { display: block; border: 1px solid var(--line); border-radius: 12px; }
@@ -714,6 +720,10 @@ td.uses { white-space: nowrap; }
 .hsg .hs-chip-t { font: 700 11px var(--mono); fill: var(--ink); }
 .hsg .hs-pt { font: 400 13px var(--font); fill: var(--ink-2); }
 .hsg .hs-note { font: italic 12px var(--font); fill: var(--muted); }
+.hsg .hs-lead.dash { stroke-dasharray: 6 4; }
+.hsg .hs-shell.thin { stroke-width: 1.2; fill: none; }
+.hsg .hs-arrow { fill: var(--sch-part); stroke: var(--sch-sym); stroke-width: 2; stroke-linejoin: round; }
+.hsg .part { cursor: pointer; }
 /* Nextion drawing */
 .mech .mx-head { font: 700 15px var(--font); fill: var(--brand-ink); }
 .mech .mx-pcb { fill: color-mix(in srgb, #2b9348 16%, var(--sch-part)); stroke: var(--sch-sym); stroke-width: 1.4; }
@@ -738,3 +748,9 @@ td.uses { white-space: nowrap; }
 .mech .mx-ce { font: 600 14px var(--font); fill: var(--ink-2); }
 .mech .mx-pinbadge { fill: var(--paper); stroke: var(--line-2); }
 .mech .mx-k.dk { fill: var(--ink); }
+.sch .net.lt .t-wl { fill: #1f2328; }
+.mech .mx-hidpin { fill: none; stroke: var(--sch-stroke); stroke-width: 1; stroke-dasharray: 3 2; }
+.mech .mx-pinl { font: 700 12px var(--mono); fill: var(--brand-ink); }
+.sch .jk-gap .wire { stroke-dasharray: 6 5; }
+.sch .jk-gap { pointer-events: none; }
+.sch .t-term { font-size: 11px; }

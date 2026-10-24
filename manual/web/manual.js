@@ -226,12 +226,16 @@
     function clear() {
       svg.classList.remove('has-hl');
       $$('.hl, .hl-part, .hl-peek', svg).forEach((e) => e.classList.remove('hl', 'hl-part', 'hl-peek'));
-      for (const [el, c] of added) el.classList.remove(c);
+      for (const [el, c] of added) { if (c) el.classList.remove(c); else el.style.removeProperty('--wc'); }
       added = [];
       if (legend) $$('.lg-item.on', legend).forEach((b) => b.classList.remove('on'));
     }
-    function lightPin(ref, cls) {
-      for (const el of pins[ref] || []) { el.classList.add('hl'); if (cls) { el.classList.add('w-' + cls); added.push([el, 'w-' + cls]); } }
+    function lightPin(ref, cls, color) {
+      for (const el of pins[ref] || []) {
+        el.classList.add('hl');
+        if (cls) { el.classList.add('w-' + cls); added.push([el, 'w-' + cls]); }
+        if (color) { el.style.setProperty('--wc', color); added.push([el, null]); }
+      }
       for (const el of parts[ref.slice(0, ref.indexOf('.'))] || []) el.classList.add('hl-part');
     }
     function show(netIds, focusPins, focusPart) {
@@ -242,9 +246,9 @@
         const n = meta.nets[id];
         if (!n) continue;
         if (nets[id]) nets[id].classList.add('hl');
-        for (const p of n.pins) lightPin(p, n.cls);
+        for (const p of n.pins) lightPin(p, n.cls, n.color);
       }
-      for (const p of focusPins || []) lightPin(p, meta.pins[p] && meta.pins[p].net ? meta.nets[meta.pins[p].net].cls : null);
+      for (const p of focusPins || []) { const nn = meta.pins[p] && meta.pins[p].net ? meta.nets[meta.pins[p].net] : null; lightPin(p, nn ? nn.cls : null, nn ? nn.color : null); }
       if (focusPart) for (const el of parts[focusPart] || []) el.classList.add('hl-part');
     }
     const partNets = (part) => [...new Set(Object.entries(meta.pins).filter(([r, p]) => p.part === part && p.net).map(([, p]) => p.net))];
@@ -267,11 +271,11 @@
       card.addEventListener('pointerover', onCardHover);
       card.addEventListener('pointerout', (e) => { if (!card.contains(e.relatedTarget)) peek(null); });
     }
-    const head = (kicker, title, sw) => `<div class="ic-head">${sw ? `<span class="sw w-${sw}"></span>` : ''}<div class="ic-titles"><div class="ic-kicker">${escH(kicker)}</div><div class="ic-title">${escH(title)}</div></div><button type="button" class="ic-x" aria-label="${escH(UIS.close)}">×</button></div>`;
+    const head = (kicker, title, sw, color) => `<div class="ic-head">${sw ? `<span class="sw w-${sw}"${color ? ` style="--wc:${escH(color)}"` : ''}></span>` : ''}<div class="ic-titles"><div class="ic-kicker">${escH(kicker)}</div><div class="ic-title">${escH(title)}</div></div><button type="button" class="ic-x" aria-label="${escH(UIS.close)}">×</button></div>`;
 
     function netHTML(netId, focus) {
       const n = meta.nets[netId];
-      let h = head(`${DATA.cls[n.cls] || ''}${n.gauge ? ' · ' + n.gauge : ''}`, n.name, n.cls);
+      let h = head(`${DATA.cls[n.cls] || ''}${n.gauge ? ' · ' + n.gauge : ''}`, n.name, n.cls, n.color);
       if (n.desc) h += `<div class="ic-desc">${escH(n.desc)}</div>`;
       h += `<div class="ic-sub">${escH(UIS.connections)}</div><div class="ic-conns">`;
       for (const ref of n.pins) {
@@ -289,19 +293,20 @@
       const selCavs = ff && ff.face === faceId ? ff.cavs : [];
       const selNet = selRef && meta.pins[selRef] ? meta.pins[selRef].net : null;
       const selCls = selNet ? meta.nets[selNet].cls : (selCavs[0] && fd.pins[selCavs[0]] ? fd.pins[selCavs[0]].cls : null);
+      const selColor = selNet ? meta.nets[selNet].color : (selCavs[0] && fd.pins[selCavs[0]] ? fd.pins[selCavs[0]].color : null);
       let h = head(partTitle(part) !== fd.title ? partTitle(part) : '', fd.title, null);
       if (faces.length > 1) h += `<div class="ic-tabs">${faces.map((f) => `<button type="button" data-face="${escH(f)}" class="${f === faceId ? 'on' : ''}">${escH(DATA.faces[f].short || f.replace(/^ecu-/, '').toUpperCase())}</button>`).join('')}</div>`;
       h += `<div class="ic-face" data-face="${escH(faceId)}" data-part="${escH(part)}"></div>`;
       if (selCavs.length) {
         const lbl = fd.pins[selCavs[0]] ? fd.pins[selCavs[0]].label : (meta.pins[selRef] && meta.pins[selRef].label) || '';
-        h += `<div class="ic-sel">${selCls ? `<span class="sw w-${selCls}"></span>` : ''}<b>${escH(UIS.pin)} ${escH(selCavs.join(', '))}</b><span>${escH(lbl)}</span>` +
+        h += `<div class="ic-sel">${selCls ? `<span class="sw w-${selCls}"${selColor ? ` style="--wc:${escH(selColor)}"` : ''}></span>` : ''}<b>${escH(UIS.pin)} ${escH(selCavs.join(', '))}</b><span>${escH(lbl)}</span>` +
           (selNet ? `<button type="button" class="ic-net" data-net="${escH(selNet)}">${escH(meta.nets[selNet].name)} →</button>` : '') + '</div>';
       }
       const ids = Object.keys(fd.pins).sort(fd.order ? (a, b) => fd.order.indexOf(a) - fd.order.indexOf(b) : naturalCmp);
       const rows = ids.map((c) => {
         const p = fd.pins[c];
         const ref = cm[c];
-        return `<tr data-cav="${escH(c)}"${ref ? ` data-pin="${escH(ref)}"` : ''} class="${ref ? 'in-diag' : ''}${selCavs.includes(c) ? ' sel' : ''}"><td class="pin">${escH(c)}</td><td class="c">${p.cls ? `<span class="sw w-${p.cls}"></span>` : ''}</td><td>${escH(p.label)}</td></tr>`;
+        return `<tr data-cav="${escH(c)}"${ref ? ` data-pin="${escH(ref)}"` : ''} class="${ref ? 'in-diag' : ''}${selCavs.includes(c) ? ' sel' : ''}"><td class="pin">${escH(c)}</td><td class="c">${p.cls ? `<span class="sw w-${p.cls}"${p.color ? ` style="--wc:${escH(p.color)}"` : ''}></span>` : ''}</td><td>${escH(p.label)}</td></tr>`;
       }).join('');
       if (rows) h += `<div class="ic-table"><table><tbody>${rows}</tbody></table></div>`;
       if (fd.view) h += `<div class="ic-view">${escH(fd.view)}</div>`;
@@ -419,6 +424,7 @@
     if (legend) legend.addEventListener('click', (e) => {
       const b = e.target.closest('.lg-item');
       if (!b) return;
+      if (b.dataset.net) { select(locked && locked.net === b.dataset.net && !locked.pin ? null : { net: b.dataset.net }); return; }
       select(locked && locked.cls === b.dataset.cls ? null : { cls: b.dataset.cls });
     });
 
@@ -513,6 +519,7 @@
     vw.s = ns;
     apply();
   }
+  function panBy(dx, dy) { vw.x += dx; vw.y += dy; apply(); }
   function closeViewer() {
     viewer.classList.remove('open');
     document.body.style.overflow = '';
@@ -532,11 +539,19 @@
       if (b.dataset.z === 'fit') fit();
       if (b.dataset.z === 'close') closeViewer();
     });
+    // Trackpad two-finger scroll pans (any direction); pinch (ctrlKey) or Ctrl/⌘ + wheel zooms.
+    // A classic mouse wheel (line mode, or whole-step vertical deltas) keeps zooming.
+    const isMouseWheel = (e) => e.deltaMode === 1 || (e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 50);
     stage.addEventListener('wheel', (e) => {
       if (!vw) return;
       e.preventDefault();
       const r = stage.getBoundingClientRect();
-      zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0022)), e.clientX - r.left, e.clientY - r.top);
+      if (e.ctrlKey || e.metaKey || isMouseWheel(e)) {
+        zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0022)), e.clientX - r.left, e.clientY - r.top);
+      } else {
+        const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX, dy = e.shiftKey && !e.deltaX ? 0 : e.deltaY;
+        panBy(-dx, -dy);
+      }
     }, { passive: false });
     const ptrs = new Map();
     let drag = null, pinch = null;
@@ -580,6 +595,9 @@
       if (e.key === '+' || e.key === '=') zoomAt(1.3, r.width / 2, r.height / 2);
       if (e.key === '-') zoomAt(1 / 1.3, r.width / 2, r.height / 2);
       if (e.key === '0') fit();
+      const step = e.shiftKey ? 240 : 80;
+      const arrows = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+      if (arrows[e.key]) { e.preventDefault(); panBy(...arrows[e.key]); }
     });
     window.addEventListener('resize', () => { if (vw) fit(); });
   }
