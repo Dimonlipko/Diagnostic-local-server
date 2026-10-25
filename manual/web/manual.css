@@ -754,3 +754,8 @@ td.uses { white-space: nowrap; }
 .sch .jk-gap .wire { stroke-dasharray: 6 5; }
 .sch .jk-gap { pointer-events: none; }
 .sch .t-term { font-size: 11px; }
+.mech .mx-key { fill: #6b7178; stroke: var(--sch-sym); stroke-width: 1; }
+.mech .mx-pin.x2 { fill: #f1f3f5; stroke: #5c636a; stroke-width: .8; }
+.mech .mx-pin.x1 { fill: #c9ced3; stroke: #15181b; stroke-width: .8; }
+.mech .mx-pinrow { font: 700 9.5px var(--mono); }
+.mech .mx-pinrow.x2 { fill: #23272b; } .mech .mx-pinrow.x1 { fill: #e9edf0; }
