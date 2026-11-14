@@ -1,0 +1,14 @@
+{
+  "name": "Smart 451 ED — E-Engines",
+  "short_name": "Smart ED",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B1012",
+  "theme_color": "#0B1012",
+  "lang": "uk",
+  "icons": [
+    { "src": "assets/logo-mark-white.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

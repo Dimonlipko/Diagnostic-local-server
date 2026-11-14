@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Smart 451 ED</title>
+    <meta name="theme-color" content="#0B1012">
+    <meta name="description" content="Діагностика Smart 451 ED через ELM327 BLE: UDS і потік шини">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/logo-mark-white.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/app.css">
+    <script>
+        // До першого малювання, інакше світла тема блимне темною.
+        try {
+            const t = localStorage.getItem('theme');
+            if (t) document.documentElement.dataset.theme = t;
+        } catch { /* приватне вікно */ }
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

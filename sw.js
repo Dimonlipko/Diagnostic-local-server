@@ -82,7 +82,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
+        // Лише власні старі версії: кеші спільні для домену, а в /smart451/
+        // живе інший застосунок зі своїм кешем.
+        if (key.startsWith('diag-app-') && key !== CACHE_NAME) {
           console.log('[Service Worker] Removing old cache', key);
           return caches.delete(key);
         }
