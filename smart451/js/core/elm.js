@@ -22,6 +22,12 @@ const CLEAR_ALL = [0x14, 0xFF, 0xFF, 0xFF];     // ClearDiagnosticInformation
 const CLEAR_LBC = [0x31, 0x01, 0xE0, 0x14];     // міст: routine E014 → LBC 14 FF FF FF
 const CLEAR_TIMEOUT = 5000;
 
+// Налаштування моста: 2E FD10+i, лише в extended-сесії (firmware/bridge/include/uds.h).
+const SESSION_EXTENDED = [0x10, 0x03];
+const SETTING_DID_FIRST = 0xFD10;
+const SETTING_DID_LAST = 0xFD2F;
+const SETTING_TIMEOUT = 3000;
+
 const AT_TIMEOUT = 1200;
 const DEFAULT_UDS_TIMEOUT = 1500;
 // У фоновій вкладці Chrome запускає таймери раз на секунду, тож запас має це покривати.
@@ -29,7 +35,7 @@ const STOP_TIMEOUT = 1800;
 
 // uds() лише читає. Перевірка на рівні драйвера, а не UI: жоден екран, консоль чи
 // майбутній код не зможе відправити через нього запис, routine чи перепрошивку.
-// Єдиний виняток — clearDtc() нижче, з фіксованими байтами.
+// Винятки — clearDtc() і writeBridgeSetting() нижче, обидва з фіксованим форматом.
 const READ_ONLY = [
     (b) => b[0] === 0x22,                                  // ReadDataByIdentifier
     (b) => b[0] === 0x19,                                  // ReadDTCInformation
@@ -229,6 +235,34 @@ export class Elm {
         const r = await this._request(ecu, lbc ? CLEAR_LBC : CLEAR_ALL, CLEAR_TIMEOUT);
         const expected = lbc ? 0x71 : 0x54;
         if (r[0] !== expected) throw new ElmError('partial', `неочікувана відповідь ${toHex(r)}`);
+    }
+
+    /**
+     * Записує одне налаштування моста Twingo. Лише BMS-адреса моста й діапазон
+     * FD10…FD2F; значення — до 4 цифр або індекс варіанта < 0x20 (BOOL/ENUM), тож
+     * запит завжди вміщається в один кадр. Діапазон перевіряє міст (7F 2E 31).
+     * Результат перевіряється новим читанням, не тут.
+     * @param {{req:number, resp:number}} ecu  ECU.BMS
+     * @param {number} index  позиція ключа у списку 22 FD02
+     * @param {string|number} value  '4100' або індекс варіанта
+     */
+    async writeBridgeSetting(ecu, index, value) {
+        const did = SETTING_DID_FIRST + index;
+        if (ecu.req !== 0x7E7 || !Number.isInteger(index) || index < 0 || did > SETTING_DID_LAST) {
+            throw new ElmError('denied', `налаштування ${index} поза FD10…FD2F`);
+        }
+        let data;
+        if (typeof value === 'number') {
+            if (!Number.isInteger(value) || value < 0 || value >= 0x20) throw new ElmError('denied', `індекс ${value}`);
+            data = [value];
+        } else {
+            if (!/^\d{1,4}$/.test(value)) throw new ElmError('denied', `значення «${value}»`);
+            data = [...value].map((c) => c.charCodeAt(0));
+        }
+        const s = await this._request(ecu, SESSION_EXTENDED, DEFAULT_UDS_TIMEOUT);
+        if (s[0] !== 0x50) throw new ElmError('partial', `неочікувана відповідь ${toHex(s)}`);
+        const r = await this._request(ecu, [0x2E, did >> 8, did & 0xFF, ...data], SETTING_TIMEOUT);
+        if (r[0] !== 0x6E) throw new ElmError('partial', `неочікувана відповідь ${toHex(r)}`);
     }
 
     _request(ecu, bytes, timeout) {

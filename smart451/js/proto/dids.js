@@ -364,6 +364,17 @@ export const POLLS = {
         set('br_lbc_age', be16(p, 11));
         if (p.length >= 47) set('br_ign_v', be16(p, 45) / 1000);
     } },
+    br_prot: { ecu: 'BMS', did: 0xFD05, every: 3000, bridge: true, apply(b, set) {
+        // Захист комірок і ланцюжок лімітів, розклад — include/uds.h (UDS_DID_LIMITS).
+        const p = b.slice(3);
+        if (p.length < 9) return;
+        set('br_cp_mode', p[1]);
+        set('br_cp_flags', p[2]);
+        set('br_cp_chg', p[3]);
+        set('br_cp_dis', p[4]);
+        set('br_cp_cmax', be16(p, 5));
+        set('br_cp_cmin', be16(p, 7));
+    } },
     lbc_soc:    { ecu: 'BMS', did: 0x9001, every: 5000, bridge: true, apply(b, set) { set('lbc_soc', u16Scaled(b, 0.01)); } },
     lbc_usable: { ecu: 'BMS', did: 0x9002, every: 5000, bridge: true, apply(b, set) { set('lbc_usable', u16Scaled(b, 0.01)); } },
     lbc_soh:    { ecu: 'BMS', did: 0x9003, every: 30000, bridge: true, apply(b, set) { set('lbc_soh', u16Scaled(b, 0.01)); } },

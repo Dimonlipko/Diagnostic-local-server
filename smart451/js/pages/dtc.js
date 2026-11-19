@@ -1,6 +1,7 @@
 // --- js/pages/dtc.js ---
 import { ECU, NRC_TEXT } from '../proto/dids.js';
 import { isRealDtc, lbcDescription, parseDtcList } from '../proto/dtc.js';
+import { ask, blockedWhileMoving } from '../ui/confirm.js';
 import { ICONS } from '../ui/icons.js';
 
 const MAIN = ['BMS', 'CEPC', 'LE', 'OBL'];
@@ -43,49 +44,6 @@ export async function sweep(ctx, names, onStep = () => {}) {
 }
 
 const titleOf = (name) => ECU[name]?.title ?? 'LBC Twingo';
-
-function ask(title, lines) {
-    return new Promise((resolve) => {
-        const dlg = document.createElement('dialog');
-        dlg.className = 'confirm';
-        const h = document.createElement('h2');
-        h.textContent = title;
-        dlg.append(h);
-        for (const text of lines) {
-            const p = document.createElement('p');
-            p.textContent = text;
-            dlg.append(p);
-        }
-        const bar = document.createElement('div');
-        bar.className = 'confirm-bar';
-        const no = document.createElement('button');
-        no.type = 'button';
-        no.className = 'btn';
-        no.textContent = 'Скасувати';
-        const yes = document.createElement('button');
-        yes.type = 'button';
-        yes.className = 'btn btn-danger';
-        yes.textContent = 'Стерти';
-        bar.append(no, yes);
-        dlg.append(bar);
-        const done = (v) => { dlg.close(); dlg.remove(); resolve(v); };
-        no.addEventListener('click', () => done(false));
-        yes.addEventListener('click', () => done(true));
-        dlg.addEventListener('cancel', () => resolve(false));
-        document.body.append(dlg);
-        dlg.showModal();
-        no.focus();           // випадковий Enter не повинен стирати
-    });
-}
-
-// Причина блокування, або null. Швидкість має бути відома: на стоянці 0x200 дає нуль,
-// а її відсутність означає, що стану машини ми просто не знаємо.
-function blocked(store) {
-    const v = store.fresh('speed');
-    if (v === null) return 'Швидкість невідома: стирання доступне лише на стоянці.';
-    if (v > 0) return 'Машина рухається: стирання доступне лише на стоянці.';
-    return null;
-}
 
 function row(d) {
     const li = document.createElement('li');
@@ -155,7 +113,9 @@ export default {
             p.textContent = 'Нема що стирати: спершу прочитайте коди.';
             return;
         }
-        const why = blocked(store);
+        // Швидкість має бути відома: на стоянці 0x200 дає нуль, а її відсутність
+        // означає, що стану машини ми просто не знаємо.
+        const why = blockedWhileMoving(store, 'стирання');
         if (why) {
             p.textContent = why;
             return;
@@ -168,7 +128,7 @@ export default {
         ];
         if (store.fresh('hv_active')) lines.push('HV зараз увімкнено.');
         const title = names.length > 1 ? 'Стерти коди всіх блоків?' : `Стерти коди: ${titleOf(names[0])}?`;
-        if (!await ask(title, lines)) return;
+        if (!await ask(title, lines, { yes: 'Стерти' })) return;
 
         const failed = [];
         for (const name of names) {

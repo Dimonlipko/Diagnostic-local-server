@@ -342,6 +342,31 @@ button, input, select { font: inherit; color: inherit; }
 .chip-good::before { background: var(--good); }
 .chip-info { color: var(--text); }
 .chip-info::before { background: var(--accent); }
+.chip-warn { color: var(--text); }
+.chip-warn::before { background: var(--warn); }
+.chip-crit { color: var(--text); }
+.chip-crit::before { background: var(--critical); }
+
+/* Форма налаштувань моста. 16 px у полі: менше — і телефон збільшує сторінку. */
+.form-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 14px; }
+.form-label { color: var(--text-3); font-size: 13px; }
+.form-hint { margin-top: 10px; color: var(--text-3); font-size: 12.5px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; margin-top: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--text-3); font-size: 13px; }
+.field > span { flex: 1 0 auto; }    /* підпис у два рядки не зсуває поле з лінії сусіда */
+.field input {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card-2);
+    color: var(--text);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+.field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field input[aria-invalid="true"] { border-color: var(--critical); }
+.field input:disabled, .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .flow-head { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-3); font-size: 12.5px; }
 .flow-value { color: var(--text); font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }

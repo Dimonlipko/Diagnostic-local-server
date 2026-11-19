@@ -33,10 +33,23 @@ function seeded(seed) {
     };
 }
 
+// Налаштування моста в порядку Due (firmware/bridge/src/settings.cpp): ключ, варіанти
+// (null — число), межі, типове значення. Звідси FD02, FD10+i і запис 2E.
+const SIM_SETTINGS = [
+    ['SRC', 'emulator|twingo_lbc', 0, 1, 1], ['EMUSOC', null, 0, 1000, 500], ['EMUPACKV', null, 0, 4500, 3505],
+    ['LBCCAR', 'off|auto|on', 0, 2, 1], ['DASHV', 'real|scale_93|fixed|soc', 0, 3, 3], ['DASHVFIX', null, 0, 4500, 3600],
+    ['PRECHG', 'timer|pack|inverter', 0, 2, 2], ['CTSENSE', 'off|on', 0, 1, 1], ['HVIL', 'off|on', 0, 1, 1],
+    ['HVILHZ', null, 1, 20000, 88], ['HVILDUTY', null, 1, 99, 50],
+    ['CELLPROT', 'off|limit|open', 0, 2, 2], ['CELLHIW', null, 3000, 4200, 4050], ['CELLHI', null, 3000, 4200, 4100],
+    ['CELLLOW', null, 2500, 4000, 3200], ['CELLLO', null, 2500, 4000, 3000],
+    ['PUMP1', null, 0, 100, 0], ['PUMP2', null, 0, 100, 0], ['PUMPINV', 'off|on', 0, 1, 0],
+];
+
 export class SimVehicle {
     constructor({ scenario = 'drive', bridge = false } = {}) {
         this.scenario = scenario;
         this.bridge = bridge;
+        this.settings = SIM_SETTINGS.map(([key, labels, min, max, v]) => ({ key, labels, min, max, v }));
         this.soc = 64.2;
         this.startedAt = Date.now();
         this.last = this.startedAt;
@@ -167,6 +180,7 @@ export class SimVehicle {
         }
         if (req[0] === 0x10) return [0x50, req[1], 0x00, 0x32, 0x01, 0xF4];
         if (req[0] === 0x3E) return [0x7E, 0x00];
+        if (req[0] === 0x2E) return this._writeSetting(ecu, req);
         if (req[0] !== 0x22) return [0x7F, req[0], 0x11];
         const did = (req[1] << 8) | req[2];
         const body = this._did(ecu, did);
@@ -277,8 +291,49 @@ export class SimVehicle {
             case 0x912B: { const b = new Array(32).fill(0); b[5] = 0x02; b[9] = 0x20; return b; }
             case 0x924F: return u32(Math.round(46.8 * 1024) + 2 ** 31);
             case 0x9250: return u32(Math.round(100.7 * 1024) + 2 ** 31);
-            default: return null;
+            case 0xFD02: return text(this.settings.map((s) => s.key).join(','));
+            case 0xFD05: return this._limits();
+            default: {
+                const s = did >= 0xFD10 ? this.settings[did - 0xFD10] : undefined;
+                return s ? text(s.labels ? s.labels.split('|')[s.v] : String(s.v)) : null;
+            }
         }
+    }
+
+    // 2E FD10+i: текст або один байт-індекс варіанта, як у мосту.
+    _writeSetting(ecu, req) {
+        const did = (req[1] << 8) | req[2];
+        const s = this.bridge && ecu === 0x7E7 && did >= 0xFD10 ? this.settings[did - 0xFD10] : undefined;
+        if (!s) return [0x7F, 0x2E, 0x31];
+        const data = [...req.slice(3)];
+        let v = NaN;
+        if (data.length === 1 && data[0] < 0x20) {
+            if (s.labels) v = data[0];
+        } else {
+            const t = String.fromCharCode(...data);
+            v = s.labels ? s.labels.split('|').indexOf(t) : /^\d+$/.test(t) ? Number(t) : NaN;
+        }
+        if (!Number.isInteger(v) || v < s.min || v > s.max) return [0x7F, 0x2E, 0x31];
+        s.v = v;
+        return [0x6E, req[1], req[2]];
+    }
+
+    // 22 FD05: захист комірок і ланцюжок лімітів, той самий розклад, що в include/uds.h.
+    _limits() {
+        const get = (k) => this.settings.find((s) => s.key === k).v;
+        const mv = this.cellsMv();
+        const hi = Math.round(Math.max(...mv) / 10) * 10;
+        const lo = Math.round(Math.min(...mv) / 10) * 10;
+        const ramp = (v, warn, stop) => (v >= stop ? 0 : v <= warn ? 100 : Math.floor(((stop - v) * 100) / (stop - warn)));
+        const chg = ramp(hi, get('CELLHIW'), get('CELLHI'));
+        const dis = ramp(-lo, -get('CELLLOW'), -get('CELLLO'));
+        const pct = (v, p) => u16(Math.round((v * p) / 100));
+        return [
+            1, get('CELLPROT'), chg === 0 ? 0x10 : 0, chg, dis,
+            ...u16(hi), ...u16(lo), ...u16(40),
+            ...u16(430), ...u16(720), ...u16(4300), ...u16(7200), ...u16(2200),
+            ...pct(1230, chg), ...pct(2060, dis), ...pct(2060, dis), ...pct(2474, chg), ...pct(2475, dis),
+        ];
     }
 
     _cepc(did) {
